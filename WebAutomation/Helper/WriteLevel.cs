@@ -1,0 +1,132 @@
+//###################################################################################
+//#                                                                                 #
+//#              (C) FreakaZone GmbH                                                #
+//#              =======================                                            #
+//#                                                                                 #
+//###################################################################################
+//#                                                                                 #
+//# Author       : Christian Scheid                                                 #
+//# Date         : 06.03.2013                                                       #
+//#                                                                                 #
+//# Revision     : $Rev:: 76                                                      $ #
+//# Author       : $Author::                                                      $ #
+//# File-ID      : $Id:: WriteLevel.cs 76 2024-01-24 07:36:57Z                    $ #
+//#                                                                                 #
+//###################################################################################
+using System;
+/**
+* @addtogroup WebAutomation
+* @{
+*/
+namespace WebAutomation.Helper {
+	/// <summary>
+	/// 
+	/// </summary>
+	public class WriteLevel {
+		/// <summary></summary>
+		private static Logger eventLog;
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="_Me"></param>
+		public static void AddWriteLevel() {
+			eventLog = new Logger(wpEventLog.PlugInWriteLevel);
+			using (SQL SQL = new SQL("Add Write Level")) {
+				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+					[dp].[id_dp],
+					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
+					AS [usergroupwrite]
+					FROM [dp]
+					INNER JOIN [dpgroup] [g] ON [dp].[id_dpgroup] = [g].[id_dpgroup]
+					INNER JOIN [dpnamespace] [s] ON [g].[id_dpnamespace] = [s].[id_dpnamespace]
+					WHERE [s].[active] = 1 AND [g].[active] = 1 AND [dp].[active] = 1"
+				);
+				LevelToItem(DBWriteLevel);
+			}
+			eventLog.Write("Taster PlugIn geladen");
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="_Me"></param>
+		/// <param name="idserver"></param>
+		public static void AddWriteLevel(int idserver) {
+			using (SQL SQL = new SQL("Add Write Level for Server")) {
+				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+					[dp].[id_dp],
+					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
+					AS [usergroupwrite]
+					FROM [dp]
+					INNER JOIN [dpgroup] [g] ON [dp].[id_dpgroup] = [g].[id_dpgroup]
+					INNER JOIN [dpnamespace] [s] ON [g].[id_dpnamespace] = [s].[id_dpnamespace]
+					WHERE [s].[id_opcserver] = {0}
+					AND [s].[active] = 1 AND [g].[active] = 1 AND [dp].[active] = 1",
+					idserver
+				);
+				LevelToItem(DBWriteLevel);
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="_Me"></param>
+		/// <param name="idserver"></param>
+		public static void AddGroupWriteLevel(int idgroup) {
+			using (SQL SQL = new SQL("Add Write Level for Group")) {
+				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+					[dp].[id_dp],
+					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
+					AS [usergroupwrite]
+					FROM [dp]
+					INNER JOIN [dpgroup] [g] ON [dp].[id_dpgroup] = [g].[id_dpgroup]
+					INNER JOIN [dpnamespace] [s] ON [g].[id_dpnamespace] = [s].[id_dpnamespace]
+					WHERE [g].[id_opcgroup] = {0}
+					AND [s].[active] = 1 AND [g].[active] = 1 AND [dp].[active] = 1",
+					idgroup
+				);
+				LevelToItem(DBWriteLevel);
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="_Me"></param>
+		/// <param name="idserver"></param>
+		public static void AddItemWriteLevel(int iditem) {
+			using (SQL SQL = new SQL("Add Write Level for Item")) {
+				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+					[dp].[id_dp],
+					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
+					AS [usergroupwrite]
+					FROM [dp]
+					INNER JOIN [dpgroup] [g] ON [dp].[id_dpgroup] = [g].[id_dpgroup]
+					INNER JOIN [dpnamespace] [s] ON [g].[id_dpnamespace] = [s].[id_dpnamespace]
+					WHERE [d].[id_opcdatapoint] = {0}
+					AND [s].[active] = 1 AND [g].[active] = 1 AND [dp].[active] = 1",
+					iditem
+				);
+				LevelToItem(DBWriteLevel);
+			}
+		}
+		private static void LevelToItem(string[][] WriteLevel) {
+			for (int iWriteLevel = 0; iWriteLevel < WriteLevel.Length; iWriteLevel++) {
+				int _iddatapoint;
+				int _writelevel;
+				double _min;
+				double _max;
+				if (Int32.TryParse(WriteLevel[iWriteLevel][0], out _iddatapoint) &&
+					Int32.TryParse(WriteLevel[iWriteLevel][3], out _writelevel)) {
+						Datapoint TheItem = Datapoints.Get(_iddatapoint);
+						if(TheItem != null) {
+							TheItem.WriteLevel = _writelevel;
+							if (Double.TryParse(WriteLevel[iWriteLevel][1], out _min))
+								TheItem.Min = _min;
+							if (Double.TryParse(WriteLevel[iWriteLevel][2], out _max))
+								TheItem.Max = _max;
+						}
+				}
+			}
+		}
+	}
+}
+/** @} */

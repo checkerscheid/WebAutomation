@@ -1,0 +1,80 @@
+﻿//###################################################################################
+//#                                                                                 #
+//#              (C) FreakaZone GmbH                                                #
+//#              =======================                                            #
+//#                                                                                 #
+//###################################################################################
+//#                                                                                 #
+//# Author       : Christian Scheid                                                 #
+//# Date         : 06.03.2013                                                       #
+//#                                                                                 #
+//# Revision     : $Rev:: 76                                                      $ #
+//# Author       : $Author::                                                      $ #
+//# File-ID      : $Id:: Router.cs 76 2024-01-24 07:36:57Z                        $ #
+//#                                                                                 #
+//###################################################################################
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using WebAutomation.Helper;
+
+namespace WebAutomation.PlugIns {
+	public class Router {
+		/// <summary></summary>
+		private static Logger eventLog;
+		private static Dictionary<int, List<int>> RouterItems = new Dictionary<int, List<int>>();
+		public static void AddRouter() {
+			eventLog = new Logger(wpEventLog.PlugInRouter);
+			using (SQL SQL = new SQL("Add Router")) {
+				string[][] DBRouter = SQL.wpQuery(@"SELECT [id_dp], [id_to] FROM [router]");
+				for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
+					try {
+						int idfrom;
+						int idto;
+						if (Int32.TryParse(DBRouter[irouter][0], out idfrom) &&
+							Int32.TryParse(DBRouter[irouter][1], out idto)) {
+							if(!RouterItems.ContainsKey(idfrom)) {
+								RouterItems.Add(idfrom, new List<int>());
+							}
+							if(!RouterItems.ContainsKey(idto) && !RouterItems[idfrom].Contains(idto)) {
+								RouterItems[idfrom].Add(idto);
+							} else {
+								eventLog.Write(EventLogEntryType.Error,
+									"Route würde einen Loop erzeugen! {0}", idto);
+							}
+						}
+					} catch (Exception ex) {
+						eventLog.WriteError(ex);
+					}
+				}
+			}
+			eventLog.Write("Router PlugIn geladen");
+		}
+		public static void UpdateRouter(int fromid) {
+			eventLog = new Logger(wpEventLog.PlugInRouter);
+			using (SQL SQL = new SQL("Update Router for Item")) {
+				string[][] DBRouter = SQL.wpQuery(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
+				if (DBRouter.Length == 0) {
+					if(RouterItems.ContainsKey(fromid)) RouterItems.Remove(fromid);
+				} else {
+					if (RouterItems.ContainsKey(fromid)) {
+						RouterItems[fromid].Clear();
+					} else {
+						RouterItems.Add(fromid, new List<int>());
+					}
+					for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
+						try {
+							int idto;
+							if (Int32.TryParse(DBRouter[irouter][0], out idto)) {
+								RouterItems[fromid].Add(idto);
+							}
+						} catch (Exception ex) {
+							eventLog.WriteError(ex);
+						}
+					}
+				}
+			}
+			eventLog.Write("Router PlugIn geupdatet");
+		}
+	}
+}

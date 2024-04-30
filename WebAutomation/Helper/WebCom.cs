@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 90                                                      $ #
+//# Revision     : $Rev:: 94                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 90 2024-04-15 23:08:09Z                        $ #
+//# File-ID      : $Id:: WebCom.cs 94 2024-04-30 05:57:33Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -191,10 +191,12 @@ namespace WebAutomation.Helper {
 			public const string cSetBrowseMqtt = "setBrowseMqtt";
 			public const string cUnsetBrowseMqtt = "unsetBrowseMqtt";
 			public const string cGetBrowseMqtt = "getBrowseMqtt";
-			public const string cGetD1MiniSettings = "getD1MiniSettings";
+			public const string cGetAllD1MiniSettings = "getAllD1MiniSettings";
+			public const string cGetD1MiniStatus = "getD1MiniStatus";
 			public const string cSetD1MiniCmd = "SetD1MiniCmd";
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
+			public const string cDeleteD1Mini = "DeleteD1Mini";
 			public const string cGetShellyStatus = "GetShellyStatus";
 
 			public const string cReadItem = "ReadItem";
@@ -288,8 +290,11 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cGetBrowseMqtt:
 					returns = JsonConvert.SerializeObject(Program.MainProg.wpMQTTClient.ServerTopics);
 					break;
-				case wpBefehl.cGetD1MiniSettings:
+				case wpBefehl.cGetAllD1MiniSettings:
 					returns = D1MiniServer.getJson();
+					break;
+				case wpBefehl.cGetD1MiniStatus:
+					returns = D1MiniServer.getJsonStatus(s_befehl[1]);
 					break;
 				case wpBefehl.cSetD1MiniCmd:
 					returns = "S_ERROR";
@@ -309,6 +314,15 @@ namespace WebAutomation.Helper {
 						D1MiniServer.addD1Mini(outint);
 						returns = "S_OK";
 					}
+					break;
+				case wpBefehl.cDeleteD1Mini:
+					param = wpBefehl.getParam(s_befehl[1]);
+					for(int i = 0; i < param.Length; i++) {
+						if(Int32.TryParse(param[i], out outint)) {
+							D1MiniServer.removeD1Mini(outint);
+						}
+					}
+					returns = "{\"erg\":\"S_OK\"}";
 					break;
 				case wpBefehl.cGetShellyStatus:
 					returns = ShellyServer.getAllStatus();

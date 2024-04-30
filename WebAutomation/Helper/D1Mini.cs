@@ -8,14 +8,16 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 81                                                      $ #
+//# Revision     : $Rev:: 94                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 81 2024-03-22 16:38:41Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 94 2024-04-30 05:57:33Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
+using ShellyDevice;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -76,6 +78,18 @@ namespace WebAutomation.Helper {
 			}
 			Program.MainProg.wpMQTTClient.registerNewD1MiniDatapoints();
 		}
+		public static void removeD1Mini(int idd1mini) {
+			using(SQL SQL = new SQL("Delete D1Mini")) {
+				string[][] Query1 = SQL.wpQuery($"SELECT [name] FROM [d1mini] WHERE [id_d1mini] = {idd1mini}");
+				string name = "";
+				if(Query1.Length >= 1) {
+					name = Query1[0][0];
+					if(D1Minis.ContainsKey(name))
+						D1Minis.Remove(name);
+					SQL.wpNonResponse($"DELETE FROM [d1mini] WHERE [id_d1mini] = {idd1mini}");
+				}
+			}
+		}
 		private static void wpMQTTClient_d1MiniChanged(object sender, MQTTClient.valueChangedEventArgs e) {
 			int pos = e.topic.IndexOf("/");
 			string name = e.topic.Substring(0, pos);
@@ -118,6 +132,24 @@ namespace WebAutomation.Helper {
 				returns += "},";
 			}
 			return returns.Remove(returns.Length - 1) + "}";
+		}
+		public static string getJsonStatus(string ip) {
+			IPAddress _ip;
+			string returns = "S_ERROR";
+			if(IPAddress.TryParse(ip, out _ip)) {
+				wpDebug.Write($"D1Mini getJson Status {_ip}");
+
+				string url = $"http://{_ip}/status";
+				try {
+					WebClient webClient = new WebClient();
+					returns = webClient.DownloadString(new Uri(url));
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex, $"{_ip}: '{returns}'");
+				}
+			} else {
+				wpDebug.Write($"D1Mini getJson Status IpError: '{ip}'");
+			}
+			return returns;
 		}
 		public static D1MiniDevice get(string name) {
 			if(!D1Minis.ContainsKey(name)) return null;

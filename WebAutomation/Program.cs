@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 91                                                      $ #
+//# Revision     : $Rev:: 94                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 91 2024-04-24 20:57:38Z                       $ #
+//# File-ID      : $Id:: Program.cs 94 2024-04-30 05:57:33Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -31,7 +31,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "90";
+		public const string subversion = "93";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>

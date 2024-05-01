@@ -8,16 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 94                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 94 2024-04-30 05:57:33Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 95 2024-05-01 05:58:47Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
-using ShellyDevice;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -99,6 +97,8 @@ namespace WebAutomation.Helper {
 					D1Minis[name].readDeviceName = e.value;
 				if(setting == "info/DeviceDescription")
 					D1Minis[name].readDeviceDescription = e.value;
+				if(setting == "info/wpFreakaZone")
+					D1Minis[name].readwpFreakaZoneVersion = e.value;
 				if(setting == "info/Version")
 					D1Minis[name].readVersion = e.value;
 				if(setting == "info/WiFi/Ip")
@@ -124,6 +124,7 @@ namespace WebAutomation.Helper {
 				returns += $"\"{kvp.Key}\":{{";
 				returns += $"\"DeviceName\":\"{kvp.Value.readDeviceName}\",";
 				returns += $"\"DeviceDescription\":\"{kvp.Value.readDeviceDescription}\",";
+				returns += $"\"wpFreakaZoneVersion\":\"{kvp.Value.readwpFreakaZoneVersion}\",";
 				returns += $"\"Version\":\"{kvp.Value.readVersion}\",";
 				returns += $"\"Ip\":\"{kvp.Value.readIp}\",";
 				returns += $"\"Mac\":\"{kvp.Value.readMac}\",";
@@ -221,11 +222,13 @@ namespace WebAutomation.Helper {
 		private string _name;
 		private string _description;
 		private IPAddress _address;
+		private string _wpFreakaZoneVersion;
 		private string _version;
 		private string _mac;
 
 		public string readDeviceName;
 		public string readDeviceDescription;
+		public string readwpFreakaZoneVersion;
 		public string readVersion;
 		public string readIp;
 		public string readMac;
@@ -262,7 +265,7 @@ namespace WebAutomation.Helper {
 			}
 		}
 		private readonly List<string> subscribeList = new List<string>() {
-			"info/DeviceName", "info/DeviceDescription", "info/Version", "info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID", "UpdateMode" };
+			"info/DeviceName", "info/DeviceDescription", "info/Version", "info/wpFreakaZone", "info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID", "UpdateMode" };
 		public D1MiniDevice(int idd1mini, string name, string description, IPAddress address, string mac) {
 			_idd1mini = idd1mini;
 			_name = name;
@@ -295,6 +298,7 @@ namespace WebAutomation.Helper {
 			public string FreakaZoneClient { get; set; }
 			public string IP { get; set; }
 			public string MAC { get; set; }
+			public string wpFreakaZoneVersion { get; set; }
 			public string Version { get; set; }
 		}
 	}

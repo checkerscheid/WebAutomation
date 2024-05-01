@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 87                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 87 2024-04-10 06:45:26Z  $ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 95 2024-05-01 05:58:47Z  $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -73,10 +73,10 @@ namespace WebAutomation {
 			this.statusStrip.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-			this.statusStrip.Location = new System.Drawing.Point(0, 153);
+			this.statusStrip.Location = new System.Drawing.Point(0, 185);
 			this.statusStrip.Name = "statusStrip";
 			this.statusStrip.Padding = new System.Windows.Forms.Padding(1, 0, 17, 0);
-			this.statusStrip.Size = new System.Drawing.Size(701, 22);
+			this.statusStrip.Size = new System.Drawing.Size(698, 22);
 			this.statusStrip.TabIndex = 0;
 			this.statusStrip.Text = "statusStrip1";
 			// 
@@ -94,8 +94,9 @@ namespace WebAutomation {
 			// 
 			// label1
 			// 
+			this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(13, 105);
+			this.label1.Location = new System.Drawing.Point(13, 131);
 			this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(83, 13);
@@ -114,11 +115,9 @@ namespace WebAutomation {
 			// 
 			// lbl_lastchange
 			// 
-			this.lbl_lastchange.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.lbl_lastchange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_lastchange.AutoSize = true;
-			this.lbl_lastchange.Location = new System.Drawing.Point(146, 105);
+			this.lbl_lastchange.Location = new System.Drawing.Point(146, 131);
 			this.lbl_lastchange.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.lbl_lastchange.Name = "lbl_lastchange";
 			this.lbl_lastchange.Size = new System.Drawing.Size(12, 13);
@@ -127,20 +126,23 @@ namespace WebAutomation {
 			// 
 			// lbl_message
 			// 
-			this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.lbl_message.Enabled = false;
 			this.lbl_message.Location = new System.Drawing.Point(149, 16);
 			this.lbl_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
 			this.lbl_message.Multiline = true;
 			this.lbl_message.Name = "lbl_message";
-			this.lbl_message.Size = new System.Drawing.Size(538, 47);
+			this.lbl_message.Size = new System.Drawing.Size(535, 73);
 			this.lbl_message.TabIndex = 4;
+			this.lbl_message.Text = "1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\n9\r\n10";
 			// 
 			// label3
 			// 
+			this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(13, 92);
+			this.label3.Location = new System.Drawing.Point(13, 118);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(130, 13);
 			this.label3.TabIndex = 5;
@@ -148,8 +150,9 @@ namespace WebAutomation {
 			// 
 			// lbl_db
 			// 
+			this.lbl_db.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_db.AutoSize = true;
-			this.lbl_db.Location = new System.Drawing.Point(146, 92);
+			this.lbl_db.Location = new System.Drawing.Point(146, 118);
 			this.lbl_db.Name = "lbl_db";
 			this.lbl_db.Size = new System.Drawing.Size(12, 13);
 			this.lbl_db.TabIndex = 6;
@@ -157,8 +160,9 @@ namespace WebAutomation {
 			// 
 			// label4
 			// 
+			this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(13, 66);
+			this.label4.Location = new System.Drawing.Point(13, 92);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(55, 13);
 			this.label4.TabIndex = 7;
@@ -166,8 +170,9 @@ namespace WebAutomation {
 			// 
 			// lbl_prozessor
 			// 
+			this.lbl_prozessor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_prozessor.AutoSize = true;
-			this.lbl_prozessor.Location = new System.Drawing.Point(146, 66);
+			this.lbl_prozessor.Location = new System.Drawing.Point(146, 92);
 			this.lbl_prozessor.Name = "lbl_prozessor";
 			this.lbl_prozessor.Size = new System.Drawing.Size(12, 13);
 			this.lbl_prozessor.TabIndex = 8;
@@ -175,8 +180,9 @@ namespace WebAutomation {
 			// 
 			// lbl_memory
 			// 
+			this.lbl_memory.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_memory.AutoSize = true;
-			this.lbl_memory.Location = new System.Drawing.Point(146, 79);
+			this.lbl_memory.Location = new System.Drawing.Point(146, 105);
 			this.lbl_memory.Name = "lbl_memory";
 			this.lbl_memory.Size = new System.Drawing.Size(12, 13);
 			this.lbl_memory.TabIndex = 9;
@@ -184,8 +190,9 @@ namespace WebAutomation {
 			// 
 			// lbl_volumeinfo
 			// 
+			this.lbl_volumeinfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_volumeinfo.AutoSize = true;
-			this.lbl_volumeinfo.Location = new System.Drawing.Point(396, 66);
+			this.lbl_volumeinfo.Location = new System.Drawing.Point(415, 92);
 			this.lbl_volumeinfo.Name = "lbl_volumeinfo";
 			this.lbl_volumeinfo.Size = new System.Drawing.Size(12, 13);
 			this.lbl_volumeinfo.TabIndex = 10;
@@ -196,7 +203,7 @@ namespace WebAutomation {
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.Control;
-			this.ClientSize = new System.Drawing.Size(701, 175);
+			this.ClientSize = new System.Drawing.Size(698, 207);
 			this.Controls.Add(this.lbl_volumeinfo);
 			this.Controls.Add(this.lbl_memory);
 			this.Controls.Add(this.lbl_prozessor);

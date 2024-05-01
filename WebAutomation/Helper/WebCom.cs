@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 94                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 94 2024-04-30 05:57:33Z                        $ #
+//# File-ID      : $Id:: WebCom.cs 95 2024-05-01 05:58:47Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -309,6 +309,7 @@ namespace WebAutomation.Helper {
 					returns = D1MiniServer.startSearch();
 					break;
 				case wpBefehl.cAddD1Mini:
+					returns = "S_ERROR";
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
 						D1MiniServer.addD1Mini(outint);

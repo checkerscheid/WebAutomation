@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 87                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 87 2024-04-10 06:45:26Z           $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 95 2024-05-01 05:58:47Z           $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -188,14 +188,10 @@ namespace WebAutomation {
 						string[] oldMessage = lbl_message.Lines;
 						List<string> newMessage = new List<string>();
 						newMessage.Add(value);
-						if(oldMessage.Length >= 1)
-							newMessage.Add(oldMessage[0]);
-						if(oldMessage.Length >= 2)
-							newMessage.Add(oldMessage[1]);
-						if(oldMessage.Length >= 3)
-							newMessage.Add(oldMessage[2]);
-						if(oldMessage.Length >= 4)
-							newMessage.Add(oldMessage[3]);
+						for(int i = 0; i < 100; i++) {
+							if(oldMessage.Length >= i + 1)
+								newMessage.Add(oldMessage[i]);
+						}
 						lbl_message.Lines = newMessage.ToArray();
 					}
 				} catch(Exception) { };

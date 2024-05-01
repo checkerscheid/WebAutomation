@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 82                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 82 2024-03-22 21:20:56Z                         $ #
+//# File-ID      : $Id:: Trend.cs 95 2024-05-01 05:58:47Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -106,8 +106,16 @@ namespace WebAutomation.PlugIns {
 				string v = Datapoints.Get(_iddp).Value;
 				if(v != null && v != "") {
 					using(SQL SQL = new SQL("Trend intervall")) {
-						string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
-							$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
+						string sql = @$"MERGE INTO [trendvalue] AS [TARGET]
+	USING (
+		VALUES ({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')
+	) AS [SOURCE] ([id_trend], [value], [time])
+	ON [TARGET].[id_trend] = [SOURCE].[id_trend] AND [TARGET].[time] = [SOURCE].[time]
+	WHEN NOT MATCHED THEN
+		INSERT ([id_trend], [value], [time])
+		VALUES ([SOURCE].[id_trend], [SOURCE].[value], [SOURCE].[time]);";
+						//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
+						//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
 						if(SQL.wpNonResponse(sql) == 0) {
 							wpDebug.Write($"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
 						}

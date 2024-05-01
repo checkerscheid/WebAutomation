@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 90                                                      $ #
+//# Revision     : $Rev:: 95                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 90 2024-04-15 23:08:09Z                    $ #
+//# File-ID      : $Id:: MQTTClient.cs 95 2024-05-01 05:58:47Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;
@@ -65,7 +65,7 @@ namespace WebAutomation.Helper {
 			wpDebug.Write("wpMQTTClient init");
 			string[][] DBBroker;
 			using(SQL SQL = new SQL("MQTT Server")) {
-				DBBroker = SQL.wpQuery(@"SELECT TOP 1 [id_mqttbroker], [ip], [port] FROM [mqttbroker]");
+				DBBroker = SQL.wpQuery(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
 			};
 			_idBroker = Int32.Parse(DBBroker[0][0]);
 			_port = Int32.Parse(DBBroker[0][2]);
@@ -88,8 +88,9 @@ namespace WebAutomation.Helper {
 SELECT
 	[t].[id_mqtttopic], [t].[topic], [t].[json], [t].[readable], [t].[writeable], [dp].[id_dp]
 FROM [mqtttopic] [t]
+LEFT JOIN [mqttgroup] ON [mqttgroup].[id_mqttgroup] = [t].[id_mqttgroup]
 LEFT JOIN [dp] ON [dp].[id_mqtttopic] = [t].[id_mqtttopic]
-WHERE [t].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
+WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				for(int itopic = 0; itopic < DBtopic.Length; itopic++) {
 					int idtopic = Int32.Parse(DBtopic[itopic][0]);
 					int iddatapoint = 0; Int32.TryParse(DBtopic[itopic][5], out iddatapoint);

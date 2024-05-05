@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 95                                                      $ #
+//# Revision     : $Rev:: 96                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 95 2024-05-01 05:58:47Z                    $ #
+//# File-ID      : $Id:: MQTTClient.cs 96 2024-05-05 13:37:32Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;
@@ -115,13 +115,17 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				.WithTcpServer(_ipBroker, _port)
 				.WithClientId(_clientId)
 				.Build();
-			MqttClientConnectResult connectResult = await _mqttClient.ConnectAsync(options);
-			if(connectResult.ResultCode == MqttClientConnectResultCode.Success) {
-				wpDebug.Write($"Connected to MQTT broker (mqtt://{_ipBroker}:{_port}) successfully");
-				_mqttClient.ApplicationMessageReceivedAsync += MqttClient_ApplicationMessageReceivedAsync;
-				await registerDatapoints();
-			} else {
-				wpDebug.Write($"Failed to connect to MQTT broker ({_ipBroker}): {connectResult.ResultCode}");
+			try {
+				MqttClientConnectResult connectResult = await _mqttClient.ConnectAsync(options);
+				if(connectResult.ResultCode == MqttClientConnectResultCode.Success) {
+					wpDebug.Write($"Connected to MQTT broker (mqtt://{_ipBroker}:{_port}) successfully");
+					_mqttClient.ApplicationMessageReceivedAsync += MqttClient_ApplicationMessageReceivedAsync;
+					await registerDatapoints();
+				} else {
+					wpDebug.Write($"Failed to connect to MQTT broker ({_ipBroker}): {connectResult.ResultCode}");
+				}
+			} catch(Exception ex) {
+				wpDebug.WriteError(ex);
 			}
 			wpDebug.Write("wpMQTTClient gestartet");
 		}
@@ -129,10 +133,14 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			foreach(KeyValuePair<string, Dictionary<string, topic>> kvp1 in _topics) {
 				foreach(KeyValuePair<string, topic> kvp2 in kvp1.Value) {
 					if(!subscribed.Contains(kvp1.Key) && kvp2.Value.Readable) {
-						await _mqttClient.SubscribeAsync(kvp1.Key);
-						subscribed.Add(kvp1.Key);
-						if(Program.MainProg.wpDebugMQTT) {
-							wpDebug.Write($"Add MQTT Topic: {kvp1.Key}");
+						try {
+							await _mqttClient.SubscribeAsync(kvp1.Key);
+							subscribed.Add(kvp1.Key);
+							if(Program.MainProg.wpDebugMQTT) {
+								wpDebug.Write($"Add MQTT Topic: {kvp1.Key}");
+							}
+						} catch(Exception ex) {
+							wpDebug.WriteError(ex);
 						}
 					}
 				}
@@ -328,12 +336,16 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public void setValue(string topic, string value) {
 			if(topic != string.Empty) {
-				MqttApplicationMessage msg = new MqttApplicationMessage();
-				msg.Topic = topic;
-				msg.PayloadSegment = getFromString(value);
-				_mqttClient.PublishAsync(msg);
-				if(Program.MainProg.wpDebugMQTT)
-					wpDebug.Write($"setValue: {topic}, value: {value}");
+				try {
+					MqttApplicationMessage msg = new MqttApplicationMessage();
+					msg.Topic = topic;
+					msg.PayloadSegment = getFromString(value);
+					_mqttClient.PublishAsync(msg);
+					if(Program.MainProg.wpDebugMQTT)
+						wpDebug.Write($"setValue: {topic}, value: {value}");
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex);
+				}
 			} else {
 				wpDebug.Write($"setValue: topic not set");
 			}

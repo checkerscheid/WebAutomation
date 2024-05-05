@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 95                                                      $ #
+//# Revision     : $Rev:: 96                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 95 2024-05-01 05:58:47Z           $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 96 2024-05-05 13:37:32Z           $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -130,6 +130,10 @@ namespace WebAutomation {
 		private bool _wpDebugShelly;
 		public bool wpDebugShelly {
 			get { return _wpDebugShelly; }
+		}
+		private bool _wpDebugD1Mini;
+		public bool wpDebugD1Mini {
+			get { return _wpDebugD1Mini; }
 		}
 
 		private bool _wpDebugMQTT;
@@ -678,6 +682,7 @@ namespace WebAutomation {
 			returns += $"\"wpDebugOpcRouter\":{(_wpDebugOpcRouter ? "true" : "false")},";
 			returns += $"\"wpDebugWebSockets\":{(_wpDebugWebSockets ? "true" : "false")},";
 			returns += $"\"wpDebugShelly\":{(_wpDebugShelly ? "true" : "false")},";
+			returns += $"\"wpDebugD1Mini\":{(_wpDebugD1Mini ? "true" : "false")},";
 			returns += $"\"wpDebugMQTT\":{(_wpDebugMQTT ? "true" : "false")}";
 			return returns + "}";
 		}
@@ -749,6 +754,11 @@ namespace WebAutomation {
 					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugShelly})");
 					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugShelly})\"";
 					break;
+				case "wpDebugD1Mini":
+					_wpDebugD1Mini = !_wpDebugD1Mini;
+					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugD1Mini})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugD1Mini})\"";
+					break;
 				case "wpDebugMQTT":
 					_wpDebugMQTT = !_wpDebugMQTT;
 					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugMQTT})");
@@ -795,6 +805,7 @@ namespace WebAutomation {
 			_wpDebugOpcRouter = false;
 			_wpDebugWebSockets = false;
 			_wpDebugShelly = false;
+			_wpDebugD1Mini = false;
 			_wpDebugMQTT = false;
 			_wpWartung = false;
 			_wpStartMinimized = false;
@@ -859,13 +870,17 @@ namespace WebAutomation {
 					_wpDebugShelly = true;
 					eventLog.Write(EventLogEntryType.Warning,
 						"{0} Server im 'Debug Shelly Modus' gestartet", Application.ProductName);
-                }
-                if (Arrays.inArray("wpDebugMQTT".ToLower(), args))
-                {
-                    _wpDebugMQTT = true;
-                    eventLog.Write(EventLogEntryType.Warning,
-                        "{0} Server im 'Debug MQTT Modus' gestartet", Application.ProductName);
-                }
+				}
+				if(Arrays.inArray("wpDebugD1Mini".ToLower(), args)) {
+					_wpDebugD1Mini = true;
+					eventLog.Write(EventLogEntryType.Warning,
+						"{0} Server im 'Debug D1Mini Modus' gestartet", Application.ProductName);
+				}
+				if (Arrays.inArray("wpDebugMQTT".ToLower(), args)) {
+					_wpDebugMQTT = true;
+					eventLog.Write(EventLogEntryType.Warning,
+						"{0} Server im 'Debug MQTT Modus' gestartet", Application.ProductName);
+				}
 #endif
 				if (Arrays.inArray("wpWartung".ToLower(), args)) {
 					_wpWartung = true;

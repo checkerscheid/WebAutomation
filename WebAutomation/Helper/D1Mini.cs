@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 95                                                      $ #
+//# Revision     : $Rev:: 96                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 95 2024-05-01 05:58:47Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 96 2024-05-05 13:37:32Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -20,6 +20,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace WebAutomation.Helper {
 	public static class D1MiniServer {
@@ -55,6 +56,7 @@ namespace WebAutomation.Helper {
 		}
 		public static void Stop() {
 			stopSearch();
+			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) kvp.Value.Stop();
 		}
 		public static void addD1Mini(int idd1mini) {
 			using(SQL SQL = new SQL("Select new D1Mini")) {
@@ -234,6 +236,9 @@ namespace WebAutomation.Helper {
 		public string readMac;
 		public string readSsid;
 		public string readUpdateMode;
+		private Timer t;
+		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
+		private const int onlineChecker = 30;
 
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
@@ -272,7 +277,20 @@ namespace WebAutomation.Helper {
 			_description = description;
 			_address = address;
 			_mac = mac;
+			t = new Timer(onlineChecker * 1000);
+			t.Elapsed += onlineCheck_Elapsed;
+			t.Enabled = true;
 		}
+		public void Stop() {
+			t.Stop();
+			if(Program.MainProg.wpDebugD1Mini)
+				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
+		}
+
+		private void onlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
+			sendOnlineQuestion();
+		}
+
 		public List<string> getSubscribtions() {
 			List<string> returns = new List<string>();
 			foreach(string topic in subscribeList) {
@@ -290,6 +308,11 @@ namespace WebAutomation.Helper {
 				wpDebug.Write($"D1 Mini `sendCmd` ERROR: {_name}, {cmd.cmd}");
 			}
 			return returns;
+		}
+		private void sendOnlineQuestion() {
+			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
+			if(Program.MainProg.wpDebugD1Mini)
+				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online");
 		}
 	}
 	class D1MiniBroadcast {

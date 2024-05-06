@@ -238,7 +238,7 @@ namespace WebAutomation.Helper {
 		public string readUpdateMode;
 		private Timer t;
 		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
-		private const int onlineChecker = 30;
+		private int onlineChecker = 60;
 
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
@@ -277,6 +277,7 @@ namespace WebAutomation.Helper {
 			_description = description;
 			_address = address;
 			_mac = mac;
+			onlineChecker = Ini.getInt("D1Mini", "OnlineToggler") < 0 ? onlineChecker : Ini.getInt("D1Mini", "OnlineToggler");
 			t = new Timer(onlineChecker * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
 			t.Enabled = true;

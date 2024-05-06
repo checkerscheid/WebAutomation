@@ -111,6 +111,8 @@ namespace WebAutomation.Helper {
 					D1Minis[name].readSsid = e.value;
 				if(setting == "UpdateMode")
 					D1Minis[name].readUpdateMode = e.value;
+				if(setting == "info/Online")
+					D1Minis[name].Online = e.value == "0" ? false : true;
 			}
 		}
 		public static void addSubscribtions(List<string> topic) {
@@ -236,9 +238,21 @@ namespace WebAutomation.Helper {
 		public string readMac;
 		public string readSsid;
 		public string readUpdateMode;
+		private bool _online;
+		public bool Online {
+			set {
+				if(value) {
+					setOnlineError(false);
+					toreset.Stop();
+				} else {
+					toreset.Start();
+				}
+			}
+		}
 		private Timer t;
 		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
 		private int onlineChecker = 60;
+		private Timer toreset;
 
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
@@ -270,7 +284,10 @@ namespace WebAutomation.Helper {
 			}
 		}
 		private readonly List<string> subscribeList = new List<string>() {
-			"info/DeviceName", "info/DeviceDescription", "info/Version", "info/wpFreakaZone", "info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID", "UpdateMode" };
+			"info/DeviceName", "info/DeviceDescription",
+			"info/Version", "info/wpFreakaZone",
+			"info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID",
+			"UpdateMode", "info/Online" };
 		public D1MiniDevice(int idd1mini, string name, string description, IPAddress address, string mac) {
 			_idd1mini = idd1mini;
 			_name = name;
@@ -281,15 +298,22 @@ namespace WebAutomation.Helper {
 			t = new Timer(onlineChecker * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
 			t.Enabled = true;
+			toreset = new Timer(1000);
+			toreset.AutoReset = false;
+			toreset.Elapsed += toreset_Elapsed;
 		}
+
 		public void Stop() {
 			t.Stop();
+			toreset.Stop();
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
 		}
-
 		private void onlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
 			sendOnlineQuestion();
+		}
+		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
+			setOnlineError();
 		}
 
 		public List<string> getSubscribtions() {
@@ -314,6 +338,12 @@ namespace WebAutomation.Helper {
 			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online");
+		}
+		private void setOnlineError(bool e) {
+			Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
+		}
+		private void setOnlineError() {
+			setOnlineError(true);
 		}
 	}
 	class D1MiniBroadcast {

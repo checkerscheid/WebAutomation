@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 96                                                      $ #
+//# Revision     : $Rev:: 97                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 96 2024-05-05 13:37:32Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 97 2024-05-09 20:38:14Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -251,8 +251,9 @@ namespace WebAutomation.Helper {
 		}
 		private Timer t;
 		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
-		private int onlineChecker = 60;
+		private int OnlineTogglerSendIntervall = 30;
 		private Timer toreset;
+		private int OnlineTogglerWait = 2;
 
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
@@ -294,11 +295,12 @@ namespace WebAutomation.Helper {
 			_description = description;
 			_address = address;
 			_mac = mac;
-			onlineChecker = Ini.getInt("D1Mini", "OnlineToggler") < 0 ? onlineChecker : Ini.getInt("D1Mini", "OnlineToggler");
-			t = new Timer(onlineChecker * 1000);
+			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall") < 0 ? OnlineTogglerSendIntervall : Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait") < 0 ? OnlineTogglerWait : Ini.getInt("D1Mini", "OnlineTogglerWait");
+			t = new Timer(OnlineTogglerSendIntervall * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
 			t.Enabled = true;
-			toreset = new Timer(1000);
+			toreset = new Timer(OnlineTogglerWait * 1000);
 			toreset.AutoReset = false;
 			toreset.Elapsed += toreset_Elapsed;
 		}

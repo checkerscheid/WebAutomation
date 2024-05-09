@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 96                                                      $ #
+//# Revision     : $Rev:: 97                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 96 2024-05-05 13:37:32Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 97 2024-05-09 20:38:14Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -342,7 +342,7 @@ namespace WebAutomation.Helper {
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online");
 		}
 		private void setOnlineError(bool e) {
-			Program.MainProg.wpMQTTClient.setValue(_name + "/Error/Online", e ? "1" : "0");
+			Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
 		private void setOnlineError() {
 			setOnlineError(true);

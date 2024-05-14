@@ -235,9 +235,13 @@ namespace WebAutomation.Helper {
 		public bool Online {
 			set {
 				if(value) {
+					if(Program.MainProg.wpDebugD1Mini)
+						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 1");
 					setOnlineError(false);
 					toreset.Stop();
 				} else {
+					if(Program.MainProg.wpDebugD1Mini)
+						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 					toreset.Start();
 				}
 			}
@@ -304,6 +308,8 @@ namespace WebAutomation.Helper {
 			sendOnlineQuestion();
 		}
 		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
+			if(Program.MainProg.wpDebugD1Mini)
+				wpDebug.Write($"{_name}: no response, ");
 			setOnlineError();
 		}
 
@@ -326,11 +332,13 @@ namespace WebAutomation.Helper {
 			return returns;
 		}
 		private void sendOnlineQuestion() {
-			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
 			if(Program.MainProg.wpDebugD1Mini)
-				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online");
+				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
+			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
 		}
 		private void setOnlineError(bool e) {
+			if(Program.MainProg.wpDebugD1Mini)
+				wpDebug.Write($"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
 			Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
 		private void setOnlineError() {

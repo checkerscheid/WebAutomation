@@ -546,12 +546,9 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
 						using (SQL SQL = new SQL("Delete Alarm")) {
-							Alarm tmpAlarm = Program.MainProg.getAlarmFromAlarmid(outint);
-							// in keiner Gruppe
-							if(tmpAlarm != null) {
-								int TheItemid = tmpAlarm.IdDp;
-								Program.MainProg.setAlarm(TheItemid, null);
-							}
+							Datapoint AlarmWeg = Datapoints.Get(outint);
+							Alarms.RemoveAlarm(AlarmWeg.idAlarm);
+							Datapoints.Get(outint).idAlarm = null;
 							SQL.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 						}
 					}
@@ -562,12 +559,9 @@ namespace WebAutomation.Helper {
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
 							using (SQL SQL = new SQL("Delete Alarm")) {
-								Alarm tmpAlarm = Program.MainProg.getAlarmFromAlarmid(outint);
-								// in keiner Gruppe
-								if (tmpAlarm != null) {
-									int TheItemid = tmpAlarm.IdDp;
-									Program.MainProg.setAlarm(TheItemid, null);
-								}
+								Datapoint AlarmWeg = Datapoints.Get(outint);
+								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
+								Datapoints.Get(outint).idAlarm = null;
 								SQL.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 							}
 						}
@@ -575,7 +569,7 @@ namespace WebAutomation.Helper {
 					returns = "S_OK";
 					break;
 				case wpBefehl.cUpdateAlarmGroups:
-					returns = Alarms.updateAlarmGroups();
+					returns = Alarms.FillAlarmGroups();
 					break;
 				case wpBefehl.cUpdateMail:
 					returns = Program.MainProg.SetRecipientRequired();
@@ -844,19 +838,16 @@ namespace WebAutomation.Helper {
 						SELECT
 							[dp].[id_dp], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 							[g].[name], [dp].[name], [c].[condition], [a].[min], [a].[max], [a].[delay],
-							[ag1].[name], [ag2].[name], [ag3].[name], [ag4].[name], [ag5].[name]
+							ISNULL([a].[id_alarmgroups1], 0), ISNULL([a].[id_alarmgroups2], 0),
+							ISNULL([a].[id_alarmgroups3], 0), ISNULL([a].[id_alarmgroups4], 0),
+							ISNULL([a].[id_alarmgroups5], 0)
 						FROM [alarm] [a]
 						INNER JOIN [alarmtype] [t] ON [a].[id_alarmtype] = [t].[id_alarmtype]
 						INNER JOIN [alarmgroup] [g] ON [a].[id_alarmgroup] = [g].[id_alarmgroup]
 						INNER JOIN [dp] ON [a].[id_dp] = [dp].[id_dp]
 						INNER JOIN [alarmcondition] [c] ON [a].[id_alarmcondition] = [c].[id_alarmcondition]
-						LEFT JOIN [alarmgroups1] [ag1] ON [a].[id_alarmgroups1] = [ag1].[id_alarmgroups1]
-						LEFT JOIN [alarmgroups2] [ag2] ON [a].[id_alarmgroups2] = [ag2].[id_alarmgroups2]
-						LEFT JOIN [alarmgroups3] [ag3] ON [a].[id_alarmgroups3] = [ag3].[id_alarmgroups3]
-						LEFT JOIN [alarmgroups4] [ag4] ON [a].[id_alarmgroups4] = [ag4].[id_alarmgroups4]
-						LEFT JOIN [alarmgroups5] [ag5] ON [a].[id_alarmgroups5] = [ag5].[id_alarmgroups5]
 						WHERE [a].[id_alarm] = " + idAlarm.ToString());
-					Alarm TheAlarm = Program.MainProg.getAlarm(Int32.Parse(DBAlarms[0][0]));
+					Alarm TheAlarm = Alarms.Get(idAlarm);
 					/// TODO: ohne Neustart neuen Alarm generieren
 					if (TheAlarm != null) {
 						TheAlarm.Alarmname = DBAlarms[0][1];
@@ -871,13 +862,13 @@ namespace WebAutomation.Helper {
 							TheAlarm.Max = Int32.Parse(DBAlarms[0][10]);
 						int delay;
 						if (Int32.TryParse(DBAlarms[0][11], out delay)) {
-							TheAlarm.updateDelay(delay);
+							TheAlarm.UpdateDelay(delay);
 						}
-						TheAlarm.Alarmgroups1 = DBAlarms[0][12];
-						TheAlarm.Alarmgroups2 = DBAlarms[0][13];
-						TheAlarm.Alarmgroups3 = DBAlarms[0][14];
-						TheAlarm.Alarmgroups4 = DBAlarms[0][15];
-						TheAlarm.Alarmgroups5 = DBAlarms[0][16];
+						TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[0][12]);
+						TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[0][13]);
+						TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[0][14]);
+						TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[0][15]);
+						TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[0][16]);
 						TheAlarm.InAlarm = false;
 						TheAlarm.AlarmUpdate = DateTime.Now;
 						eventLog.Write(String.Format("Alarm update: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
@@ -924,7 +915,7 @@ namespace WebAutomation.Helper {
 				Now.ToString("yyyy, M-1, d, H, m, s"),
 				Now.ToString("dd.MM.yyyy"),
 				Now.ToString("HH:mm:ss"));
-			foreach (KeyValuePair<int, Alarm> TheAlarm in Program.MainProg.getActiveAlarms()) {
+			foreach (KeyValuePair<int, Alarm> TheAlarm in Alarms.getActiveAlarms()) {
 				returns += String.Format("{{{0}=", TheAlarm.Value.IdAlarm);
 				returns += String.Format(
 					@"{{id={0}}}{{DpName={1}}}{{Come={2}}}{{Gone={3}}}{{Quit={4}}}{{Type={5}}}
@@ -940,11 +931,16 @@ namespace WebAutomation.Helper {
 					TheAlarm.Value.Alarmtext,
 					TheAlarm.Value.Alarmlink,
 					TheAlarm.Value.AlarmUpdate.ToString(),
-					Alarms.useAlarmGroup1 ? String.Format("{{AlarmGroup1={0}}}", TheAlarm.Value.Alarmgroups1) : "",
-					Alarms.useAlarmGroup2 ? String.Format("{{AlarmGroup2={0}}}", TheAlarm.Value.Alarmgroups2) : "",
-					Alarms.useAlarmGroup3 ? String.Format("{{AlarmGroup3={0}}}", TheAlarm.Value.Alarmgroups3) : "",
-					Alarms.useAlarmGroup4 ? String.Format("{{AlarmGroup4={0}}}", TheAlarm.Value.Alarmgroups4) : "",
-					Alarms.useAlarmGroup5 ? String.Format("{{AlarmGroup5={0}}}", TheAlarm.Value.Alarmgroups5) : "");
+					Alarms.UseAlarmGroup1 ?
+						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Value.Alarmgroups1)}}}" : "",
+					Alarms.UseAlarmGroup2 ?
+						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Value.Alarmgroups2)}}}" : "",
+					Alarms.UseAlarmGroup3 ?
+						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Value.Alarmgroups3)}}}" : "",
+					Alarms.UseAlarmGroup4 ?
+						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Value.Alarmgroups4)}}}" : "",
+					Alarms.UseAlarmGroup5 ?
+						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Value.Alarmgroups5)}}}" : "");
 			}
 			return String.Format("{0}}}{{Wartung={1}}}",
 				returns,
@@ -1084,7 +1080,7 @@ namespace WebAutomation.Helper {
 			int AlarmsCome = 0;
 			int AlarmsGone = 0;
 			int AlarmsQuit = 0;
-			foreach (KeyValuePair<int, Alarm> TheAlarm in Program.MainProg.getActiveAlarms()) {
+			foreach (KeyValuePair<int, Alarm> TheAlarm in Alarms.getActiveAlarms()) {
 				if (TheAlarm.Value.Come != Alarm.Default && TheAlarm.Value.Gone == Alarm.Default)
 					AlarmsCome++;
 				if (TheAlarm.Value.Gone != Alarm.Default) AlarmsGone++;

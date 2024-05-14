@@ -14,8 +14,10 @@
 //#                                                                                 #
 //###################################################################################
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Timers;
 using WebAutomation.Helper;
 
@@ -25,9 +27,9 @@ namespace WebAutomation.PlugIns {
 	/// </summary>
 	public class Alarm {
 		/// <summary></summary>
-		private static Logger eventLog;
+		private static Logger _eventLog;
 		/// <summary></summary>
-		public static DateTime Default = new DateTime(2000, 01, 01, 0, 0, 0);
+		public static readonly DateTime Default = new DateTime(2000, 01, 01, 0, 0, 0);
 		/// <summary></summary>
 		private int _idalarm;
 		/// <summary></summary>
@@ -111,37 +113,37 @@ namespace WebAutomation.PlugIns {
 			set { _alarmgroup = value; }
 		}
 		/// <summary></summary>
-		private string _alarmgroups1;
+		private int _alarmgroups1;
 		/// <summary></summary>
-		public string Alarmgroups1 {
+		public int Alarmgroups1 {
 			get { return _alarmgroups1; }
 			set { _alarmgroups1 = value; }
 		}
 		/// <summary></summary>
-		private string _alarmgroups2;
+		private int _alarmgroups2;
 		/// <summary></summary>
-		public string Alarmgroups2 {
+		public int Alarmgroups2 {
 			get { return _alarmgroups2; }
 			set { _alarmgroups2 = value; }
 		}
 		/// <summary></summary>
-		private string _alarmgroups3;
+		private int _alarmgroups3;
 		/// <summary></summary>
-		public string Alarmgroups3 {
+		public int Alarmgroups3 {
 			get { return _alarmgroups3; }
 			set { _alarmgroups3 = value; }
 		}
 		/// <summary></summary>
-		private string _alarmgroups4;
+		private int _alarmgroups4;
 		/// <summary></summary>
-		public string Alarmgroups4 {
+		public int Alarmgroups4 {
 			get { return _alarmgroups4; }
 			set { _alarmgroups4 = value; }
 		}
 		/// <summary></summary>
-		private string _alarmgroups5;
+		private int _alarmgroups5;
 		/// <summary></summary>
-		public string Alarmgroups5 {
+		public int Alarmgroups5 {
 			get { return _alarmgroups5; }
 			set { _alarmgroups5 = value; }
 		}
@@ -187,11 +189,6 @@ namespace WebAutomation.PlugIns {
 			get { return _condition; }
 			set { _condition = value; }
 		}
-		private int _lastPlantMode;
-		public int LastPlantMode {
-			get { return _lastPlantMode; }
-			set { _lastPlantMode = value; }
-		}
 		/// <summary></summary>
 		private string _min;
 		/// <summary></summary>
@@ -207,11 +204,11 @@ namespace WebAutomation.PlugIns {
 			set { _max = value; }
 		}
 		/// <summary></summary>
-		private Timer Delay;
+		private Timer _delay;
 		/// <summary></summary>
 		private bool _hasDelay;
 		/// <summary></summary>
-		public bool hasDelay {
+		public bool HasDelay {
 			get { return _hasDelay; }
 		}
 		/// <summary></summary>
@@ -223,11 +220,11 @@ namespace WebAutomation.PlugIns {
 		/// <summary></summary>
 		private bool _nodelaycome;
 		/// <summary></summary>
-		public bool noDelayCome {
+		public bool NoDelayCome {
 			set { _nodelaycome = value; }
 		}
 		private bool _wartung;
-		public bool wartung { 
+		public bool Wartung { 
 			set { _wartung = value; }
 			get { return _wartung; }
 		}
@@ -240,7 +237,7 @@ namespace WebAutomation.PlugIns {
 		/// <param name="dpname"></param>
 		/// <param name="sec"></param>
 		public Alarm(int idalarm, int dpid, string dpname, int sec) {
-			eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(wpEventLog.PlugInAlarm);
 			init(idalarm, dpid, dpname, sec);
 		}
 		/// <summary>
@@ -263,11 +260,14 @@ namespace WebAutomation.PlugIns {
 			this._wartung = false;
 			if (sec > 0) {
 				_hasDelay = true;
-				Delay = new Timer((double)(sec * 1000));
-				Delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
+				_delay = new Timer((double)(sec * 1000));
+				_delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
 			} else {
 				_hasDelay = false;
 			}
+		}
+		public void Stop() {
+			TimerStop();
 		}
 
 		/// <summary>
@@ -277,39 +277,197 @@ namespace WebAutomation.PlugIns {
 		/// <param name="e"></param>
 		private void Delay_Tick(object sender, ElapsedEventArgs e) {
 			if (_nodelaycome) {
-				setCome(DateTime.Now);
-				eventLog.Write("{0} ({1}) - Alarmdelay finished - real come",
+				SetCome(DateTime.Now);
+				_eventLog.Write("{0} ({1}) - Alarmdelay finished - real come",
 					this._alarmtext, this._dpname);
 			}
-			Delay.Stop();
+			_delay.Stop();
 			_timerstarted = false;
 		}
 		/// <summary>
 		/// 
 		/// </summary>
-		public void TimerStart() {
+		private void TimerStart() {
 			if (_hasDelay) {
-				Delay.Stop();
-				Delay.Start();
+				_delay.Stop();
+				_delay.Start();
 				_timerstarted = true;
-				eventLog.Write("{0} ({1}) - Alarm come with delay - start",
+				_eventLog.Write("{0} ({1}) - Alarm come with delay - start",
 					this._alarmtext, this._dpname);
 			}
 		}
 		/// <summary>
 		/// 
 		/// </summary>
-		public void TimerStop() {
+		private void TimerStop() {
 			if (_hasDelay) {
-				Delay.Stop();
+				_delay.Stop();
 				_timerstarted = false;
 			}
 		}
 		/// <summary>
 		/// 
 		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="value"></param>
 		/// <param name="Now"></param>
-		public void setCome(DateTime Now) {
+		public void setAlarmValue() {
+			string v = Datapoints.Get(_iddp).Value;
+			DateTime Now = DateTime.Now;
+			string issep;
+			string mustsep;
+			string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+			if(sep == ".") {
+				issep = ",";
+				mustsep = ".";
+			} else {
+				issep = ".";
+				mustsep = ",";
+			}
+			decimal ivaluedec;
+			decimal param1dec;
+			try {
+				switch(_condition) {
+					case "=":
+						if(v == _min) {
+							_nodelaycome = true;
+							if(!_inalarm) {
+								if(_hasDelay) {
+									if(!_timerstarted)
+										TimerStart();
+								} else {
+									SetCome(Now);
+								}
+							}
+						}
+						if(v != _min) {
+							_nodelaycome = false;
+							TimerStop();
+							if(_inalarm)
+								SetGone(Now);
+						}
+						break;
+					case "<>":
+						if(v != _min) {
+							_nodelaycome = true;
+							if(!_inalarm) {
+								if(_hasDelay) {
+									if(!_timerstarted)
+										TimerStart();
+								} else {
+									SetCome(Now);
+								}
+							}
+						}
+						if(v == _min) {
+							_nodelaycome = false;
+							TimerStop();
+							if(_inalarm)
+								SetGone(Now);
+						}
+						break;
+					case ">":
+						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+							if(ivaluedec > param1dec) {
+								_nodelaycome = true;
+								if(!_inalarm) {
+									if(_hasDelay) {
+										if(!_timerstarted)
+											TimerStart();
+									} else {
+										SetCome(Now);
+									}
+								}
+							}
+							if(ivaluedec <= param1dec) {
+								_nodelaycome = false;
+								TimerStop();
+								if(_inalarm)
+									SetGone(Now);
+							}
+						}
+						break;
+					case "<":
+						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+							if(ivaluedec < param1dec) {
+								_nodelaycome = true;
+								if(!_inalarm) {
+									if(_hasDelay) {
+										if(!_timerstarted)
+											TimerStart();
+									} else {
+										SetCome(Now);
+									}
+								}
+							}
+							if(ivaluedec >= param1dec) {
+								_nodelaycome = false;
+								TimerStop();
+								if(_inalarm)
+									SetGone(Now);
+							}
+						}
+						break;
+					case ">x<":
+						// min max
+						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+							if((ivaluedec < param1dec || ivaluedec > _max)) {
+								_nodelaycome = true;
+								if(!_inalarm) {
+									if(_hasDelay) {
+										if(!_timerstarted)
+											TimerStart();
+									} else {
+										SetCome(Now);
+									}
+								}
+							}
+							if(ivaluedec >= param1dec && ivaluedec <= _max) {
+								_nodelaycome = false;
+								TimerStop();
+								if(_inalarm)
+									SetGone(Now);
+							}
+						}
+						break;
+					case "<x>":
+						// zwischen
+						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+							if((ivaluedec >= param1dec && ivaluedec <= _max)) {
+								_nodelaycome = true;
+								if(_inalarm) {
+									if(_hasDelay) {
+										if(!_timerstarted)
+											TimerStart();
+									} else {
+										SetCome(Now);
+									}
+								}
+							}
+							if(ivaluedec < param1dec || ivaluedec > _max) {
+								_nodelaycome = false;
+								TimerStop();
+								if(_inalarm)
+									SetGone(Now);
+							}
+						}
+						break;
+					default:
+						break;
+				}
+			} catch(Exception ex) {
+				_eventLog.WriteError(ex);
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="Now"></param>
+		public void SetCome(DateTime Now) {
 			_alarmupdate = Now;
 			_come = Now;
 			_gone = Alarm.Default;
@@ -341,7 +499,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		/// <param name="Now"></param>
-		public void setGone(DateTime Now) {
+		public void SetGone(DateTime Now) {
 			_alarmupdate = Now;
 			_gone = Now;
 			_inalarm = false;
@@ -353,87 +511,54 @@ namespace WebAutomation.PlugIns {
 			}
 			wpDebug.Write("Alarm Gone: {0} - {2} ({1})", this.Alarmname, this.IdDp, this.DpName);
 		}
-		public void updateDelay(int sec) {
+		public void UpdateDelay(int sec) {
 			TimerStop();
-			Delay = null;
+			_delay = null;
 			if (sec > 0) {
 				_hasDelay = true;
-				Delay = new Timer((double)(sec * 1000));
-				Delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
+				_delay = new Timer((double)(sec * 1000));
+				_delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
 			} else {
 				_hasDelay = false;
 			}
-		}
-		public string getReadableAlarmGroup1() {
-			return Alarmgroups1 == "" ? "-" : Alarmgroups1;
-		}
-		public string getReadableAlarmGroup2() {
-			return Alarmgroups2 == "" ? "-" : Alarmgroups2;
-		}
-		public string getReadableAlarmGroup3() {
-			return Alarmgroups3 == "" ? "-" : Alarmgroups3;
-		}
-		public string getReadableAlarmGroup4() {
-			return Alarmgroups4 == "" ? "-" : Alarmgroups4;
-		}
-		public string getReadableAlarmGroup5() {
-			return Alarmgroups5 == "" ? "-" : Alarmgroups5;
 		}
 	}
 	/// <summary>
 	/// 
 	/// </summary>
-	public class Alarms {
+	public static class Alarms {
 		/// <summary>
 		/// AlarmList mit den hinzuzufuegenden Alarmen<br />
 		/// Key: id_alarm<br />
 		/// Value: Alarm
 		/// </summary>
-		private static Dictionary<int, Alarm> AlarmList = new Dictionary<int, Alarm>();
+		private static Dictionary<int, Alarm> _alarmList = new Dictionary<int, Alarm>();
 		/// <summary></summary>
-		private static Logger eventLog;
-		public static bool useAlarmGroup1 = false;
-		public static bool useAlarmGroup2 = false;
-		public static bool useAlarmGroup3 = false;
-		public static bool useAlarmGroup4 = false;
-		public static bool useAlarmGroup5 = false;
-		public static string nameAlarmGroup1 = "";
-		public static string nameAlarmGroup2 = "";
-		public static string nameAlarmGroup3 = "";
-		public static string nameAlarmGroup4 = "";
-		public static string nameAlarmGroup5 = "";
+		private static Logger _eventLog;
+
+		public const int ALARMGROUP1 = 1;
+		public const int ALARMGROUP2 = 2;
+		public const int ALARMGROUP3 = 3;
+		public const int ALARMGROUP4 = 4;
+		public const int ALARMGROUP5 = 5;
+
+		public static string NameAlarmGroup1;
+		public static string NameAlarmGroup2;
+		public static string NameAlarmGroup3;
+		public static string NameAlarmGroup4;
+		public static string NameAlarmGroup5;
+		public static bool UseAlarmGroup1;
+		public static bool UseAlarmGroup2;
+		public static bool UseAlarmGroup3;
+		public static bool UseAlarmGroup4;
+		public static bool UseAlarmGroup5;
 		/// <summary>
 		/// 
 		/// </summary>
 		public static void Init() {
-			eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			FillAlarmGroups();
 			using (SQL SQL = new SQL("Init Alarms")) {
-				string[][] AlarmGroups = SQL.wpQuery(@"
-					SELECT [key], [value] FROM [cfg] WHERE
-					[key] = 'usealarmgroup1' OR
-					[key] = 'usealarmgroup2' OR
-					[key] = 'usealarmgroup3' OR
-					[key] = 'usealarmgroup4' OR
-					[key] = 'usealarmgroup5' OR
-					[key] = 'namealarmgroup1' OR
-					[key] = 'namealarmgroup2' OR
-					[key] = 'namealarmgroup3' OR
-					[key] = 'namealarmgroup4' OR
-					[key] = 'namealarmgroup5'
-					ORDER BY [key]
-				");
-				if (AlarmGroups.Length == 10) {
-					nameAlarmGroup1 = AlarmGroups[0][1];
-					nameAlarmGroup2 = AlarmGroups[1][1];
-					nameAlarmGroup3 = AlarmGroups[2][1];
-					nameAlarmGroup4 = AlarmGroups[3][1];
-					nameAlarmGroup5 = AlarmGroups[4][1];
-					useAlarmGroup1 = AlarmGroups[5][1] == "True";
-					useAlarmGroup2 = AlarmGroups[6][1] == "True";
-					useAlarmGroup3 = AlarmGroups[7][1] == "True";
-					useAlarmGroup4 = AlarmGroups[8][1] == "True";
-					useAlarmGroup5 = AlarmGroups[9][1] == "True";
-				}
 				string[][] DBAlarms = SQL.wpQuery(@"
 				SELECT
 					[a].[id_alarm], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
@@ -441,31 +566,29 @@ namespace WebAutomation.PlugIns {
 					[a].[min], [a].[max], [a].[delay],
 					COUNT([atm].[id_email]) AS [emailcounter],
 					ISNULL(SUM([atm].[minutes]), 0) AS [emailminutes],
-					[ag1].[name], [ag2].[name], [ag3].[name], [ag4].[name], [ag5].[name]
+					ISNULL([a].[id_alarmgroups1], 0), ISNULL([a].[id_alarmgroups2], 0),
+					ISNULL([a].[id_alarmgroups3], 0), ISNULL([a].[id_alarmgroups4], 0),
+					ISNULL([a].[id_alarmgroups5], 0)
 				FROM [alarm] [a]
 				INNER JOIN [alarmtype] [t] ON [a].[id_alarmtype] = [t].[id_alarmtype]
 				INNER JOIN [alarmgroup] [g] ON [a].[id_alarmgroup] = [g].[id_alarmgroup]
 				INNER JOIN [dp] ON [a].[id_dp] = [dp].[id_dp]
 				INNER JOIN [alarmcondition] [c] ON [a].[id_alarmcondition] = [c].[id_alarmcondition]
-				LEFT JOIN [alarmgroups1] [ag1] ON [a].[id_alarmgroups1] = [ag1].[id_alarmgroups1]
-				LEFT JOIN [alarmgroups2] [ag2] ON [a].[id_alarmgroups2] = [ag2].[id_alarmgroups2]
-				LEFT JOIN [alarmgroups3] [ag3] ON [a].[id_alarmgroups3] = [ag3].[id_alarmgroups3]
-				LEFT JOIN [alarmgroups4] [ag4] ON [a].[id_alarmgroups4] = [ag4].[id_alarmgroups4]
-				LEFT JOIN [alarmgroups5] [ag5] ON [a].[id_alarmgroups5] = [ag5].[id_alarmgroups5]
 				LEFT JOIN [alarmtoemail] [atm] ON [atm].[id_alarm] = [a].[id_alarm]
 				GROUP BY [a].[id_alarm], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
 					[a].[min], [a].[max], [a].[delay],
-					[ag1].[name], [ag2].[name], [ag3].[name], [ag4].[name], [ag5].[name]");
+					[a].[id_alarmgroups1], [a].[id_alarmgroups2], [a].[id_alarmgroups3],
+					[a].[id_alarmgroups4], [a].[id_alarmgroups5]");
 				for (int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
-					int idalarm = Int32.Parse(DBAlarms[ialarms][0]);
-					int idpoint = Int32.Parse(DBAlarms[ialarms][7]);
+					int idAlarm = Int32.Parse(DBAlarms[ialarms][0]);
+					int idDp = Int32.Parse(DBAlarms[ialarms][7]);
 					Alarm TheAlarm;
 					int delay;
 					if (Int32.TryParse(DBAlarms[ialarms][12], out delay)) {
-						TheAlarm = new Alarm(idalarm, idpoint, DBAlarms[ialarms][8], delay);
+						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][8], delay);
 					} else {
-						TheAlarm = new Alarm(idalarm, idpoint, DBAlarms[ialarms][8], 0);
+						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][8], 0);
 					}
 					int? emailCounter = SQL.convertNumeric(DBAlarms[ialarms][13]);
 					int? emailMinutes = SQL.convertNumeric(DBAlarms[ialarms][14]);
@@ -477,19 +600,20 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmgroup = DBAlarms[ialarms][6];
 					TheAlarm.Condition = DBAlarms[ialarms][9];
 					TheAlarm.Min = DBAlarms[ialarms][10];
-					TheAlarm.Alarmgroups1 = DBAlarms[ialarms][15];
-					TheAlarm.Alarmgroups2 = DBAlarms[ialarms][16];
-					TheAlarm.Alarmgroups3 = DBAlarms[ialarms][17];
-					TheAlarm.Alarmgroups4 = DBAlarms[ialarms][18];
-					TheAlarm.Alarmgroups5 = DBAlarms[ialarms][19];
+					TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[ialarms][15]);
+					TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[ialarms][16]);
+					TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[ialarms][17]);
+					TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[ialarms][18]);
+					TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[ialarms][19]);
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][11]);
-					Program.MainProg.setAlarm(idpoint, TheAlarm);
+					_alarmList.Add(idAlarm, TheAlarm);
+					Datapoints.Get(idDp).idAlarm = idAlarm;
 				}
 			}
 
 			using (SQL SQL = new SQL("Add Aktive Alarms")) {
-				string[][] ActiveAlarms = SQL.wpQuery(@"
+				string[][] DBActiveAlarms = SQL.wpQuery(@"
 SELECT 
 	[t].[id_alarm], [t].[id_dp], [t].[come], [t].[gone], [t].[quit]
 FROM (
@@ -500,265 +624,104 @@ FROM (
 	INNER JOIN [alarm] [a] ON [a].[id_alarm] = [ah].[id_alarm]
 	WHERE ([ah].[gone] IS NULL OR [ah].[quit] IS NULL)
 ) [t] WHERE [t].[ranking] = 1");
-				for (int ialarms = 0; ialarms < ActiveAlarms.Length; ialarms++) {
-					int idpoint = Int32.Parse(ActiveAlarms[ialarms][1]);
-					Alarm TheAlarm = Program.MainProg.getAlarm(idpoint);
+				for (int ialarms = 0; ialarms < DBActiveAlarms.Length; ialarms++) {
+					int idAlarm = Int32.Parse(DBActiveAlarms[ialarms][0]);
+					int idDp = Int32.Parse(DBActiveAlarms[ialarms][1]);
+					Alarm TheAlarm = _alarmList[idAlarm];
 					if (TheAlarm != null) {
-						TheAlarm.Come = DateTime.Parse(ActiveAlarms[ialarms][2]);
+						TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
 						TheAlarm.Gone = Alarm.Default;
-						TheAlarm.InAlarm = false;
+						TheAlarm.InAlarm = true;
 						TheAlarm.Quit = Alarm.Default;
 						TheAlarm.IsQuit = false;
-						if (ActiveAlarms[ialarms][3] != "") {
-							TheAlarm.Gone = DateTime.Parse(ActiveAlarms[ialarms][3]);
+						if (DBActiveAlarms[ialarms][3] != "") {
+							TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
 							TheAlarm.InAlarm = true;
 						}
-						if (ActiveAlarms[ialarms][4] != "") {
-							TheAlarm.Quit = DateTime.Parse(ActiveAlarms[ialarms][4]);
+						if (DBActiveAlarms[ialarms][4] != "") {
+							TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
 							TheAlarm.IsQuit = true;
 						}
-						TheAlarm.InAlarm = true;
 					}
 				}
 			}
-			eventLog.Write("Alarm PlugIn geladen");
+			_eventLog.Write("Alarm PlugIn geladen");
 		}
-		public static string updateAlarmGroups() {
-			using (SQL SQL = new SQL("Add Alarms")) {
-				string[][] AlarmGroups = SQL.wpQuery(@"
-					SELECT [key], [value] FROM [cfg] WHERE
+		public static Dictionary<int, Alarm> getActiveAlarms() {
+			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();
+			foreach(KeyValuePair<int, Alarm> kvp in _alarmList) {
+				if(kvp.Value.InAlarm)
+				if (kvp.Value.Come != Alarm.Default && (
+						kvp.Value.Gone == Alarm.Default ||
+						kvp.Value.Quit == Alarm.Default)
+					) {
+						returns.Add(kvp.Key, kvp.Value);
+				}
+			}
+			return returns;
+		}
+		public static Alarm Get(int? idAlarm) {
+			if(idAlarm == null) return null;
+			return _alarmList[(int)idAlarm];
+		}
+		public static void RemoveAlarm(int? idAlarm) {
+			if(idAlarm != null) {
+				_alarmList[(int)idAlarm].Stop();
+				_alarmList.Remove((int)idAlarm);
+			}
+		}
+		public static string FillAlarmGroups() {
+			using(SQL SQL = new SQL("Fill AlarmGroups")) {
+				string[][] DBAlarmGroups = SQL.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
 					[key] = 'usealarmgroup1' OR
 					[key] = 'usealarmgroup2' OR
 					[key] = 'usealarmgroup3' OR
 					[key] = 'usealarmgroup4' OR
-					[key] = 'usealarmgroup5'
-					ORDER BY [key]
-				");
-				if (AlarmGroups.Length == 5) {
-					useAlarmGroup1 = AlarmGroups[0][1] == "True";
-					useAlarmGroup2 = AlarmGroups[1][1] == "True";
-					useAlarmGroup3 = AlarmGroups[2][1] == "True";
-					useAlarmGroup4 = AlarmGroups[3][1] == "True";
-					useAlarmGroup5 = AlarmGroups[4][1] == "True";
-				}
-				string[][] DBAlarms = SQL.wpQuery(@"
-					SELECT
-						[a].[id_alarm], [dp].[id_dp], 
-						[ag1].[name], [ag2].[name], [ag3].[name], [ag4].[name], [ag5].[name]
-					FROM [alarm] [a]
-					INNER JOIN [dp] ON [a].[id_dp] = [dp].[id_dp]
-					LEFT JOIN [alarmgroups1] [ag1] ON [a].[id_alarmgroups1] = [ag1].[id_alarmgroups1]
-					LEFT JOIN [alarmgroups2] [ag2] ON [a].[id_alarmgroups2] = [ag2].[id_alarmgroups2]
-					LEFT JOIN [alarmgroups3] [ag3] ON [a].[id_alarmgroups3] = [ag3].[id_alarmgroups3]
-					LEFT JOIN [alarmgroups4] [ag4] ON [a].[id_alarmgroups4] = [ag4].[id_alarmgroups4]
-					LEFT JOIN [alarmgroups5] [ag5] ON [a].[id_alarmgroups5] = [ag5].[id_alarmgroups5]");
-
-				for (int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
-					int idpoint = Int32.Parse(DBAlarms[ialarms][1]);
-					Alarm TheAlarm = Program.MainProg.getAlarm(idpoint);
-					if (TheAlarm != null) {
-						TheAlarm.Alarmgroups1 = DBAlarms[ialarms][2];
-						TheAlarm.Alarmgroups2 = DBAlarms[ialarms][3];
-						TheAlarm.Alarmgroups3 = DBAlarms[ialarms][4];
-						TheAlarm.Alarmgroups4 = DBAlarms[ialarms][5];
-						TheAlarm.Alarmgroups5 = DBAlarms[ialarms][6];
-						TheAlarm.AlarmUpdate = DateTime.Now;
-					}
+					[key] = 'usealarmgroup5' OR
+					[key] = 'namealarmgroup1' OR
+					[key] = 'namealarmgroup2' OR
+					[key] = 'namealarmgroup3' OR
+					[key] = 'namealarmgroup4' OR
+					[key] = 'namealarmgroup5'
+					ORDER BY [key]");
+				if(DBAlarmGroups.Length == 10) {
+					NameAlarmGroup1 = DBAlarmGroups[0][1];
+					NameAlarmGroup2 = DBAlarmGroups[1][1];
+					NameAlarmGroup3 = DBAlarmGroups[2][1];
+					NameAlarmGroup4 = DBAlarmGroups[3][1];
+					NameAlarmGroup5 = DBAlarmGroups[4][1];
+					UseAlarmGroup1 = DBAlarmGroups[5][1] == "True";
+					UseAlarmGroup2 = DBAlarmGroups[6][1] == "True";
+					UseAlarmGroup3 = DBAlarmGroups[7][1] == "True";
+					UseAlarmGroup4 = DBAlarmGroups[8][1] == "True";
+					UseAlarmGroup5 = DBAlarmGroups[9][1] == "True";
 				}
 			}
-			wpDebug.Write("Update Alarmgroups");
 			return "S_OK";
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="id"></param>
-		/// <param name="value"></param>
-		/// <param name="Now"></param>
-		public static void setAlarm(int id, string value, DateTime Now) {
-			Alarm TheAlarm = Program.MainProg.getAlarm(id);
-			string issep;
-			string mustsep;
-			string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-			if (sep == ".") {
-				issep = ",";
-				mustsep = ".";
-			} else {
-				issep = ".";
-				mustsep = ",";
+		public static string GetReadableGroup(int GroupNo, int IdGroup) {
+			string returns = "";
+			switch(GroupNo) {
+				case ALARMGROUP1:
+					returns = NameAlarmGroup1 == "" ? "-" : NameAlarmGroup1;
+					break;
+				case ALARMGROUP2:
+					returns = NameAlarmGroup2 == "" ? "-" : NameAlarmGroup2;
+					break;
+				case ALARMGROUP3:
+					returns = NameAlarmGroup3 == "" ? "-" : NameAlarmGroup3;
+					break;
+				case ALARMGROUP4:
+					returns = NameAlarmGroup4 == "" ? "-" : NameAlarmGroup4;
+					break;
+				case ALARMGROUP5:
+					returns = NameAlarmGroup5 == "" ? "-" : NameAlarmGroup5;
+					break;
+				default:
+					returns = "-";
+					break;
 			}
-			decimal ivaluedec;
-			int ivalueint;
-			decimal param1dec;
-			try {
-				switch (TheAlarm.Condition) {
-					case "=":
-						if (value == TheAlarm.Min) {
-							TheAlarm.noDelayCome = true;
-							if (!TheAlarm.InAlarm) {
-								if (TheAlarm.hasDelay) {
-									if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-								} else {
-									TheAlarm.setCome(Now);
-								}
-							}
-						}
-						if (value != TheAlarm.Min) {
-							TheAlarm.noDelayCome = false;
-							TheAlarm.TimerStop();
-							if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-						}
-						break;
-					case "<>":
-						if (value != TheAlarm.Min) {
-							TheAlarm.noDelayCome = true;
-							if (!TheAlarm.InAlarm) {
-								if (TheAlarm.hasDelay) {
-									if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-								} else {
-									TheAlarm.setCome(Now);
-								}
-							}
-						}
-						if (value == TheAlarm.Min) {
-							TheAlarm.noDelayCome = false;
-							TheAlarm.TimerStop();
-							if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-						}
-						break;
-					case ">":
-						if (Decimal.TryParse(TheAlarm.Min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(value.Replace(issep, mustsep), out ivaluedec)) {
-							if (ivaluedec > param1dec) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							}
-							if (ivaluedec <= param1dec) {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-							}
-						}
-						break;
-					case "<":
-						if (Decimal.TryParse(TheAlarm.Min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(value.Replace(issep, mustsep), out ivaluedec)) {
-							if (ivaluedec < param1dec) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							}
-							if (ivaluedec >= param1dec) {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-							}
-						}
-						break;
-					case ">x<":
-						// min max
-						if (Decimal.TryParse(TheAlarm.Min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(value.Replace(issep, mustsep), out ivaluedec)) {
-							if ((ivaluedec < param1dec || ivaluedec > TheAlarm.Max)) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							}
-							if (ivaluedec >= param1dec && ivaluedec <= TheAlarm.Max) {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-							}
-						}
-						break;
-					case "<x>":
-						// zwischen
-						if (Decimal.TryParse(TheAlarm.Min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(value.Replace(issep, mustsep), out ivaluedec)) {
-							if ((ivaluedec >= param1dec && ivaluedec <= TheAlarm.Max)) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							}
-							if (ivaluedec < param1dec || ivaluedec > TheAlarm.Max) {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm) TheAlarm.setGone(Now);
-							}
-						}
-						break;
-					case "PM":
-						if (Int32.TryParse(value.Replace(issep, mustsep), out ivalueint)) {
-							string os;
-							if (Alarms.PlantMode.TryGetValue(ivalueint, out os)) TheAlarm.Alarmtext = os;
-							else TheAlarm.Alarmtext = "unbekannt: " + ivalueint.ToString();
-							if (ivalueint == 20 || ivalueint == 21 || ivalueint == 30) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm || TheAlarm.LastPlantMode != ivalueint) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							} else {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm || TheAlarm.LastPlantMode != ivalueint) TheAlarm.setGone(Now);
-							}
-							TheAlarm.LastPlantMode = ivalueint;
-						}
-						break;
-					case "PMb":
-						if (Int32.TryParse(value.Replace(issep, mustsep), out ivalueint)) {
-							string os;
-							if (Alarms.PlantModeBac.TryGetValue(ivalueint, out os)) TheAlarm.Alarmtext = os;
-							else TheAlarm.Alarmtext = "unbekannt: " + ivalueint.ToString();
-							if (ivalueint == 21 || ivalueint == 22 || ivalueint == 31) {
-								TheAlarm.noDelayCome = true;
-								if (!TheAlarm.InAlarm || TheAlarm.LastPlantMode != ivalueint) {
-									if (TheAlarm.hasDelay) {
-										if (!TheAlarm.TimerStarted) TheAlarm.TimerStart();
-									} else {
-										TheAlarm.setCome(Now);
-									}
-								}
-							} else {
-								TheAlarm.noDelayCome = false;
-								TheAlarm.TimerStop();
-								if (TheAlarm.InAlarm || TheAlarm.LastPlantMode != ivalueint) TheAlarm.setGone(Now);
-							}
-							TheAlarm.LastPlantMode = ivalueint;
-						}
-						break;
-					default:
-						break;
-				}
-				Program.MainProg.setAlarm(id, TheAlarm);
-			} catch (Exception ex) {
-				eventLog.WriteError(ex);
-			}
+			return returns;
 		}
 	}
 }

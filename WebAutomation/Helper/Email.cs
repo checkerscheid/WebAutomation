@@ -85,7 +85,7 @@ namespace WebAutomation.Helper {
 		}
 		public List<string> getSMSText(PRecipient r) {
 			mailMessage.Body = ServiceName + " Alarm";
-			return Alarms.getSMS(r);
+			return EmailAlarms.getSMS(r);
 		}
 		public int getFromLength() {
 			return mailMessage.From.Address.Length;
@@ -100,10 +100,10 @@ namespace WebAutomation.Helper {
 
 			if (Ini.get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
-					Ini.get("Projekt", "Nummer"), ServiceName, Alarms.getTotalCount(r)));
+					Ini.get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
 			} else {
 				setSubject(String.Format("{0} - {1} Neue Alarm Aktionen",
-					ServiceName, Alarms.getTotalCount(r)));
+					ServiceName, EmailAlarms.getTotalCount(r)));
 			}
 			string MailToInMail = Ini.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
@@ -118,7 +118,7 @@ namespace WebAutomation.Helper {
 			mailMessage.Body = @"
 		<div style='font-family:Arial; font-size:9pt;'>
 			<p>In Ihrer Anlage stehen die folgenden Alarme an:</p>
-			<p>" + Alarms.getText(r) + @"</p>
+			<p>" + EmailAlarms.getText(r) + @"</p>
 			<br />" + String.Format("<p>Projekt: {0} - {1}</p>",
 				Ini.get("Projekt", "Nummer"),
 				Ini.get("Projekt", "Name")) + @"
@@ -152,29 +152,30 @@ namespace WebAutomation.Helper {
 		/// <param name="TheAlarm"></param>
 		public void AddAlarm(Alarm TheAlarm) {
 			string color = TheAlarm.Autoquit ? "#FFA500" : "#A91919";
-			Alarms.Add(TheAlarm.IdAlarm, @"
+			EmailAlarms.Add(TheAlarm.IdAlarm, @"
 	<div style='font-weight:bold; color:" + color + @"'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - gekommen</div>
 	<div style='margin-left:20px;'>gekommen: <span style='font-weight:bold;'>" + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(PlugIns.Alarms.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(Alarms.UseAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup1 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) + "</div>" : "") +
+	(Alarms.UseAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup2 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) + "</div>" : "") +
+	(Alarms.UseAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup3 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) + "</div>" : "") +
+	(Alarms.UseAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup4 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) + "</div>" : "") +
+	(Alarms.UseAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup5 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
 	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
 	<div style='margin-left:40px;'>Quittierung erforderlich: " + (TheAlarm.Autoquit ? "<span style='color:#090'>Nein</span>" : "<span style='color:#A91919'>Ja</span>") + @"</div>
 	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
 
-			Alarms.AddSMS(TheAlarm.IdAlarm, @"" +
+			EmailAlarms.AddSMS(TheAlarm.IdAlarm, @"" +
 				TheAlarm.Alarmtext + " - " + TheAlarm.Alarmtype + " - " + TheAlarm.Alarmgroup +
-				(PlugIns.Alarms.useAlarmGroup1 ? " - " + TheAlarm.getReadableAlarmGroup1() : "") +
-				(PlugIns.Alarms.useAlarmGroup2 ? " - " + TheAlarm.getReadableAlarmGroup2() : "") +
-				(PlugIns.Alarms.useAlarmGroup3 ? " - " + TheAlarm.getReadableAlarmGroup3() : "") +
-				(PlugIns.Alarms.useAlarmGroup4 ? " - " + TheAlarm.getReadableAlarmGroup4() : "") +
-				(PlugIns.Alarms.useAlarmGroup5 ? " - " + TheAlarm.getReadableAlarmGroup5() : "") + " ");
-			Alarms.countup(TheAlarm.IdAlarm, 0);
+				(Alarms.UseAlarmGroup1 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) : "") +
+				(Alarms.UseAlarmGroup2 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) : "") +
+				(Alarms.UseAlarmGroup3 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) : "") +
+				(Alarms.UseAlarmGroup4 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) : "") +
+				(Alarms.UseAlarmGroup5 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) : "") +
+				" ");
+			EmailAlarms.countup(TheAlarm.IdAlarm, 0);
 			wpDebug.Write("Alarm to Mail: {0} ({1})", TheAlarm.Alarmname, TheAlarm.Alarmtext);
 		}
 		/// <summary>
@@ -185,7 +186,7 @@ namespace WebAutomation.Helper {
 			AddQuit(TheAlarm, 0);
 		}
 		private void AddQuit(Alarm TheAlarm, int minutes) {
-			Alarms.Add(TheAlarm.IdAlarm, minutes, @"
+			EmailAlarms.Add(TheAlarm.IdAlarm, minutes, @"
 	<div style='font-weight:bold; color:#090'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - quittiert</div>
 	<div style='margin-left:20px;'>gekommen: " + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</div>
 	<div style='margin-left:20px;'>quittiert: <span style='font-weight:bold;'>" + TheAlarm.QuitFrom + " (" + TheAlarm.Quit.ToString("dd.MM.yyyy HH:mm:ss") + @")</span></div>
@@ -194,15 +195,15 @@ namespace WebAutomation.Helper {
 	(TheAlarm.Gone == Alarm.Default ? "<span style='color:#A91919'>anstehend</span>" : "gegangen (" + TheAlarm.Gone.ToString() + ")") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(PlugIns.Alarms.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(PlugIns.Alarms.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(Alarms.UseAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup1 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) + "</div>" : "") +
+	(Alarms.UseAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup2 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) + "</div>" : "") +
+	(Alarms.UseAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup3 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) + "</div>" : "") +
+	(Alarms.UseAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup4 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) + "</div>" : "") +
+	(Alarms.UseAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup5 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
 	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
 	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
-			Alarms.countup(TheAlarm.IdAlarm, minutes);
+			EmailAlarms.countup(TheAlarm.IdAlarm, minutes);
 		}
 		/// <summary>
 		/// 
@@ -259,9 +260,9 @@ namespace WebAutomation.Helper {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Alarms.Alarmtext)) {
-					Alarms.Alarmtext.Clear();
-					Monitor.Exit(Alarms.Alarmtext);
+				if(Monitor.TryEnter(EmailAlarms.Alarmtext)) {
+					EmailAlarms.Alarmtext.Clear();
+					Monitor.Exit(EmailAlarms.Alarmtext);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -275,9 +276,9 @@ namespace WebAutomation.Helper {
 			entered = false;
 			notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Alarms.Alarmsms)) {
-					Alarms.Alarmsms.Clear();
-					Monitor.Exit(Alarms.Alarmsms);
+				if (Monitor.TryEnter(EmailAlarms.Alarmsms)) {
+					EmailAlarms.Alarmsms.Clear();
+					Monitor.Exit(EmailAlarms.Alarmsms);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -291,9 +292,9 @@ namespace WebAutomation.Helper {
 			entered = false;
 			notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Alarms.count)) {
-					Alarms.count.Clear();
-					Monitor.Exit(Alarms.count);
+				if(Monitor.TryEnter(EmailAlarms.count)) {
+					EmailAlarms.count.Clear();
+					Monitor.Exit(EmailAlarms.count);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -477,7 +478,7 @@ namespace WebAutomation.Helper {
 		/// <summary>
 		/// 
 		/// </summary>
-		public static class Alarms {
+		public static class EmailAlarms {
 			/// <summary>
 			/// 
 			/// </summary>

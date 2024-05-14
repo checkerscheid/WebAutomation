@@ -309,43 +309,6 @@ namespace WebAutomation {
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <returns></returns>
-		public Dictionary<int, Alarm> getActiveAlarms() {
-			Dictionary<int, Alarm> ActiveAlarms = new Dictionary<int, Alarm>();
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						foreach (KeyValuePair<int, OPCItem> TheItem in Server.Dictionaries.Items) {
-							//if (TheItem.Value.Alarm != null) {
-							//	if (TheItem.Value.Alarm.Come != wpAlarm.Default &&
-							//		(TheItem.Value.Alarm.Gone == wpAlarm.Default ||
-							//		TheItem.Value.Alarm.Quit == wpAlarm.Default)) {
-							//		ActiveAlarms.Add(TheItem.Value.Alarm.Idalarm, TheItem.Value.Alarm);
-							//	}
-							//}
-						}
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							"Angeforderte Items blockiert.\r\ngetActiveAlarms nicht möglich");
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return ActiveAlarms;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
 		public Alarm getAlarmFromAlarmid(int id) {
@@ -393,7 +356,7 @@ namespace WebAutomation {
 							recipient = renewRecipient(out RecipientRequired);
 						}
 						foreach (KeyValuePair<string, PRecipient> Alarmstosend in recipient) {
-							if (Email.Alarms.getTotalCount(Alarmstosend.Value) > 0) {
+							if (Email.EmailAlarms.getTotalCount(Alarmstosend.Value) > 0) {
 								string[] MailContent = new string[2];
 								try {
 									if (Alarmstosend.Value.IsSMS) {

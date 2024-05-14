@@ -441,41 +441,17 @@ namespace WebAutomation {
 				for (int j = 0; j < Query.Length; j++) {
 					Dictionary<int, int> AlarmperUser = new Dictionary<int, int>();
 					using (SQL SQL2 = new SQL("renew Recipient Table - Alarm per User")) {
-						if (Program.MainProg.LicenseAlarming) {
-							string[][] Escalation = SQL2.wpQuery(@"SELECT [a].[id_alarm], [m].[minutes]
-								FROM [alarmtoescalation] [ae]
-								INNER JOIN [alarm] [a] ON [ae].[id_alarm] = [a].[id_alarm]
-								INNER JOIN [escalationgroup] [g]
-									ON [ae].[id_escalationgroup] = [g].[id_escalationgroup]
-								INNER JOIN [escalationgroupmember] [m]
-									ON [g].[id_escalationgroup] = [m].[id_escalationgroup]
-								INNER JOIN [email] [e] ON [m].[id_email] = [e].[id_email]
-								WHERE [e].[id_email] = {0}", Query[j][1]);
-							for (int k = 0; k < Escalation.Length; k++) {
-								int checker;
-								int minutes;
-								if (Int32.TryParse(Escalation[k][0], out checker) &&
-									Int32.TryParse(Escalation[k][1], out minutes)) {
-									if (AlarmperUser.ContainsKey(checker)) {
-										AlarmperUser[checker] = minutes;
-									} else {
-										AlarmperUser.Add(checker, minutes);
-									}
-								}
-							}
-						} else {
-							string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
-							FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
-							for (int k = 0; k < Alarme.Length; k++) {
-								int checker;
-								int minutes;
-								if (Int32.TryParse(Alarme[k][0], out checker) &&
-									Int32.TryParse(Alarme[k][1], out minutes)) {
-									if (AlarmperUser.ContainsKey(checker)) {
-										AlarmperUser[checker] = minutes;
-									} else {
-										AlarmperUser.Add(checker, minutes);
-									}
+						string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
+						FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
+						for (int k = 0; k < Alarme.Length; k++) {
+							int checker;
+							int minutes;
+							if (Int32.TryParse(Alarme[k][0], out checker) &&
+								Int32.TryParse(Alarme[k][1], out minutes)) {
+								if (AlarmperUser.ContainsKey(checker)) {
+									AlarmperUser[checker] = minutes;
+								} else {
+									AlarmperUser.Add(checker, minutes);
 								}
 							}
 						}

@@ -150,59 +150,59 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		/// <param name="TheAlarm"></param>
-		public void AddAlarm(wpAlarm TheAlarm) {
+		public void AddAlarm(Alarm TheAlarm) {
 			string color = TheAlarm.Autoquit ? "#FFA500" : "#A91919";
-			Alarms.Add(TheAlarm.Idalarm, @"
+			Alarms.Add(TheAlarm.IdAlarm, @"
 	<div style='font-weight:bold; color:" + color + @"'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - gekommen</div>
 	<div style='margin-left:20px;'>gekommen: <span style='font-weight:bold;'>" + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(Alarm.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(Alarm.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(Alarm.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(Alarm.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(Alarm.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(PlugIns.Alarms.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
-	<div style='margin-left:40px;'>Alarmtype: " + String.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
+	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
 	<div style='margin-left:40px;'>Quittierung erforderlich: " + (TheAlarm.Autoquit ? "<span style='color:#090'>Nein</span>" : "<span style='color:#A91919'>Ja</span>") + @"</div>
 	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
 
-			Alarms.AddSMS(TheAlarm.Idalarm, @"" +
+			Alarms.AddSMS(TheAlarm.IdAlarm, @"" +
 				TheAlarm.Alarmtext + " - " + TheAlarm.Alarmtype + " - " + TheAlarm.Alarmgroup +
-				(Alarm.useAlarmGroup1 ? " - " + TheAlarm.getReadableAlarmGroup1() : "") +
-				(Alarm.useAlarmGroup2 ? " - " + TheAlarm.getReadableAlarmGroup2() : "") +
-				(Alarm.useAlarmGroup3 ? " - " + TheAlarm.getReadableAlarmGroup3() : "") +
-				(Alarm.useAlarmGroup4 ? " - " + TheAlarm.getReadableAlarmGroup4() : "") +
-				(Alarm.useAlarmGroup5 ? " - " + TheAlarm.getReadableAlarmGroup5() : "") + " ");
-			Alarms.countup(TheAlarm.Idalarm, 0);
+				(PlugIns.Alarms.useAlarmGroup1 ? " - " + TheAlarm.getReadableAlarmGroup1() : "") +
+				(PlugIns.Alarms.useAlarmGroup2 ? " - " + TheAlarm.getReadableAlarmGroup2() : "") +
+				(PlugIns.Alarms.useAlarmGroup3 ? " - " + TheAlarm.getReadableAlarmGroup3() : "") +
+				(PlugIns.Alarms.useAlarmGroup4 ? " - " + TheAlarm.getReadableAlarmGroup4() : "") +
+				(PlugIns.Alarms.useAlarmGroup5 ? " - " + TheAlarm.getReadableAlarmGroup5() : "") + " ");
+			Alarms.countup(TheAlarm.IdAlarm, 0);
 			wpDebug.Write("Alarm to Mail: {0} ({1})", TheAlarm.Alarmname, TheAlarm.Alarmtext);
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="TheAlarm"></param>
-		public void AddQuit(wpAlarm TheAlarm) {
+		public void AddQuit(Alarm TheAlarm) {
 			AddQuit(TheAlarm, 0);
 		}
-		private void AddQuit(wpAlarm TheAlarm, int minutes) {
-			Alarms.Add(TheAlarm.Idalarm, minutes, @"
+		private void AddQuit(Alarm TheAlarm, int minutes) {
+			Alarms.Add(TheAlarm.IdAlarm, minutes, @"
 	<div style='font-weight:bold; color:#090'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - quittiert</div>
 	<div style='margin-left:20px;'>gekommen: " + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</div>
 	<div style='margin-left:20px;'>quittiert: <span style='font-weight:bold;'>" + TheAlarm.QuitFrom + " (" + TheAlarm.Quit.ToString("dd.MM.yyyy HH:mm:ss") + @")</span></div>
 	<div style='margin-left:20px;'>Bemerkung: <span style='font-weight:bold;'>" + TheAlarm.QuitText + @"</span></div>
 	<div style='margin-left:20px;'>status: <span style='font-weight:bold;'>" +
-	(TheAlarm.Gone == wpAlarm.Default ? "<span style='color:#A91919'>anstehend</span>" : "gegangen (" + TheAlarm.Gone.ToString() + ")") + @"</span></div>
+	(TheAlarm.Gone == Alarm.Default ? "<span style='color:#A91919'>anstehend</span>" : "gegangen (" + TheAlarm.Gone.ToString() + ")") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(Alarm.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(Alarm.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(Alarm.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(Alarm.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(Alarm.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(PlugIns.Alarms.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
+	(PlugIns.Alarms.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + PlugIns.Alarms.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
-	<div style='margin-left:40px;'>Alarmtype: " + String.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
+	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
 	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
-			Alarms.countup(TheAlarm.Idalarm, minutes);
+			Alarms.countup(TheAlarm.IdAlarm, minutes);
 		}
 		/// <summary>
 		/// 

@@ -102,7 +102,7 @@
     <Compile Include="PlugIns\Router.cs" />
     <Compile Include="PlugIns\Scene.cs" />
     <Compile Include="Helper\WriteLevel.cs" />
-    <Compile Include="PlugIns\Alarm.cs" />
+    <Compile Include="PlugIns\Alarms.cs" />
     <Compile Include="PlugIns\Trend.cs" />
     <Compile Include="Helper\Shelly.cs" />
     <Compile Include="Helper\Watchdog.cs" />

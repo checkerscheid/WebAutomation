@@ -221,69 +221,8 @@ namespace WebAutomation {
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="itemid"></param>
-		/// <param name="value"></param>
-		public void setAlarm(int itemid, wpAlarm value) {
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						//if (Server.Dictionaries.Items.ContainsKey(itemid)) Server.Dictionaries.Items[itemid].Alarm = value;
-						//else eventLog.Write(EventLogEntryType.Warning,
-						//	String.Format("OPC Item nicht vorhanden / nicht aktiv ({0})", itemid));
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format("Angefordertes Item blockiert: {0}.\r\nsetAlarm nicht möglich", itemid));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="itemid"></param>
-		/// <returns></returns>
-		public wpAlarm getAlarm(int itemid) {
-			wpAlarm returns = null;
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						//if (Server.Dictionaries.Items.ContainsKey(itemid))
-						//	returns = Server.Dictionaries.Items[itemid].Alarm;
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format("Angefordertes Item blockiert: {0}.\r\ngetAlarm nicht möglich", itemid));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return returns;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void AlarmToMail(wpAlarm newAlarm) {
+		public void AlarmToMail(Alarm newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -300,7 +239,7 @@ namespace WebAutomation {
 					if (++notEntered >= 10) {
 						eventLog.Write(EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								AlarmToMail nicht möglich", newAlarm.Idalarm));
+								AlarmToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
 						Thread.Sleep(10);
 					}
@@ -311,7 +250,7 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void QuitToMail(wpAlarm newAlarm) {
+		public void QuitToMail(Alarm newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -328,7 +267,7 @@ namespace WebAutomation {
 					if (++notEntered >= 10) {
 						eventLog.Write(EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								QuitToMail nicht möglich", newAlarm.Idalarm));
+								QuitToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
 						Thread.Sleep(10);
 					}
@@ -339,13 +278,13 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void QuitsToMail(List<wpAlarm> newAlarm) {
+		public void QuitsToMail(List<Alarm> newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
 				if (Monitor.TryEnter(TheMail, 5000)) {
 					try {
-						foreach (wpAlarm TheAlarm in newAlarm) {
+						foreach (Alarm TheAlarm in newAlarm) {
 							TheMail.AddQuit(TheAlarm);
 						}
 					} catch (Exception ex) {
@@ -356,10 +295,10 @@ namespace WebAutomation {
 					}
 				} else {
 					if (++notEntered >= 10) {
-						foreach (wpAlarm TheAlarm in newAlarm) {
+						foreach (Alarm TheAlarm in newAlarm) {
 							eventLog.Write(EventLogEntryType.Error,
 								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-									QuitsToMail nicht möglich", TheAlarm.Idalarm));
+									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
 						}
 					} else {
 						Thread.Sleep(10);
@@ -371,8 +310,8 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		public Dictionary<int, wpAlarm> getActiveAlarms() {
-			Dictionary<int, wpAlarm> ActiveAlarms = new Dictionary<int, wpAlarm>();
+		public Dictionary<int, Alarm> getActiveAlarms() {
+			Dictionary<int, Alarm> ActiveAlarms = new Dictionary<int, Alarm>();
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -409,8 +348,8 @@ namespace WebAutomation {
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public wpAlarm getAlarmFromAlarmid(int id) {
-			wpAlarm returns = null;
+		public Alarm getAlarmFromAlarmid(int id) {
+			Alarm returns = null;
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -999,6 +938,7 @@ namespace WebAutomation {
 
 			Datapoints.Init();
 			Trends.Init();
+			Alarms.Init();
 			wpWebSockets = new WebSockets();
 			ShellyServer.Start();
 			wpMQTTClient = new MQTTClient();

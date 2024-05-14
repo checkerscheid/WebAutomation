@@ -36,7 +36,9 @@ namespace WebAutomation {
 		private int? _idOpc;
 		private int? _idMqtt;
 		private int? _idTrend;
-		public int? idTrend { set { _idTrend = value; } }
+		public int? idTrend { get { return _idTrend; } set { _idTrend = value; } }
+		private int? _idAlarm;
+		public int? idAlarm { get { return _idAlarm; } set { _idAlarm = value; } }
 		private string _value;
 		public string Value { get { return _value; } }
 		private string _valueString = "-";
@@ -106,6 +108,8 @@ namespace WebAutomation {
 				Program.MainProg.wpWebSockets.sendDatapoint(this);
 				if(_idTrend != null && Trends.Get((int)_idTrend).Intervall == 0)
 					Trends.Get((int)_idTrend).setTrendValue();
+				if(_idAlarm != null)
+					Alarms.Get((int)_id_alarm).setAlarmValue();
 				if(Program.MainProg.wpDebugWebSockets)
 					Debug.WriteLine($"Datenpunk gesetzt '{_name}': {_valueString} ({_value})");
 			}

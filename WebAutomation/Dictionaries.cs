@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 90                                                      $ #
+//# Revision     : $Rev:: 99                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 90 2024-04-15 23:08:09Z                  $ #
+//# File-ID      : $Id:: Dictionaries.cs 99 2024-05-15 14:57:32Z                  $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json.Linq;

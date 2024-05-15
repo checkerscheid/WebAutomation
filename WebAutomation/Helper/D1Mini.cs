@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 98                                                      $ #
+//# Revision     : $Rev:: 99                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 98 2024-05-15 14:54:56Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 99 2024-05-15 14:57:32Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;

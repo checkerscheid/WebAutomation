@@ -163,7 +163,7 @@ namespace WebAutomation.Helper {
 					}
 				}
 			}
-			Alarm.AddAlarms();
+			//Alarms.AddAlarms();
 			//WriteLevel.AddWriteLevel();
 			//Router.AddRouter();
 
@@ -231,7 +231,7 @@ namespace WebAutomation.Helper {
 						}
 					}
 				}
-				Alarm.AddAlarms(aktServerid);
+				//Alarms.AddAlarms(aktServerid);
 				//WriteLevel.AddWriteLevel(aktServerid);
 				//Router.AddRouter();
 				activate(aktServerid);

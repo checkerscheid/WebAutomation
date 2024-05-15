@@ -56,7 +56,7 @@ namespace WebAutomation.PlugIns {
 			set {
 				onChangeMinValue.Stop();
 				_intervall = value;
-				onChangeMinValue.Interval = setMinIntervall();
+				onChangeMinValue.Interval = SetMinIntervall();
 				onChangeMinValue.Start();
 				wpDebug.Write($"Trend intervall changed {_trendname}: {_intervall} sec");
 			}
@@ -101,7 +101,7 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Stop();
 			wpDebug.Write($"Trend Stop {_trendname}");
 		}
-		public void setTrendValue(bool withReset) {
+		public void SetTrendValue(bool withReset) {
 			if(_active) {
 				string v = Datapoints.Get(_iddp).Value;
 				if(v != null && v != "") {
@@ -121,11 +121,11 @@ namespace WebAutomation.PlugIns {
 						}
 					}
 					if(withReset)
-						resetMinValue();
+						ResetMinValue();
 				}
 			}
 		}
-		public void setTrendValue() { setTrendValue(true); }
+		public void SetTrendValue() { SetTrendValue(true); }
 		public void Activate() {
 			_active = true;
 			onChangeMinValue.Start();
@@ -151,13 +151,13 @@ namespace WebAutomation.PlugIns {
 			_maxdays = maxdays;
 			_active = active;
 			onChangeMinValue = new System.Timers.Timer();
-			onChangeMinValue.Interval = setMinIntervall();
-			onChangeMinValue.Elapsed += onChangeMinValue_Tick;
+			onChangeMinValue.Interval = SetMinIntervall();
+			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
 			if(_active) onChangeMinValue.Start();
 			wpDebug.Write($"Trend Init {_trendname}");
 		}
-		private int setMinIntervall() {
+		private int SetMinIntervall() {
 			if(_intervall == 0) {
 				if(Program.MainProg.wpDebugTrend)
 					minMinutes = 1 * 60;
@@ -168,10 +168,10 @@ namespace WebAutomation.PlugIns {
 			}
 			return 1000 * minMinutes;
 		}
-		private void onChangeMinValue_Tick(object sender, EventArgs e) {
-			setTrendValue(false);
+		private void OnChangeMinValue_Tick(object sender, EventArgs e) {
+			SetTrendValue(false);
 		}
-		private void resetMinValue() {
+		private void ResetMinValue() {
 			if (_intervall == 0) {
 				onChangeMinValue.Stop();
 				onChangeMinValue.Start();
@@ -187,14 +187,14 @@ namespace WebAutomation.PlugIns {
 		/// Key: id_trend<br />
 		/// Value: Trend
 		/// </summary>
-		private static Dictionary<int, Trend> TrendList = new Dictionary<int, Trend>();
+		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
 		/// <summary></summary>
-		private static Logger eventLog = new Logger(wpEventLog.PlugInTrend);
-		private static Thread ThreadCleanDB;
+		private static Logger _eventLog = new Logger(wpEventLog.PlugInTrend);
+		private static Thread _threadCleanDB;
 
 		public static void Init() {
-			ThreadCleanDB = new Thread(TrendCleanDB.Start);
-			ThreadCleanDB.Priority = ThreadPriority.BelowNormal;
+			_threadCleanDB = new Thread(TrendCleanDB.Start);
+			_threadCleanDB.Priority = ThreadPriority.BelowNormal;
 			using(SQL SQL = new SQL("get Trend Dictionary")) {
 				string[][] erg = SQL.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
@@ -208,29 +208,29 @@ namespace WebAutomation.PlugIns {
 					intervall = Int32.Parse(erg[i][3]);
 					max = Int32.Parse(erg[i][4]);
 					maxage = Int32.Parse(erg[i][5]);
-					TrendList.Add(idTrend, new Trend(idTrend, idDp, erg[i][2], intervall, max, maxage, erg[i][6] == "True"));
+					_trendList.Add(idTrend, new Trend(idTrend, idDp, erg[i][2], intervall, max, maxage, erg[i][6] == "True"));
 					Datapoints.Get(idDp).idTrend = idTrend;
 				}
 			}
 			wpDebug.Write($"Trends Init");
 			TrendCleanDB.Init();
-			ThreadCleanDB.Start();
+			_threadCleanDB.Start();
 		}
 
 		public static void Stop() {
 			TrendCleanDB.Stop();
-			ThreadCleanDB.Join(1500);
-			foreach(KeyValuePair<int, Trend> kvp in TrendList) {
+			_threadCleanDB.Join(1500);
+			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}
 			wpDebug.Write($"Trends Stop");
 		}
 		public static Trend Get(int idTrend) {
-			return TrendList[idTrend];
+			return _trendList[idTrend];
 		}
 		public static void RemoveTrend(int idTrend) {
-			TrendList[idTrend].Stop();
-			TrendList.Remove(idTrend);
+			_trendList[idTrend].Stop();
+			_trendList.Remove(idTrend);
 		}
 		public static void AddTrend(int idDp) {
 			using(SQL SQL = new SQL("Add Trend to Dictionary")) {
@@ -242,7 +242,7 @@ namespace WebAutomation.PlugIns {
 				intervall = Int32.Parse(erg[0][2]);
 				max = Int32.Parse(erg[0][3]);
 				maxage = Int32.Parse(erg[0][4]);
-				TrendList.Add(idTrend, new Trend(idTrend, idDp, erg[0][1], intervall, max, maxage, erg[0][5] == "True"));
+				_trendList.Add(idTrend, new Trend(idTrend, idDp, erg[0][1], intervall, max, maxage, erg[0][5] == "True"));
 			}
 		}
 		/// <summary>
@@ -296,10 +296,10 @@ namespace WebAutomation.PlugIns {
 							sw.WriteLine("1  SQLCHAR  0  255 \";\"  1  time  Latin1_General_CI_AS");
 							sw.WriteLine("2  SQLCHAR  0  255 \";\\r\\n\"  2  value  Latin1_General_CI_AS");
 						}
-						eventLog.Write(EventLogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
+						_eventLog.Write(EventLogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
 					}
 				} else {
-					eventLog.Write(EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
+					_eventLog.Write(EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
 				}
 			}
 			private static void DBcleaner() {
@@ -318,7 +318,7 @@ namespace WebAutomation.PlugIns {
 				Dictionary<DateTime, string> DataforExport;
 				watch.Start();
 				wpDebug.Write("Start Trend cleaner");
-				foreach (KeyValuePair<int, Trend> kvpTrend in TrendList) {
+				foreach (KeyValuePair<int, Trend> kvpTrend in _trendList) {
 					if (_doStop) break;
 					deleteToOld = 0;
 					deleteToMuch = 0;
@@ -387,7 +387,7 @@ namespace WebAutomation.PlugIns {
 										String.Format("{0} - {1}", t.IdTrend, Datapoints.Get(t.IdDP).Name),
 										kvp.Key, kvp.Value);
 								} catch(Exception ex) {
-									eventLog.WriteError(ex);
+									_eventLog.WriteError(ex);
 								};
 							}
 							// Log
@@ -421,19 +421,19 @@ namespace WebAutomation.PlugIns {
 							trendsToMuch++;
 						}
 					} catch (Exception ex) {
-						eventLog.WriteError(ex);
+						_eventLog.WriteError(ex);
 					}
 				}
 				watch.Stop();
 				if (ev_save != "") {
-					eventLog.Write("Dauer: {0}, Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write("Dauer: {0}, Trenddaten archiviert", watch.Elapsed);
 				} else {
-					eventLog.Write("Dauer: {0}, keine Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write("Dauer: {0}, keine Trenddaten archiviert", watch.Elapsed);
 				}
 				if (ev_del != "") {
-					eventLog.Write("Dauer: {0}, Trenddaten gelöscht ({1})", watch.Elapsed, trendsToOld + trendsToMuch);
+					_eventLog.Write("Dauer: {0}, Trenddaten gelöscht ({1})", watch.Elapsed, trendsToOld + trendsToMuch);
 				} else {
-					eventLog.Write("Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
+					_eventLog.Write("Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
 				}
 			}
 			private static bool writeToFile(string filename, DateTime DateForFolder, string text) {
@@ -473,7 +473,7 @@ namespace WebAutomation.PlugIns {
 						returns = false;
 					}
 				} catch (Exception ex) {
-					eventLog.WriteError(ex);
+					_eventLog.WriteError(ex);
 				}
 				return returns;
 			}

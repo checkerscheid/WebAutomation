@@ -221,69 +221,8 @@ namespace WebAutomation {
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="itemid"></param>
-		/// <param name="value"></param>
-		public void setAlarm(int itemid, wpAlarm value) {
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						//if (Server.Dictionaries.Items.ContainsKey(itemid)) Server.Dictionaries.Items[itemid].Alarm = value;
-						//else eventLog.Write(EventLogEntryType.Warning,
-						//	String.Format("OPC Item nicht vorhanden / nicht aktiv ({0})", itemid));
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format("Angefordertes Item blockiert: {0}.\r\nsetAlarm nicht möglich", itemid));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="itemid"></param>
-		/// <returns></returns>
-		public wpAlarm getAlarm(int itemid) {
-			wpAlarm returns = null;
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						//if (Server.Dictionaries.Items.ContainsKey(itemid))
-						//	returns = Server.Dictionaries.Items[itemid].Alarm;
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format("Angefordertes Item blockiert: {0}.\r\ngetAlarm nicht möglich", itemid));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return returns;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void AlarmToMail(wpAlarm newAlarm) {
+		public void AlarmToMail(Alarm newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -300,7 +239,7 @@ namespace WebAutomation {
 					if (++notEntered >= 10) {
 						eventLog.Write(EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								AlarmToMail nicht möglich", newAlarm.Idalarm));
+								AlarmToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
 						Thread.Sleep(10);
 					}
@@ -311,7 +250,7 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void QuitToMail(wpAlarm newAlarm) {
+		public void QuitToMail(Alarm newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -328,7 +267,7 @@ namespace WebAutomation {
 					if (++notEntered >= 10) {
 						eventLog.Write(EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								QuitToMail nicht möglich", newAlarm.Idalarm));
+								QuitToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
 						Thread.Sleep(10);
 					}
@@ -339,13 +278,13 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		/// <param name="newAlarm"></param>
-		public void QuitsToMail(List<wpAlarm> newAlarm) {
+		public void QuitsToMail(List<Alarm> newAlarm) {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
 				if (Monitor.TryEnter(TheMail, 5000)) {
 					try {
-						foreach (wpAlarm TheAlarm in newAlarm) {
+						foreach (Alarm TheAlarm in newAlarm) {
 							TheMail.AddQuit(TheAlarm);
 						}
 					} catch (Exception ex) {
@@ -356,61 +295,24 @@ namespace WebAutomation {
 					}
 				} else {
 					if (++notEntered >= 10) {
-						foreach (wpAlarm TheAlarm in newAlarm) {
+						foreach (Alarm TheAlarm in newAlarm) {
 							eventLog.Write(EventLogEntryType.Error,
 								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-									QuitsToMail nicht möglich", TheAlarm.Idalarm));
+									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
 						}
 					} else {
 						Thread.Sleep(10);
 					}
 				}
 			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
-		public Dictionary<int, wpAlarm> getActiveAlarms() {
-			Dictionary<int, wpAlarm> ActiveAlarms = new Dictionary<int, wpAlarm>();
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						foreach (KeyValuePair<int, OPCItem> TheItem in Server.Dictionaries.Items) {
-							//if (TheItem.Value.Alarm != null) {
-							//	if (TheItem.Value.Alarm.Come != wpAlarm.Default &&
-							//		(TheItem.Value.Alarm.Gone == wpAlarm.Default ||
-							//		TheItem.Value.Alarm.Quit == wpAlarm.Default)) {
-							//		ActiveAlarms.Add(TheItem.Value.Alarm.Idalarm, TheItem.Value.Alarm);
-							//	}
-							//}
-						}
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							"Angeforderte Items blockiert.\r\ngetActiveAlarms nicht möglich");
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return ActiveAlarms;
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public wpAlarm getAlarmFromAlarmid(int id) {
-			wpAlarm returns = null;
+		public Alarm getAlarmFromAlarmid(int id) {
+			Alarm returns = null;
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
@@ -454,7 +356,7 @@ namespace WebAutomation {
 							recipient = renewRecipient(out RecipientRequired);
 						}
 						foreach (KeyValuePair<string, PRecipient> Alarmstosend in recipient) {
-							if (Email.Alarms.getTotalCount(Alarmstosend.Value) > 0) {
+							if (Email.EmailAlarms.getTotalCount(Alarmstosend.Value) > 0) {
 								string[] MailContent = new string[2];
 								try {
 									if (Alarmstosend.Value.IsSMS) {
@@ -539,41 +441,17 @@ namespace WebAutomation {
 				for (int j = 0; j < Query.Length; j++) {
 					Dictionary<int, int> AlarmperUser = new Dictionary<int, int>();
 					using (SQL SQL2 = new SQL("renew Recipient Table - Alarm per User")) {
-						if (Program.MainProg.LicenseAlarming) {
-							string[][] Escalation = SQL2.wpQuery(@"SELECT [a].[id_alarm], [m].[minutes]
-								FROM [alarmtoescalation] [ae]
-								INNER JOIN [alarm] [a] ON [ae].[id_alarm] = [a].[id_alarm]
-								INNER JOIN [escalationgroup] [g]
-									ON [ae].[id_escalationgroup] = [g].[id_escalationgroup]
-								INNER JOIN [escalationgroupmember] [m]
-									ON [g].[id_escalationgroup] = [m].[id_escalationgroup]
-								INNER JOIN [email] [e] ON [m].[id_email] = [e].[id_email]
-								WHERE [e].[id_email] = {0}", Query[j][1]);
-							for (int k = 0; k < Escalation.Length; k++) {
-								int checker;
-								int minutes;
-								if (Int32.TryParse(Escalation[k][0], out checker) &&
-									Int32.TryParse(Escalation[k][1], out minutes)) {
-									if (AlarmperUser.ContainsKey(checker)) {
-										AlarmperUser[checker] = minutes;
-									} else {
-										AlarmperUser.Add(checker, minutes);
-									}
-								}
-							}
-						} else {
-							string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
-							FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
-							for (int k = 0; k < Alarme.Length; k++) {
-								int checker;
-								int minutes;
-								if (Int32.TryParse(Alarme[k][0], out checker) &&
-									Int32.TryParse(Alarme[k][1], out minutes)) {
-									if (AlarmperUser.ContainsKey(checker)) {
-										AlarmperUser[checker] = minutes;
-									} else {
-										AlarmperUser.Add(checker, minutes);
-									}
+						string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
+						FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
+						for (int k = 0; k < Alarme.Length; k++) {
+							int checker;
+							int minutes;
+							if (Int32.TryParse(Alarme[k][0], out checker) &&
+								Int32.TryParse(Alarme[k][1], out minutes)) {
+								if (AlarmperUser.ContainsKey(checker)) {
+									AlarmperUser[checker] = minutes;
+								} else {
+									AlarmperUser.Add(checker, minutes);
 								}
 							}
 						}
@@ -999,6 +877,7 @@ namespace WebAutomation {
 
 			Datapoints.Init();
 			Trends.Init();
+			Alarms.Init();
 			wpWebSockets = new WebSockets();
 			ShellyServer.Start();
 			wpMQTTClient = new MQTTClient();

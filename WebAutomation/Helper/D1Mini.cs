@@ -46,7 +46,7 @@ namespace WebAutomation.Helper {
 					description = Query1[i][2];
 					IPAddress.TryParse(Query1[i][3], out ip);
 					mac = Query1[i][4];
-					D1MiniDevice d1md = new D1MiniDevice(id_d1mini, name, description, ip, mac);
+					D1MiniDevice d1md = new D1MiniDevice(name);
 					D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
 					//d1md.sendCmd("ForceMqttUpdate");
@@ -70,7 +70,7 @@ namespace WebAutomation.Helper {
 					description = Query1[0][1];
 					IPAddress.TryParse(Query1[0][2], out ip);
 					mac = Query1[0][3];
-					D1MiniDevice d1md = new D1MiniDevice(idd1mini, name, description, ip, mac);
+					D1MiniDevice d1md = new D1MiniDevice(name);
 					if(!D1Minis.ContainsKey(name)) D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
 					//d1md.sendCmd("ForceMqttUpdate");
@@ -222,13 +222,7 @@ namespace WebAutomation.Helper {
 		}
 	}
 	public class D1MiniDevice {
-		private int _idd1mini;
 		private string _name;
-		private string _description;
-		private IPAddress _address;
-		private string _wpFreakaZoneVersion;
-		private string _version;
-		private string _mac;
 
 		public string readDeviceName;
 		public string readDeviceDescription;
@@ -238,7 +232,6 @@ namespace WebAutomation.Helper {
 		public string readMac;
 		public string readSsid;
 		public string readUpdateMode;
-		private bool _online;
 		public bool Online {
 			set {
 				if(value) {
@@ -293,12 +286,8 @@ namespace WebAutomation.Helper {
 			"info/Version", "info/wpFreakaZone",
 			"info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID",
 			"UpdateMode", "info/Online" };
-		public D1MiniDevice(int idd1mini, string name, string description, IPAddress address, string mac) {
-			_idd1mini = idd1mini;
+		public D1MiniDevice(string name) {
 			_name = name;
-			_description = description;
-			_address = address;
-			_mac = mac;
 			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall") < 0 ? OnlineTogglerSendIntervall : Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
 			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait") < 0 ? OnlineTogglerWait : Ini.getInt("D1Mini", "OnlineTogglerWait");
 			t = new Timer(OnlineTogglerSendIntervall * 1000);

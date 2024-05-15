@@ -85,7 +85,7 @@ namespace WebAutomation.Helper {
 		}
 		public List<string> getSMSText(PRecipient r) {
 			mailMessage.Body = ServiceName + " Alarm";
-			return Alarms.getSMS(r);
+			return EmailAlarms.getSMS(r);
 		}
 		public int getFromLength() {
 			return mailMessage.From.Address.Length;
@@ -100,10 +100,10 @@ namespace WebAutomation.Helper {
 
 			if (Ini.get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
-					Ini.get("Projekt", "Nummer"), ServiceName, Alarms.getTotalCount(r)));
+					Ini.get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
 			} else {
 				setSubject(String.Format("{0} - {1} Neue Alarm Aktionen",
-					ServiceName, Alarms.getTotalCount(r)));
+					ServiceName, EmailAlarms.getTotalCount(r)));
 			}
 			string MailToInMail = Ini.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
@@ -118,7 +118,7 @@ namespace WebAutomation.Helper {
 			mailMessage.Body = @"
 		<div style='font-family:Arial; font-size:9pt;'>
 			<p>In Ihrer Anlage stehen die folgenden Alarme an:</p>
-			<p>" + Alarms.getText(r) + @"</p>
+			<p>" + EmailAlarms.getText(r) + @"</p>
 			<br />" + String.Format("<p>Projekt: {0} - {1}</p>",
 				Ini.get("Projekt", "Nummer"),
 				Ini.get("Projekt", "Name")) + @"
@@ -150,59 +150,60 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		/// <param name="TheAlarm"></param>
-		public void AddAlarm(wpAlarm TheAlarm) {
+		public void AddAlarm(Alarm TheAlarm) {
 			string color = TheAlarm.Autoquit ? "#FFA500" : "#A91919";
-			Alarms.Add(TheAlarm.Idalarm, @"
+			EmailAlarms.Add(TheAlarm.IdAlarm, @"
 	<div style='font-weight:bold; color:" + color + @"'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - gekommen</div>
 	<div style='margin-left:20px;'>gekommen: <span style='font-weight:bold;'>" + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(Alarm.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(Alarm.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(Alarm.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(Alarm.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(Alarm.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(Alarms.UseAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup1 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) + "</div>" : "") +
+	(Alarms.UseAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup2 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) + "</div>" : "") +
+	(Alarms.UseAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup3 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) + "</div>" : "") +
+	(Alarms.UseAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup4 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) + "</div>" : "") +
+	(Alarms.UseAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup5 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
-	<div style='margin-left:40px;'>Alarmtype: " + String.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
+	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
 	<div style='margin-left:40px;'>Quittierung erforderlich: " + (TheAlarm.Autoquit ? "<span style='color:#090'>Nein</span>" : "<span style='color:#A91919'>Ja</span>") + @"</div>
 	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
 
-			Alarms.AddSMS(TheAlarm.Idalarm, @"" +
+			EmailAlarms.AddSMS(TheAlarm.IdAlarm, @"" +
 				TheAlarm.Alarmtext + " - " + TheAlarm.Alarmtype + " - " + TheAlarm.Alarmgroup +
-				(Alarm.useAlarmGroup1 ? " - " + TheAlarm.getReadableAlarmGroup1() : "") +
-				(Alarm.useAlarmGroup2 ? " - " + TheAlarm.getReadableAlarmGroup2() : "") +
-				(Alarm.useAlarmGroup3 ? " - " + TheAlarm.getReadableAlarmGroup3() : "") +
-				(Alarm.useAlarmGroup4 ? " - " + TheAlarm.getReadableAlarmGroup4() : "") +
-				(Alarm.useAlarmGroup5 ? " - " + TheAlarm.getReadableAlarmGroup5() : "") + " ");
-			Alarms.countup(TheAlarm.Idalarm, 0);
+				(Alarms.UseAlarmGroup1 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) : "") +
+				(Alarms.UseAlarmGroup2 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) : "") +
+				(Alarms.UseAlarmGroup3 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) : "") +
+				(Alarms.UseAlarmGroup4 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) : "") +
+				(Alarms.UseAlarmGroup5 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) : "") +
+				" ");
+			EmailAlarms.countup(TheAlarm.IdAlarm, 0);
 			wpDebug.Write("Alarm to Mail: {0} ({1})", TheAlarm.Alarmname, TheAlarm.Alarmtext);
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="TheAlarm"></param>
-		public void AddQuit(wpAlarm TheAlarm) {
+		public void AddQuit(Alarm TheAlarm) {
 			AddQuit(TheAlarm, 0);
 		}
-		private void AddQuit(wpAlarm TheAlarm, int minutes) {
-			Alarms.Add(TheAlarm.Idalarm, minutes, @"
+		private void AddQuit(Alarm TheAlarm, int minutes) {
+			EmailAlarms.Add(TheAlarm.IdAlarm, minutes, @"
 	<div style='font-weight:bold; color:#090'>" + TheAlarm.Alarmgroup + " - " + TheAlarm.Alarmtext + @" - quittiert</div>
 	<div style='margin-left:20px;'>gekommen: " + TheAlarm.Come.ToString("dd.MM.yyyy HH:mm:ss") + @"</div>
 	<div style='margin-left:20px;'>quittiert: <span style='font-weight:bold;'>" + TheAlarm.QuitFrom + " (" + TheAlarm.Quit.ToString("dd.MM.yyyy HH:mm:ss") + @")</span></div>
 	<div style='margin-left:20px;'>Bemerkung: <span style='font-weight:bold;'>" + TheAlarm.QuitText + @"</span></div>
 	<div style='margin-left:20px;'>status: <span style='font-weight:bold;'>" +
-	(TheAlarm.Gone == wpAlarm.Default ? "<span style='color:#A91919'>anstehend</span>" : "gegangen (" + TheAlarm.Gone.ToString() + ")") + @"</span></div>
+	(TheAlarm.Gone == Alarm.Default ? "<span style='color:#A91919'>anstehend</span>" : "gegangen (" + TheAlarm.Gone.ToString() + ")") + @"</span></div>
 	<div style='margin-left:20px; font-weight:bold;'>Alarmdetails:</div>
 	<div style='margin-left:40px;'>Beschreibung: " + TheAlarm.Alarmtext + @"</div>" +
-	(Alarm.useAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup1 + ": " + TheAlarm.getReadableAlarmGroup1() + "</div>" : "") +
-	(Alarm.useAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup2 + ": " + TheAlarm.getReadableAlarmGroup2() + "</div>" : "") +
-	(Alarm.useAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup3 + ": " + TheAlarm.getReadableAlarmGroup3() + "</div>" : "") +
-	(Alarm.useAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup4 + ": " + TheAlarm.getReadableAlarmGroup4() + "</div>" : "") +
-	(Alarm.useAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarm.nameAlarmGroup5 + ": " + TheAlarm.getReadableAlarmGroup5() + "</div>" : "") + @"
+	(Alarms.UseAlarmGroup1 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup1 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Alarmgroups1) + "</div>" : "") +
+	(Alarms.UseAlarmGroup2 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup2 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Alarmgroups2) + "</div>" : "") +
+	(Alarms.UseAlarmGroup3 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup3 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Alarmgroups3) + "</div>" : "") +
+	(Alarms.UseAlarmGroup4 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup4 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Alarmgroups4) + "</div>" : "") +
+	(Alarms.UseAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup5 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
-	<div style='margin-left:40px;'>Alarmtype: " + String.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
-	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
-			Alarms.countup(TheAlarm.Idalarm, minutes);
+	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
+	<div style='margin-left:40px;'>Datenpunkt Name: " + TheAlarm.DpName + @"</div>");
+			EmailAlarms.countup(TheAlarm.IdAlarm, minutes);
 		}
 		/// <summary>
 		/// 
@@ -259,9 +260,9 @@ namespace WebAutomation.Helper {
 			bool entered = false;
 			int notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Alarms.Alarmtext)) {
-					Alarms.Alarmtext.Clear();
-					Monitor.Exit(Alarms.Alarmtext);
+				if(Monitor.TryEnter(EmailAlarms.Alarmtext)) {
+					EmailAlarms.Alarmtext.Clear();
+					Monitor.Exit(EmailAlarms.Alarmtext);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -275,9 +276,9 @@ namespace WebAutomation.Helper {
 			entered = false;
 			notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Alarms.Alarmsms)) {
-					Alarms.Alarmsms.Clear();
-					Monitor.Exit(Alarms.Alarmsms);
+				if (Monitor.TryEnter(EmailAlarms.Alarmsms)) {
+					EmailAlarms.Alarmsms.Clear();
+					Monitor.Exit(EmailAlarms.Alarmsms);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -291,9 +292,9 @@ namespace WebAutomation.Helper {
 			entered = false;
 			notEntered = 0;
 			while (!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Alarms.count)) {
-					Alarms.count.Clear();
-					Monitor.Exit(Alarms.count);
+				if(Monitor.TryEnter(EmailAlarms.count)) {
+					EmailAlarms.count.Clear();
+					Monitor.Exit(EmailAlarms.count);
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
@@ -349,135 +350,12 @@ namespace WebAutomation.Helper {
 					}
 				}
 				alarmTimer = new Dictionary<int, System.Timers.Timer>();
-				getTimes();
-			}
-			public void getTimes() {
-				getTimes(0);
-			}
-			public void getTimes(int verz) {
-				DateTime Now = DateTime.Now;
-				int WeekDay = (int)Now.DayOfWeek;
-				if(WeekDay == 0) WeekDay = 7;
-				DateTime ThisMonday = Now.AddDays((-1 * WeekDay) + 1).Date;
-
-				using(SQL sql = new SQL("Recipient Timer")) {
-					foreach(KeyValuePair<int, int> kvp in alarmMinutes) {
-						string[][] Query1 = sql.wpQuery(@"
-						SELECT [day], [time], [stopfor] FROM [standbyescalation] [se]
-						INNER JOIN [escalationgroup] [eg]
-							ON [se].[id_escalationgroup] = [eg].[id_escalationgroup]
-						INNER JOIN [escalationgroupmember] [egm]
-							ON [eg].[id_escalationgroup] = [egm].[id_escalationgroup]
-						INNER JOIN [alarmtoescalation] [ae]
-							ON [eg].[id_escalationgroup] = [ae].[id_escalationgroup]
-						WHERE [id_email] = {0} AND [id_alarm] = {1}
-						ORDER BY [day], [time]", email, kvp.Key);
-						string[][] Query2 = new string[0][];
-						//string[][] Query2 = sql.wpQuery(@"
-						//	SELECT [s].[day], [s].[time], [s].[stopfor] FROM [standbyescalation] [s]
-						//	INNER JOIN [alarmtoescalation] [ate]
-						//		ON [s].[id_alarmtoescalation] = [ate].[id_alarmtoescalation]
-						//	INNER JOIN [escalationgroupmember] [g]
-						//		ON [ate].[id_escalationgroup] = [g].[id_escalationgroup]
-						//	WHERE [g].[id_email] = {0} AND [ate].[id_alarm] = {1}
-						//	ORDER BY [day], [time]", email, kvp.Key);
-						string[][] Query = new string[Query1.Length + Query2.Length][];
-						Array.Copy(Query1, Query, Query1.Length);
-						for(int i = Query1.Length; i < Query.Length; i++) {
-							if(Query2.Length > 0)
-								Query[i] = Query2[i - Query1.Length];
-						}
-
-						if(!checklastDate(ThisMonday, Now, Query, kvp.Key)) {
-							checklastDate(ThisMonday.AddDays(-7), Now, Query, kvp.Key);
-						}
-						if(!checknextDate(ThisMonday, Now, Query, kvp.Key, verz)) {
-							checknextDate(ThisMonday.AddDays(7), Now, Query, kvp.Key, verz);
-						}
-
-					}
-				}
-			}
-			private bool checklastDate(DateTime Monday, DateTime Now, string[][] DBScheduleTimes, int idalarm) {
-				bool foundLast = false;
-				DateTime CheckDate;
-				for(int iScheduleTimes = 0; iScheduleTimes < DBScheduleTimes.Length; iScheduleTimes++) {
-					int checkDayOfWeek;
-					string[] HourMinute = DBScheduleTimes[iScheduleTimes][1].Split(':');
-					int checkHour;
-					int checkMinute;
-					if(Int32.TryParse(DBScheduleTimes[iScheduleTimes][0], out checkDayOfWeek) &&
-						Int32.TryParse(HourMinute[0], out checkHour) &&
-						Int32.TryParse(HourMinute[1], out checkMinute)) {
-						CheckDate = Monday.Add(new TimeSpan(checkDayOfWeek - 1, checkHour, checkMinute, 0));
-						if(CheckDate < Now) {
-							active[idalarm] = DBScheduleTimes[iScheduleTimes][2] == "" ? true : false;
-							wpDebug.Write("User {0} (alarm:{1}) ist jetzt {2} (last)",
-								address, idalarm, active[idalarm]);
-							foundLast = true;
-						}
-					}
-				}
-				return foundLast;
-			}
-			/// <summary>
-			/// 
-			/// </summary>
-			/// <param name="Monday"></param>
-			/// <param name="Now"></param>
-			/// <param name="DBScheduleTimes"></param>
-			/// <returns></returns>
-			private bool checknextDate(DateTime Monday, DateTime Now, string[][] DBScheduleTimes,
-				int idalarm, int verz) {
-				bool foundNext = false;
-				DateTime CheckDate;
-				double next = 0;
-				for(int iScheduleTimes = 0; iScheduleTimes < DBScheduleTimes.Length; iScheduleTimes++) {
-					if(!foundNext) {
-						int checkDayOfWeek;
-						string[] HourMinute = DBScheduleTimes[iScheduleTimes][1].Split(':');
-						int checkHour;
-						int checkMinute;
-						if(Int32.TryParse(DBScheduleTimes[iScheduleTimes][0], out checkDayOfWeek) &&
-							Int32.TryParse(HourMinute[0], out checkHour) &&
-							Int32.TryParse(HourMinute[1], out checkMinute)) {
-							CheckDate = Monday.Add(new TimeSpan(checkDayOfWeek - 1, checkHour, checkMinute, 0));
-							if(CheckDate > Now) {
-								TimeSpan sec = CheckDate - Now;
-								next = (double)sec.TotalMilliseconds;
-								System.Timers.Timer t = new System.Timers.Timer();
-								t.Elapsed += (sender, args) => t_Elapsed(idalarm);
-								t.Interval = next + (verz * 1000);
-								t.AutoReset = false;
-								t.Enabled = true;
-								if(alarmTimer.ContainsKey(idalarm)) {
-									alarmTimer[idalarm].Stop();
-									alarmTimer[idalarm].Dispose();
-									alarmTimer[idalarm] = null;
-									alarmTimer[idalarm] = t;
-								} else {
-									alarmTimer.Add(idalarm, t);
-								}
-								wpDebug.Write("User {0} (alarm:{1}) wird in {2:%d} Tag(e) " +
-									"{2:hh\\:mm\\:ss} geschaltet: {3}",
-									address, idalarm, sec + new TimeSpan(0, 0, verz), !active[idalarm]);
-								foundNext = true;
-							}
-						}
-					}
-				}
-				return foundNext;
-			}
-			private void t_Elapsed(int idalarm) {
-				active[idalarm] = !active[idalarm];
-				wpDebug.Write("User {0} (alarm:{1}) ist jetzt {2}", address, idalarm, active[idalarm]);
-				getTimes(5);
 			}
 		}
 		/// <summary>
 		/// 
 		/// </summary>
-		public static class Alarms {
+		public static class EmailAlarms {
 			/// <summary>
 			/// 
 			/// </summary>

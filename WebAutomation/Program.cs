@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 97                                                      $ #
+//# Revision     : $Rev:: 98                                                      $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 97 2024-05-09 20:38:14Z                       $ #
+//# File-ID      : $Id:: Program.cs 98 2024-05-15 14:54:56Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using System;

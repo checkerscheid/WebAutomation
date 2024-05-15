@@ -202,7 +202,7 @@ namespace WebAutomation.Helper {
 	(Alarms.UseAlarmGroup5 ? "<div style='margin-left:40px;'>" + Alarms.NameAlarmGroup5 + ": " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) + "</div>" : "") + @"
 	<div style='margin-left:40px;'>Gruppe: " + TheAlarm.Alarmgroup + @"</div>
 	<div style='margin-left:40px;'>Alarmtype: " + string.Format(getTypeColor(TheAlarm.Alarmtype), TheAlarm.Alarmtype) + @"</div>
-	<div style='margin-left:40px;'>OPC Item Name: " + TheAlarm.DpName + @"</div>");
+	<div style='margin-left:40px;'>Datenpunkt Name: " + TheAlarm.DpName + @"</div>");
 			EmailAlarms.countup(TheAlarm.IdAlarm, minutes);
 		}
 		/// <summary>

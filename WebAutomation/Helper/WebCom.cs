@@ -909,43 +909,43 @@ namespace WebAutomation.Helper {
 			WatchDogByte += 1;
 			if(WatchDogByte > 255) WatchDogByte = 1;
 			DateTime Now = DateTime.Now;
-			string returns = String.Format(
-				"{{WatchDog={0}}}{{DateTime={1}}}{{Date={2}}}{{Time={3}}}{{Alarme=",
-				WatchDogByte,
-				Now.ToString("yyyy, M-1, d, H, m, s"),
-				Now.ToString("dd.MM.yyyy"),
-				Now.ToString("HH:mm:ss"));
+			string returns =
+$"{{WatchDog={WatchDogByte}}}" +
+$"{{DateTime={Now.ToString("yyyy, M-1, d, H, m, s")}}}" +
+$"{{Date={Now.ToString("dd.MM.yyyy")}}}" +
+$"{{Time={Now.ToString("HH:mm:ss")}}}" +
+$"{{Alarme=";
 			foreach (KeyValuePair<int, Alarm> TheAlarm in Alarms.getActiveAlarms()) {
-				returns += String.Format("{{{0}=", TheAlarm.Value.IdAlarm);
-				returns += String.Format(
-					@"{{id={0}}}{{DpName={1}}}{{Come={2}}}{{Gone={3}}}{{Quit={4}}}{{Type={5}}}
-					{{Group={6}}}{{Name={7}}}{{Text={8}}}{{Link={9}}}{{AlarmUpdate={10}}}{11}{12}{13}{14}{15}}}",
-					TheAlarm.Value.IdAlarm,
-					TheAlarm.Value.DpName,
-					TheAlarm.Value.Come == Alarm.Default ? "-" : TheAlarm.Value.Come.ToString(),
-					TheAlarm.Value.Gone == Alarm.Default ? "-" : TheAlarm.Value.Gone.ToString(),
-					TheAlarm.Value.Quit == Alarm.Default ? "-" : TheAlarm.Value.Quit.ToString(),
-					TheAlarm.Value.Alarmtype,
-					TheAlarm.Value.Alarmgroup,
-					TheAlarm.Value.Alarmname,
-					TheAlarm.Value.Alarmtext,
-					TheAlarm.Value.Alarmlink,
-					TheAlarm.Value.AlarmUpdate.ToString(),
-					Alarms.UseAlarmGroup1 ?
-						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Value.Alarmgroups1)}}}" : "",
-					Alarms.UseAlarmGroup2 ?
-						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Value.Alarmgroups2)}}}" : "",
-					Alarms.UseAlarmGroup3 ?
-						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Value.Alarmgroups3)}}}" : "",
-					Alarms.UseAlarmGroup4 ?
-						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Value.Alarmgroups4)}}}" : "",
-					Alarms.UseAlarmGroup5 ?
-						$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Value.Alarmgroups5)}}}" : "");
+				returns +=
+	$"{{{TheAlarm.Value.IdAlarm}={{" +
+		$"{{id={TheAlarm.Value.IdAlarm}}}" +
+		$"{{DpName={TheAlarm.Value.DpName}}}" +
+		$"{{Come={TheAlarm.Value.Come}}}" +
+		$"{{Gone={(TheAlarm.Value.Gone == Alarm.Default ? "-" : TheAlarm.Value.Gone.ToString())}}}" +
+		$"{{Quit={(TheAlarm.Value.Quit == Alarm.Default ? "-" : TheAlarm.Value.Quit.ToString())}}}" +
+		$"{{Type={TheAlarm.Value.Alarmtype}}}" +
+		$"{{Group={TheAlarm.Value.Alarmgroup}}}" +
+		$"{{Name={TheAlarm.Value.Alarmname}}}" +
+		$"{{Text={TheAlarm.Value.Alarmtext}}}" +
+		$"{{Link={TheAlarm.Value.Alarmlink}}}" +
+		$"{{AlarmUpdate={TheAlarm.Value.AlarmUpdate.ToString()}}}" +
+		$"{(Alarms.UseAlarmGroup1 ?
+			$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Value.Alarmgroups1)}}}" : "")}" +
+		$"{(Alarms.UseAlarmGroup2 ?
+			$"{{AlarmGroup2={Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Value.Alarmgroups2)}}}" : "")}" +
+		$"{(Alarms.UseAlarmGroup3 ?
+			$"{{AlarmGroup3={Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Value.Alarmgroups3)}}}" : "")}" +
+		$"{(Alarms.UseAlarmGroup4 ?
+			$"{{AlarmGroup4={Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Value.Alarmgroups4)}}}" : "")}" +
+		$"{(Alarms.UseAlarmGroup5 ?
+			$"{{AlarmGroup5={Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Value.Alarmgroups5)}}}" : "")}" +
+	$"}}";
 			}
-			return String.Format("{0}}}{{Wartung={1}}}",
-				returns,
-				Program.MainProg.wpWartung ? "True" : "False");
-			//return returns + "}";
+			returns +=
+$"}}" +
+$"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
+				
+			return returns;
 		}
 		/// <summary>
 		/// 
@@ -961,7 +961,7 @@ namespace WebAutomation.Helper {
 			TheAlarm.Quit = DateTimeNow;
 			TheAlarm.QuitFrom = user;
 			TheAlarm.QuitText = quittext;
-			TheAlarm.IsQuit = true;
+			TheAlarm.NeedQuit = true;
 			using(SQL SQL = new SQL("Quit Alarm")) {
 				SQL.wpNonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = ""{0}"", [quitfrom] = ""{1}"", [quittext] = ""{2}""
@@ -988,13 +988,13 @@ namespace WebAutomation.Helper {
 			for(int i = 1; i < param.Length - 1; i++) {
 				int alarmid;
 				if (Int32.TryParse(param[i], out alarmid)) {
-					TheAlarm = Program.MainProg.getAlarmFromAlarmid(alarmid);
+					TheAlarm = Alarms.Get(alarmid);
 					TheAlarmList.Add(TheAlarm);
 					TheAlarm.AlarmUpdate = DateTimeNow;
 					TheAlarm.Quit = DateTimeNow;
 					TheAlarm.QuitFrom = param[0];
 					TheAlarm.QuitText = param[param.Length - 1];
-					TheAlarm.IsQuit = true;
+					TheAlarm.NeedQuit = true;
 					toinsert += "[id_alarm] = " + alarmid + " OR ";
 				}
 			}

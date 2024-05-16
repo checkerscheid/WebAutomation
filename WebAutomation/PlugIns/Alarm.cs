@@ -57,11 +57,11 @@ namespace WebAutomation.PlugIns {
 			set { _inalarm = value; }
 		}
 		/// <summary></summary>
-		private bool _isquit;
+		private bool _needquit;
 		/// <summary></summary>
-		public bool IsQuit {
-			get { return _isquit; }
-			set { _isquit = value; }
+		public bool NeedQuit {
+			get { return _needquit; }
+			set { _needquit = value; }
 		}
 		/// <summary></summary>
 		private DateTime _come;
@@ -255,7 +255,7 @@ namespace WebAutomation.PlugIns {
 			this._gone = Default;
 			this._quit = Default;
 			this._inalarm = false;
-			this._isquit = false;
+			this._needquit = true;
 			this._timerstarted = false;
 			this._wartung = false;
 			if (sec > 0) {
@@ -467,7 +467,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		/// <param name="Now"></param>
-		public void SetCome(DateTime Now) {
+		private void SetCome(DateTime Now) {
 			_alarmupdate = Now;
 			_come = Now;
 			_gone = Alarm.Default;
@@ -476,12 +476,12 @@ namespace WebAutomation.PlugIns {
 			string sqlautoquitfrom = "NULL";
 			if (_autoquit) {
 				_quit = Now;
-				_isquit = true;
+				_needquit = true;
 				sqlautoquit = String.Format("'{0}'",
 					Now.ToString(SQL.DateTimeFormat));
 				sqlautoquitfrom = "'wpSystem'";
 			} else {
-				_isquit = false;
+				_needquit = false;
 				_quit = Alarm.Default;
 			}
 			using (SQL SQL = new SQL("Alarm Come in Historic")) {
@@ -499,7 +499,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		/// <param name="Now"></param>
-		public void SetGone(DateTime Now) {
+		private void SetGone(DateTime Now) {
 			_alarmupdate = Now;
 			_gone = Now;
 			_inalarm = false;
@@ -633,14 +633,14 @@ FROM (
 						TheAlarm.Gone = Alarm.Default;
 						TheAlarm.InAlarm = true;
 						TheAlarm.Quit = Alarm.Default;
-						TheAlarm.IsQuit = false;
+						TheAlarm.NeedQuit = false;
 						if (DBActiveAlarms[ialarms][3] != "") {
 							TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
-							TheAlarm.InAlarm = true;
+							TheAlarm.InAlarm = false;
 						}
 						if (DBActiveAlarms[ialarms][4] != "") {
 							TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
-							TheAlarm.IsQuit = true;
+							TheAlarm.NeedQuit = true;
 						}
 					}
 				}
@@ -650,12 +650,9 @@ FROM (
 		public static Dictionary<int, Alarm> getActiveAlarms() {
 			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();
 			foreach(KeyValuePair<int, Alarm> kvp in _alarmList) {
-				if(kvp.Value.InAlarm)
-				if (kvp.Value.Come != Alarm.Default && (
-						kvp.Value.Gone == Alarm.Default ||
-						kvp.Value.Quit == Alarm.Default)
-					) {
-						returns.Add(kvp.Key, kvp.Value);
+				kvp.Value.setAlarmValue();
+				if (kvp.Value.InAlarm || !kvp.Value.NeedQuit) {
+					returns.Add(kvp.Key, kvp.Value);
 				}
 			}
 			return returns;

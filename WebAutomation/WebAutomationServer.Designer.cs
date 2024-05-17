@@ -129,7 +129,11 @@ namespace WebAutomation {
 			this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.lbl_message.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+			this.lbl_message.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.lbl_message.Cursor = System.Windows.Forms.Cursors.Default;
 			this.lbl_message.Enabled = false;
+			this.lbl_message.ForeColor = System.Drawing.Color.DarkGray;
 			this.lbl_message.Location = new System.Drawing.Point(149, 16);
 			this.lbl_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
 			this.lbl_message.Multiline = true;
@@ -202,7 +206,7 @@ namespace WebAutomation {
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.BackColor = System.Drawing.SystemColors.Control;
+			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(96)))), ((int)(((byte)(96)))), ((int)(((byte)(96)))));
 			this.ClientSize = new System.Drawing.Size(698, 207);
 			this.Controls.Add(this.lbl_volumeinfo);
 			this.Controls.Add(this.lbl_memory);
@@ -216,6 +220,7 @@ namespace WebAutomation {
 			this.Controls.Add(this.label_msg);
 			this.Controls.Add(this.label1);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(236)))), ((int)(((byte)(251)))));
 			this.Icon = global::WebAutomation.Properties.Resources.wp;
 			this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
 			this.Name = "WebAutomationServer";

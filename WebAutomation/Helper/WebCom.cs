@@ -197,6 +197,8 @@ namespace WebAutomation.Helper {
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
 			public const string cDeleteD1Mini = "DeleteD1Mini";
+			public const string cGetD1MiniServer = "GetD1MiniServer";
+			public const string cSetD1MiniServer = "SetD1MiniServer";
 			public const string cGetShellyStatus = "GetShellyStatus";
 
 			public const string cReadItem = "ReadItem";
@@ -324,6 +326,13 @@ namespace WebAutomation.Helper {
 						}
 					}
 					returns = "{\"erg\":\"S_OK\"}";
+					break;
+				case wpBefehl.cGetD1MiniServer:
+					returns = D1MiniServer.getServerSettings();
+					break;
+				case wpBefehl.cSetD1MiniServer:
+					param = wpBefehl.getParam(s_befehl[1]);
+					returns = D1MiniServer.setServerSetting(param[0], param[1]);
 					break;
 				case wpBefehl.cGetShellyStatus:
 					returns = ShellyServer.getAllStatus();

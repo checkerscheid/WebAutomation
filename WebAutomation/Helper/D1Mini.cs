@@ -85,6 +85,11 @@ namespace WebAutomation.Helper {
 			stopSearch();
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) kvp.Value.Stop();
 		}
+		public static void ForceRenewValue() {
+			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
+			}
+		}
 		public static string getServerSettings() {
 			return "{" + 
 				$"\"OnlineTogglerSendIntervall\":\"{OnlineTogglerSendIntervall}\"," +
@@ -145,7 +150,6 @@ namespace WebAutomation.Helper {
 					D1MiniDevice d1md = new D1MiniDevice(name);
 					if(!D1Minis.ContainsKey(name)) D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
-					//d1md.sendCmd("ForceMqttUpdate");
 				}
 			}
 			Program.MainProg.wpMQTTClient.registerNewD1MiniDatapoints();
@@ -324,6 +328,7 @@ namespace WebAutomation.Helper {
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
 			public const string ForceMqttUpdate = "ForceMqttUpdate";
+			public const string ForceRenewValue = "ForceRenewValue";
 			public const string UpdateFW = "UpdateFW";
 			public const string UnknownCmd = "UnknownCmd";
 			private string _choosenCmd;
@@ -334,6 +339,9 @@ namespace WebAutomation.Helper {
 						break;
 					case ForceMqttUpdate:
 						_choosenCmd = ForceMqttUpdate;
+						break;
+					case ForceRenewValue:
+						_choosenCmd = ForceRenewValue;
 						break;
 					case UpdateFW:
 						_choosenCmd = UpdateFW;
@@ -412,7 +420,7 @@ namespace WebAutomation.Helper {
 		private void sendOnlineQuestion() {
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
-			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
+			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
 		private void setOnlineError(bool e) {
 			if(Program.MainProg.wpDebugD1Mini)

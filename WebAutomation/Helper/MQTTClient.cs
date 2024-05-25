@@ -16,6 +16,7 @@
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
+using MQTTnet.Protocol;
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
@@ -128,6 +129,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				wpDebug.WriteError(ex);
 			}
 			wpDebug.Write("wpMQTTClient gestartet");
+			D1MiniServer.ForceRenewValue();
 		}
 		private async Task<string> registerDatapoints() {
 			foreach(KeyValuePair<string, Dictionary<string, topic>> kvp1 in _topics) {
@@ -323,10 +325,15 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 
 		public void setValue(int IdTopic, string value) {
+			setValue(IdTopic, value, MqttQualityOfServiceLevel.AtMostOnce);
+		}
+		public void setValue(int IdTopic, string value, MqttQualityOfServiceLevel QoS) {
 			if(getTopicFromId(IdTopic) != null) {
-				MqttApplicationMessage msg = new MqttApplicationMessage();
-				msg.Topic = getTopicFromId(IdTopic);
-				msg.PayloadSegment = getFromString(value);
+				MqttApplicationMessage msg = new MqttApplicationMessage {
+					Topic = getTopicFromId(IdTopic),
+					PayloadSegment = getFromString(value),
+					QualityOfServiceLevel = QoS
+				};
 				_mqttClient.PublishAsync(msg);
 				if(Program.MainProg.wpDebugMQTT)
 					wpDebug.Write($"setValue: {msg.Topic} ({IdTopic}), value: {value}");
@@ -335,11 +342,16 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			}
 		}
 		public void setValue(string topic, string value) {
+			setValue(topic, value, MqttQualityOfServiceLevel.AtMostOnce);
+		}
+		public void setValue(string topic, string value, MqttQualityOfServiceLevel QoS) {
 			if(topic != string.Empty) {
 				try {
-					MqttApplicationMessage msg = new MqttApplicationMessage();
-					msg.Topic = topic;
-					msg.PayloadSegment = getFromString(value);
+					MqttApplicationMessage msg = new MqttApplicationMessage {
+						Topic = topic,
+						PayloadSegment = getFromString(value),
+						QualityOfServiceLevel = QoS
+					};
 					_mqttClient.PublishAsync(msg);
 					if(Program.MainProg.wpDebugMQTT)
 						wpDebug.Write($"setValue: {topic}, value: {value}");

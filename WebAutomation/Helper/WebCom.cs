@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 105                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 99 2024-05-15 14:57:32Z                        $ #
+//# File-ID      : $Id:: WebCom.cs 105 2024-05-26 02:22:00Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -186,6 +186,7 @@ namespace WebAutomation.Helper {
 			public const string cWrite = "WriteDP";
 			public const string cWriteMulti = "WriteMultiDP";
 			public const string cWriteScene = "WriteSceneDP";
+			public const string cPublishTopic = "publishTopic";
 
 			public const string cForceMqttUpdate = "ForceMqttUpdate";
 			public const string cSetBrowseMqtt = "setBrowseMqtt";
@@ -197,6 +198,8 @@ namespace WebAutomation.Helper {
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
 			public const string cDeleteD1Mini = "DeleteD1Mini";
+			public const string cGetD1MiniServer = "GetD1MiniServer";
+			public const string cSetD1MiniServer = "SetD1MiniServer";
 			public const string cGetShellyStatus = "GetShellyStatus";
 
 			public const string cReadItem = "ReadItem";
@@ -276,6 +279,12 @@ namespace WebAutomation.Helper {
 						returns = "{ERROR=Szene nicht gefunden}";
 					}
 					break;
+				case wpBefehl.cPublishTopic:
+					param = wpBefehl.getParam(s_befehl[1]);
+					if(Int32.TryParse(param[1], out outint)) {
+						Program.MainProg.wpMQTTClient.setValue(param[0], outint.ToString());
+					}
+					break;
 				case wpBefehl.cForceMqttUpdate:
 					returns = ForceMqttUpdate();
 					break;
@@ -324,6 +333,13 @@ namespace WebAutomation.Helper {
 						}
 					}
 					returns = "{\"erg\":\"S_OK\"}";
+					break;
+				case wpBefehl.cGetD1MiniServer:
+					returns = D1MiniServer.getServerSettings();
+					break;
+				case wpBefehl.cSetD1MiniServer:
+					param = wpBefehl.getParam(s_befehl[1]);
+					returns = D1MiniServer.setServerSetting(param[0], param[1]);
 					break;
 				case wpBefehl.cGetShellyStatus:
 					returns = ShellyServer.getAllStatus();

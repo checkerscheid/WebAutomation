@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 100                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 99 2024-05-15 14:57:32Z                         $ #
+//# File-ID      : $Id:: Alarm.cs 100 2024-05-16 23:40:04Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;

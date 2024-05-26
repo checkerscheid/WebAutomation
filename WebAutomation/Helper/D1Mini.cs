@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 105                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 99 2024-05-15 14:57:32Z                        $ #
+//# File-ID      : $Id:: D1Mini.cs 105 2024-05-26 02:22:00Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -30,6 +30,32 @@ namespace WebAutomation.Helper {
 		private static UdpClient udpClient;
 		private static int udpPort = 51346;
 		private static bool searchActive = false;
+
+		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
+		private static int _onlineTogglerSendIntervall = 30;
+		public static int OnlineTogglerSendIntervall {
+			set {
+				_onlineTogglerSendIntervall = value;
+				foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+					kvp.Value.SetOnlineTogglerSendIntervall();
+				}
+			}
+			get {
+				return _onlineTogglerSendIntervall;
+			}
+		}
+		private static int _onlineTogglerWait = 2;
+		public static int OnlineTogglerWait {
+			set {
+				_onlineTogglerWait = value;
+				foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+					kvp.Value.SetOnlineTogglerWait();
+				}
+			}
+			get {
+				return _onlineTogglerWait;
+			}
+		}
 		public static void Start() {
 			wpDebug.Write("D1 Mini Server Start");
 			D1Minis = new Dictionary<string, D1MiniDevice>();
@@ -52,11 +78,62 @@ namespace WebAutomation.Helper {
 					//d1md.sendCmd("ForceMqttUpdate");
 				}
 			}
+			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
 		}
 		public static void Stop() {
 			stopSearch();
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) kvp.Value.Stop();
+		}
+		public static void ForceRenewValue() {
+			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
+			}
+		}
+		public static string getServerSettings() {
+			return "{" + 
+				$"\"OnlineTogglerSendIntervall\":\"{OnlineTogglerSendIntervall}\"," +
+				$"\"OnlineTogglerWait\":\"{OnlineTogglerWait}\"" +
+				"}";
+		}
+		public static string setServerSetting(string setting, string value) {
+			int _v = 0;
+			int OnlineTogglerSendIntervallMin = 0;
+			int OnlineTogglerSendIntervallMax = 120;
+			int OnlineTogglerWaitMin = 1;
+			int OnlineTogglerWaitMax = 10;
+
+			if(!Int32.TryParse(value, out _v)) {
+				return  $"{{\"erg\":\"S_ERROR\",\"msg\":\"'value' is no integer ({value})\"}}";
+			}
+			switch(setting) {
+				case "OnlineTogglerSendIntervall":
+					if(_v < OnlineTogglerSendIntervallMin) {
+						wpDebug.Write($"ERROR OnlineTogglerSendIntervall, min value is {OnlineTogglerSendIntervallMin} ({_v})");
+						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"min value is {OnlineTogglerSendIntervallMin} ({_v})\"}}";
+					}
+					if(_v > OnlineTogglerSendIntervallMax) {
+						wpDebug.Write($"ERROR OnlineTogglerSendIntervall, max value is {OnlineTogglerSendIntervallMax} ({_v})");
+						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"max value is {OnlineTogglerSendIntervallMax} ({_v})\"}}";
+					}
+					OnlineTogglerSendIntervall = _v;
+					wpDebug.Write($"OnlineTogglerSendIntervall, new Value: {_v}");
+					return $"{{\"erg\":\"S_OK\"}}";
+				case "OnlineTogglerWait":
+					if(_v < OnlineTogglerWaitMin) {
+						wpDebug.Write($"ERROR OnlineTogglerWait, min value is {OnlineTogglerWaitMin} ({_v})");
+						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"min value is {OnlineTogglerWaitMin} ({_v})\"}}";
+					}
+					if(_v > OnlineTogglerWaitMax) {
+						wpDebug.Write($"ERROR OnlineTogglerWait, max value is {OnlineTogglerWaitMax} ({_v})");
+						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"max value is {OnlineTogglerWaitMax} ({_v})\"}}";
+					}
+					OnlineTogglerWait = _v;
+					wpDebug.Write($"OnlineTogglerWait, new Value: {_v}");
+					return $"{{\"erg\":\"S_OK\"}}";
+				default:
+					return $"{{\"erg\":\"S_ERROR\",\"msg\":\"unknown command\"}}";
+			}
 		}
 		public static void addD1Mini(int idd1mini) {
 			using(SQL SQL = new SQL("Select new D1Mini")) {
@@ -73,7 +150,6 @@ namespace WebAutomation.Helper {
 					D1MiniDevice d1md = new D1MiniDevice(name);
 					if(!D1Minis.ContainsKey(name)) D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
-					//d1md.sendCmd("ForceMqttUpdate");
 				}
 			}
 			Program.MainProg.wpMQTTClient.registerNewD1MiniDatapoints();
@@ -247,14 +323,12 @@ namespace WebAutomation.Helper {
 			}
 		}
 		private Timer t;
-		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
-		private int OnlineTogglerSendIntervall = 30;
 		private Timer toreset;
-		private int OnlineTogglerWait = 2;
 
 		public class cmdList {
 			public const string RestartDevice = "RestartDevice";
 			public const string ForceMqttUpdate = "ForceMqttUpdate";
+			public const string ForceRenewValue = "ForceRenewValue";
 			public const string UpdateFW = "UpdateFW";
 			public const string UnknownCmd = "UnknownCmd";
 			private string _choosenCmd;
@@ -265,6 +339,9 @@ namespace WebAutomation.Helper {
 						break;
 					case ForceMqttUpdate:
 						_choosenCmd = ForceMqttUpdate;
+						break;
+					case ForceRenewValue:
+						_choosenCmd = ForceRenewValue;
 						break;
 					case UpdateFW:
 						_choosenCmd = UpdateFW;
@@ -288,12 +365,10 @@ namespace WebAutomation.Helper {
 			"UpdateMode", "info/Online" };
 		public D1MiniDevice(string name) {
 			_name = name;
-			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall") < 0 ? OnlineTogglerSendIntervall : Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
-			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait") < 0 ? OnlineTogglerWait : Ini.getInt("D1Mini", "OnlineTogglerWait");
-			t = new Timer(OnlineTogglerSendIntervall * 1000);
+			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
-			t.Enabled = true;
-			toreset = new Timer(OnlineTogglerWait * 1000);
+			if(D1MiniServer.OnlineTogglerSendIntervall > 0) t.Start();
+			toreset = new Timer(D1MiniServer.OnlineTogglerWait * 1000);
 			toreset.AutoReset = false;
 			toreset.Elapsed += toreset_Elapsed;
 		}
@@ -303,6 +378,17 @@ namespace WebAutomation.Helper {
 			toreset.Stop();
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
+		}
+		public void SetOnlineTogglerSendIntervall() {
+			t.Interval = D1MiniServer.OnlineTogglerSendIntervall * 1000;
+			t.Stop();
+			if(D1MiniServer.OnlineTogglerSendIntervall > 0) {
+				t.Start();
+			}
+		}
+		public void SetOnlineTogglerWait() {
+			toreset.Interval = D1MiniServer.OnlineTogglerWait * 1000;
+			toreset.Stop();
 		}
 		private void onlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
 			sendOnlineQuestion();
@@ -334,7 +420,7 @@ namespace WebAutomation.Helper {
 		private void sendOnlineQuestion() {
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
-			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0");
+			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
 		private void setOnlineError(bool e) {
 			if(Program.MainProg.wpDebugD1Mini)

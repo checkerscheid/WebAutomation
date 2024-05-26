@@ -186,6 +186,7 @@ namespace WebAutomation.Helper {
 			public const string cWrite = "WriteDP";
 			public const string cWriteMulti = "WriteMultiDP";
 			public const string cWriteScene = "WriteSceneDP";
+			public const string cPublishTopic = "publishTopic";
 
 			public const string cForceMqttUpdate = "ForceMqttUpdate";
 			public const string cSetBrowseMqtt = "setBrowseMqtt";
@@ -276,6 +277,12 @@ namespace WebAutomation.Helper {
 						returns = writeSceneDP(outint, param[0]);
 					} else {
 						returns = "{ERROR=Szene nicht gefunden}";
+					}
+					break;
+				case wpBefehl.cPublishTopic:
+					param = wpBefehl.getParam(s_befehl[1]);
+					if(Int32.TryParse(param[1], out outint)) {
+						Program.MainProg.wpMQTTClient.setValue(param[0], outint.ToString());
 					}
 					break;
 				case wpBefehl.cForceMqttUpdate:

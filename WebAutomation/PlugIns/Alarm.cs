@@ -14,10 +14,8 @@
 //#                                                                                 #
 //###################################################################################
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Timers;
 using WebAutomation.Helper;
 
@@ -160,13 +158,6 @@ namespace WebAutomation.PlugIns {
 		public bool Autoquit {
 			get { return _autoquit; }
 			set { _autoquit = value; }
-		}
-		/// <summary></summary>
-		private string _alarmname;
-		/// <summary></summary>
-		public string Alarmname {
-			get { return _alarmname; }
-			set { _alarmname = value; }
 		}
 		/// <summary></summary>
 		private string _alarmtext;
@@ -492,7 +483,7 @@ namespace WebAutomation.PlugIns {
 					Now.ToString(SQL.DateTimeFormat),
 					sqlautoquit, sqlautoquitfrom, this.Alarmtext);
 			}
-			wpDebug.Write("Alarm Come: {0} - {2} ({1})", this.Alarmname, this.IdDp, this.DpName);
+			wpDebug.Write("Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 			Program.MainProg.AlarmToMail(this);
 		}
 		/// <summary>
@@ -509,7 +500,7 @@ namespace WebAutomation.PlugIns {
 					Now.ToString(SQL.DateTimeFormat),
 					_idalarm);
 			}
-			wpDebug.Write("Alarm Gone: {0} - {2} ({1})", this.Alarmname, this.IdDp, this.DpName);
+			wpDebug.Write("Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 		}
 		public void UpdateDelay(int sec) {
 			TimerStop();
@@ -561,7 +552,7 @@ namespace WebAutomation.PlugIns {
 			using (SQL SQL = new SQL("Init Alarms")) {
 				string[][] DBAlarms = SQL.wpQuery(@"
 				SELECT
-					[a].[id_alarm], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
+					[a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
 					[a].[min], [a].[max], [a].[delay],
 					COUNT([atm].[id_email]) AS [emailcounter],
@@ -575,38 +566,37 @@ namespace WebAutomation.PlugIns {
 				INNER JOIN [dp] ON [a].[id_dp] = [dp].[id_dp]
 				INNER JOIN [alarmcondition] [c] ON [a].[id_alarmcondition] = [c].[id_alarmcondition]
 				LEFT JOIN [alarmtoemail] [atm] ON [atm].[id_alarm] = [a].[id_alarm]
-				GROUP BY [a].[id_alarm], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
+				GROUP BY [a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
 					[a].[min], [a].[max], [a].[delay],
 					[a].[id_alarmgroups1], [a].[id_alarmgroups2], [a].[id_alarmgroups3],
 					[a].[id_alarmgroups4], [a].[id_alarmgroups5]");
 				for (int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBAlarms[ialarms][0]);
-					int idDp = Int32.Parse(DBAlarms[ialarms][7]);
+					int idDp = Int32.Parse(DBAlarms[ialarms][6]);
 					Alarm TheAlarm;
 					int delay;
-					if (Int32.TryParse(DBAlarms[ialarms][12], out delay)) {
-						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][8], delay);
+					if (Int32.TryParse(DBAlarms[ialarms][11], out delay)) {
+						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], delay);
 					} else {
-						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][8], 0);
+						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], 0);
 					}
-					int? emailCounter = SQL.convertNumeric(DBAlarms[ialarms][13]);
-					int? emailMinutes = SQL.convertNumeric(DBAlarms[ialarms][14]);
-					TheAlarm.Alarmname = DBAlarms[ialarms][1];
-					TheAlarm.Alarmtext = DBAlarms[ialarms][2];
-					TheAlarm.Alarmlink = DBAlarms[ialarms][3];
-					TheAlarm.Alarmtype = DBAlarms[ialarms][4];
-					TheAlarm.Autoquit = DBAlarms[ialarms][5] == "True";
-					TheAlarm.Alarmgroup = DBAlarms[ialarms][6];
-					TheAlarm.Condition = DBAlarms[ialarms][9];
-					TheAlarm.Min = DBAlarms[ialarms][10];
-					TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[ialarms][15]);
-					TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[ialarms][16]);
-					TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[ialarms][17]);
-					TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[ialarms][18]);
-					TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[ialarms][19]);
+					int? emailCounter = SQL.convertNumeric(DBAlarms[ialarms][12]);
+					int? emailMinutes = SQL.convertNumeric(DBAlarms[ialarms][13]);
+					TheAlarm.Alarmtext = DBAlarms[ialarms][1];
+					TheAlarm.Alarmlink = DBAlarms[ialarms][2];
+					TheAlarm.Alarmtype = DBAlarms[ialarms][3];
+					TheAlarm.Autoquit = DBAlarms[ialarms][4] == "True";
+					TheAlarm.Alarmgroup = DBAlarms[ialarms][5];
+					TheAlarm.Condition = DBAlarms[ialarms][8];
+					TheAlarm.Min = DBAlarms[ialarms][9];
+					TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[ialarms][14]);
+					TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[ialarms][15]);
+					TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[ialarms][16]);
+					TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[ialarms][17]);
+					TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[ialarms][18]);
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
-						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][11]);
+						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
 					_alarmList.Add(idAlarm, TheAlarm);
 					Datapoints.Get(idDp).idAlarm = idAlarm;
 				}

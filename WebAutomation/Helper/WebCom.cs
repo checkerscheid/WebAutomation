@@ -926,7 +926,7 @@ namespace WebAutomation.Helper {
 			DateTime Now = DateTime.Now;
 			string returns =
 $"{{WatchDog={WatchDogByte}}}" +
-$"{{DateTime={Now.ToString("yyyy, M-1, d, H, m, s")}}}" +
+$"{{DateTime={Now.ToString("yyyy-MM-ddTHH:mm:ss")}}}" +
 $"{{Date={Now.ToString("dd.MM.yyyy")}}}" +
 $"{{Time={Now.ToString("HH:mm:ss")}}}" +
 $"{{Alarme=";

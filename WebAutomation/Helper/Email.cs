@@ -176,7 +176,7 @@ namespace WebAutomation.Helper {
 				(Alarms.UseAlarmGroup5 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) : "") +
 				" ");
 			EmailAlarms.countup(TheAlarm.IdAlarm, 0);
-			wpDebug.Write("Alarm to Mail: {0} ({1})", TheAlarm.Alarmname, TheAlarm.Alarmtext);
+			wpDebug.Write("Alarm to Mail: {0}", TheAlarm.Alarmtext);
 		}
 		/// <summary>
 		/// 

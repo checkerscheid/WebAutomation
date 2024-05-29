@@ -852,7 +852,7 @@ namespace WebAutomation.Helper {
 
 					string[][] DBAlarms = SQL.wpQuery(@"
 						SELECT
-							[dp].[id_dp], [a].[name], [a].[text], [a].[link], [t].[name], [t].[autoquit],
+							[dp].[id_dp], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 							[g].[name], [dp].[name], [c].[condition], [a].[min], [a].[max], [a].[delay],
 							ISNULL([a].[id_alarmgroups1], 0), ISNULL([a].[id_alarmgroups2], 0),
 							ISNULL([a].[id_alarmgroups3], 0), ISNULL([a].[id_alarmgroups4], 0),
@@ -866,25 +866,24 @@ namespace WebAutomation.Helper {
 					Alarm TheAlarm = Alarms.Get(idAlarm);
 					/// TODO: ohne Neustart neuen Alarm generieren
 					if (TheAlarm != null) {
-						TheAlarm.Alarmname = DBAlarms[0][1];
-						TheAlarm.Alarmtext = DBAlarms[0][2];
-						TheAlarm.Alarmlink = DBAlarms[0][3];
-						TheAlarm.Alarmtype = DBAlarms[0][4];
-						TheAlarm.Autoquit = DBAlarms[0][5] == "True";
-						TheAlarm.Alarmgroup = DBAlarms[0][6];
-						TheAlarm.Condition = DBAlarms[0][8];
-						TheAlarm.Min = DBAlarms[0][9];
+						TheAlarm.Alarmtext = DBAlarms[0][1];
+						TheAlarm.Alarmlink = DBAlarms[0][2];
+						TheAlarm.Alarmtype = DBAlarms[0][3];
+						TheAlarm.Autoquit = DBAlarms[0][4] == "True";
+						TheAlarm.Alarmgroup = DBAlarms[0][5];
+						TheAlarm.Condition = DBAlarms[0][7];
+						TheAlarm.Min = DBAlarms[0][8];
 						if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
-							TheAlarm.Max = Int32.Parse(DBAlarms[0][10]);
+							TheAlarm.Max = Int32.Parse(DBAlarms[0][9]);
 						int delay;
-						if (Int32.TryParse(DBAlarms[0][11], out delay)) {
+						if (Int32.TryParse(DBAlarms[0][10], out delay)) {
 							TheAlarm.UpdateDelay(delay);
 						}
-						TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[0][12]);
-						TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[0][13]);
-						TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[0][14]);
-						TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[0][15]);
-						TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[0][16]);
+						TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[0][11]);
+						TheAlarm.Alarmgroups2 = Int32.Parse(DBAlarms[0][12]);
+						TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[0][13]);
+						TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[0][14]);
+						TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[0][15]);
 						TheAlarm.InAlarm = false;
 						TheAlarm.AlarmUpdate = DateTime.Now;
 						eventLog.Write(String.Format("Alarm update: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
@@ -927,7 +926,7 @@ namespace WebAutomation.Helper {
 			DateTime Now = DateTime.Now;
 			string returns =
 $"{{WatchDog={WatchDogByte}}}" +
-$"{{DateTime={Now.ToString("yyyy, M-1, d, H, m, s")}}}" +
+$"{{DateTime={Now.ToString("yyyy-MM-ddTHH:mm:ss")}}}" +
 $"{{Date={Now.ToString("dd.MM.yyyy")}}}" +
 $"{{Time={Now.ToString("HH:mm:ss")}}}" +
 $"{{Alarme=";
@@ -941,7 +940,6 @@ $"{{Alarme=";
 		$"{{Quit={(TheAlarm.Value.Quit == Alarm.Default ? "-" : TheAlarm.Value.Quit.ToString())}}}" +
 		$"{{Type={TheAlarm.Value.Alarmtype}}}" +
 		$"{{Group={TheAlarm.Value.Alarmgroup}}}" +
-		$"{{Name={TheAlarm.Value.Alarmname}}}" +
 		$"{{Text={TheAlarm.Value.Alarmtext}}}" +
 		$"{{Link={TheAlarm.Value.Alarmlink}}}" +
 		$"{{AlarmUpdate={TheAlarm.Value.AlarmUpdate.ToString()}}}" +

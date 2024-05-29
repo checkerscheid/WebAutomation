@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 106                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 99 2024-05-15 14:57:32Z                         $ #
+//# File-ID      : $Id:: Email.cs 106 2024-05-29 01:25:19Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;

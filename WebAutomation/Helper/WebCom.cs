@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 105                                                     $ #
+//# Revision     : $Rev:: 106                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 105 2024-05-26 02:22:00Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 106 2024-05-29 01:25:19Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;

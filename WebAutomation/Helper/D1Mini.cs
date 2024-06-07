@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -72,13 +73,15 @@ namespace WebAutomation.Helper {
 					description = Query1[i][2];
 					IPAddress.TryParse(Query1[i][3], out ip);
 					mac = Query1[i][4];
-					D1MiniDevice d1md = new D1MiniDevice(name);
+					D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
+					d1md.readDeviceDescription = description;
 					D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
 					//d1md.sendCmd("ForceMqttUpdate");
 				}
 			}
 			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait");
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
 		}
 		public static void Stop() {
@@ -147,7 +150,7 @@ namespace WebAutomation.Helper {
 					description = Query1[0][1];
 					IPAddress.TryParse(Query1[0][2], out ip);
 					mac = Query1[0][3];
-					D1MiniDevice d1md = new D1MiniDevice(name);
+					D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
 					if(!D1Minis.ContainsKey(name)) D1Minis.Add(name, d1md);
 					addSubscribtions(d1md.getSubscribtions());
 				}
@@ -299,6 +302,9 @@ namespace WebAutomation.Helper {
 	}
 	public class D1MiniDevice {
 		private string _name;
+		private IPAddress _ipAddress;
+		private string _mac;
+		private string _description;
 
 		public string readDeviceName;
 		public string readDeviceDescription;
@@ -363,8 +369,11 @@ namespace WebAutomation.Helper {
 			"info/Version", "info/wpFreakaZone",
 			"info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID",
 			"UpdateMode", "info/Online" };
-		public D1MiniDevice(string name) {
+		public D1MiniDevice(String name, IPAddress ip, String mac, String description) {
 			_name = name;
+			_ipAddress = ip;
+			_mac = mac;
+			_description = description;
 			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
 			if(D1MiniServer.OnlineTogglerSendIntervall > 0) t.Start();
@@ -395,8 +404,12 @@ namespace WebAutomation.Helper {
 		}
 		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
 			if(Program.MainProg.wpDebugD1Mini)
-				wpDebug.Write($"{_name}: no response, ");
-			setOnlineError();
+				wpDebug.Write($"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+			//last chance
+			Ping _ping = new Ping();
+			if(_ping.Send(_ipAddress, 750) == null) {
+				setOnlineError();
+			}
 		}
 
 		public List<string> getSubscribtions() {

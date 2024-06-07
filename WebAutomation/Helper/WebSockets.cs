@@ -242,41 +242,44 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public void sendDatapoint(string name) {
+			string msg = "";
+			using(SQL SQL = new SQL("get id from Datapoint")) {
+				string[][] Query = SQL.wpQuery($"SELECT [id_dp] FROM [dp] WHERE [name] = '{name}'");
+				int iddatapoint = 0;
+				Int32.TryParse(Query[0][0], out iddatapoint);
+				Datapoint datapoint = Datapoints.Get(iddatapoint); 
+				msg = "{" +
+					$"\"id\":{iddatapoint}," +
+					$"\"name\":\"{name}\"," +
+					$"\"value\":\"{datapoint.Value}\"," +
+					$"\"valuestring\":\"{datapoint.ValueString}\"," +
+					$"\"nks\":{datapoint.NKS}," +
+					$"\"unit\":\"{datapoint.Unit}\"," +
+					$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
+				"}";
+			}
 			foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
 				if(entry.Value.hasDatapoint(name)) {
-					using(SQL SQL = new SQL("get id from Datapoint")) {
-						string[][] Query = SQL.wpQuery($"SELECT [id_dp] FROM [dp] WHERE [name] = '{name}'");
-						int iddatapoint = 0;
-						Int32.TryParse(Query[0][0], out iddatapoint);
-						Datapoint datapoint = Datapoints.Get(iddatapoint);
-						entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
-						entry.Value.message += "{" +
-							$"\"id\":{iddatapoint}," +
-							$"\"name\":\"{name}\"," +
-							$"\"value\":\"{datapoint.Value}\"," +
-							$"\"valuestring\":\"{datapoint.ValueString}\"," +
-							$"\"nks\":{datapoint.NKS}," +
-							$"\"unit\":\"{datapoint.Unit}\"," +
-							$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
-						"}";
-					}
+					entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
+					entry.Value.message += msg;
 				}
 			}
 		}
 		public void sendDatapoint(Datapoint DP) {
 			try {
+				string msg = "{" +
+					$"\"id\":{DP.ID}," +
+					$"\"name\":\"{DP.Name}\"," +
+					$"\"value\":\"{DP.Value}\"," +
+					$"\"valuestring\":\"{DP.ValueString}\"," +
+					$"\"nks\":{DP.NKS}," +
+					$"\"unit\":\"{DP.Unit}\"," +
+					$"\"lastchange\":\"{DP.LastChange.ToString("s")}\"" +
+				"}";
 				foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
 					if(entry.Value.hasDatapoint(DP.Name)) {
 						entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
-						entry.Value.message += "{" +
-							$"\"id\":{DP.ID}," +
-							$"\"name\":\"{DP.Name}\"," +
-							$"\"value\":\"{DP.Value}\"," +
-							$"\"valuestring\":\"{DP.ValueString}\"," +
-							$"\"nks\":{DP.NKS}," +
-							$"\"unit\":\"{DP.Unit}\"," +
-							$"\"lastchange\":\"{DP.LastChange.ToString("s")}\"" +
-						"}";
+						entry.Value.message += msg;
 					}
 				}
 			} catch(Exception ex) {

@@ -504,7 +504,7 @@ namespace WebAutomation.Helper {
 							if(ShellyType.isGen2(this.type))
 								Datapoints.Get(this.id_onoff).setValue(sds.output ? "True" : "False");
 						}
-						eventLog.Write(result);
+						if(Program.MainProg.wpDebugShelly) eventLog.Write(result);
 
 						if(ShellyType.isGen2(this.type)) {
 							target = $"{url}/rpc/Mqtt.GetConfig";

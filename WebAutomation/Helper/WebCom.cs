@@ -103,7 +103,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		/// <param name="client"></param>
-		private void TCP_HandleClient(object client) {
+		private async void TCP_HandleClient(object client) {
 			TcpClient tcpClient = (TcpClient)client;
 			try {
 				string s_message = "";
@@ -115,7 +115,7 @@ namespace WebAutomation.Helper {
 					s_message += encoder.GetString(message, 0, bytesRead);
 				} while (clientStream.DataAvailable);
 				if (!isFinished) {
-					byte[] answer = getAnswer(s_message);
+					byte[] answer = await getAnswer(s_message);
 					clientStream.Write(answer, 0, answer.Length);
 					clientStream.Flush();
 					clientStream.Close();
@@ -242,7 +242,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private byte[] getAnswer(string text) {
+		private async Task<byte[]> getAnswer(string text) {
 			string returns = "{ERROR=undefined command}";
 			string[] s_befehl = wpBefehl.getBefehl(text);
 			string[] param;
@@ -281,9 +281,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cPublishTopic:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if(Int32.TryParse(param[1], out outint)) {
-						Program.MainProg.wpMQTTClient.setValue(param[0], outint.ToString());
-					}
+					returns = await Program.MainProg.wpMQTTClient.setValue(param[0], param[1]);
 					break;
 				case wpBefehl.cForceMqttUpdate:
 					returns = ForceMqttUpdate();

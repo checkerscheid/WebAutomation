@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 105                                                     $ #
+//# Revision     : $Rev:: 107                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 105 2024-05-26 02:22:00Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 107 2024-06-13 09:50:13Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -407,7 +407,7 @@ namespace WebAutomation.Helper {
 				wpDebug.Write($"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
-			if(_ping.Send(_ipAddress, 750) == null) {
+			if(_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
 				setOnlineError();
 			}
 		}
@@ -422,7 +422,7 @@ namespace WebAutomation.Helper {
 		public bool sendCmd(cmdList cmd) {
 			bool returns = false;
 			if(cmd.isValid) {
-				Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.cmd, "1");
+				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.cmd, "1");
 				wpDebug.Write($"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
 				returns = true;
 			} else {
@@ -433,12 +433,12 @@ namespace WebAutomation.Helper {
 		private void sendOnlineQuestion() {
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
-			Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
+			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
 		private void setOnlineError(bool e) {
 			if(Program.MainProg.wpDebugD1Mini)
 				wpDebug.Write($"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
-			Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
+			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
 		private void setOnlineError() {
 			setOnlineError(true);

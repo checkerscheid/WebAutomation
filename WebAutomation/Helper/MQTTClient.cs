@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 105                                                     $ #
+//# Revision     : $Rev:: 107                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 105 2024-05-26 02:22:00Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 107 2024-06-13 09:50:13Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;
@@ -341,10 +341,11 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				wpDebug.Write($"setValue: ID not found: {IdTopic}");
 			}
 		}
-		public void setValue(string topic, string value) {
-			setValue(topic, value, MqttQualityOfServiceLevel.AtMostOnce);
+		public async Task<string> setValue(string topic, string value) {
+			return await setValue(topic, value, MqttQualityOfServiceLevel.AtMostOnce);
 		}
-		public void setValue(string topic, string value, MqttQualityOfServiceLevel QoS) {
+		public async Task<string> setValue(string topic, string value, MqttQualityOfServiceLevel QoS) {
+			string returns = "{\"erg\":\"S_OK\"}";
 			if(topic != string.Empty) {
 				try {
 					MqttApplicationMessage msg = new MqttApplicationMessage {
@@ -352,15 +353,23 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 						PayloadSegment = getFromString(value),
 						QualityOfServiceLevel = QoS
 					};
-					_mqttClient.PublishAsync(msg);
+					await _mqttClient.PublishAsync(msg);
 					if(Program.MainProg.wpDebugMQTT)
 						wpDebug.Write($"setValue: {topic}, value: {value}");
 				} catch(Exception ex) {
 					wpDebug.WriteError(ex);
+					returns = "{\"erg\":\"S_ERROR\", \"msg\":\"" + ex.Message + "\"}";
+				} finally {
+					if(!_mqttClient.IsConnected) {
+						wpDebug.Write("Connection Lost, try to reconnect");
+						_ = Start();
+					}
 				}
 			} else {
 				wpDebug.Write($"setValue: topic not set");
+				returns = "{\"erg\":\"S_Warning\", \"msg\":\"topic is Empty\"}";
 			}
+			return returns;
 		}
 		private ArraySegment<byte> getFromString(string m) {
 			return new ArraySegment<byte>(Encoding.UTF8.GetBytes(m));

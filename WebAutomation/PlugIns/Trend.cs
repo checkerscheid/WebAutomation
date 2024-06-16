@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 99 2024-05-15 14:57:32Z                         $ #
+//# File-ID      : $Id:: Trend.cs 109 2024-06-16 15:59:41Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;

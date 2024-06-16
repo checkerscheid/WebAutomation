@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 107                                                     $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 107 2024-06-13 09:50:13Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 109 2024-06-16 15:59:41Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;

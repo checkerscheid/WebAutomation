@@ -296,8 +296,7 @@ namespace WebAutomation.Helper {
 					returns = D1MiniMqttUpdate();
 					break;
 				case wpBefehl.cSetBrowseMqtt:
-					_ = Program.MainProg.wpMQTTClient.setBrowseTopics();
-					returns = "S_OK";
+					returns = await Program.MainProg.wpMQTTClient.setBrowseTopics();
 					break;
 				case wpBefehl.cUnsetBrowseMqtt:
 					_ = Program.MainProg.wpMQTTClient.unsetBrowseTopics();

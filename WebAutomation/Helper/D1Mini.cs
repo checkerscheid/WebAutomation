@@ -93,10 +93,13 @@ namespace WebAutomation.Helper {
 				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
 			}
 		}
-		public static void ForceMqttUpdate() {
+		public static bool ForceMqttUpdate() {
+			bool returns = false;
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceMqttUpdate));
+				if(!kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceMqttUpdate)))
+					returns = false;
 			}
+			return returns;
 		}
 		public static string getServerSettings() {
 			return "{" + 

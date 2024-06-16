@@ -388,8 +388,10 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public bool forceMqttUpdate() {
 			bool returns = true;
-			returns = shellyMqttUpdate();
-			d1MiniMqttUpdate();
+			if(!shellyMqttUpdate())
+				returns = false;
+			if(!d1MiniMqttUpdate()) 
+				returns = false;
 			return returns;
 		}
 		public bool shellyMqttUpdate() {

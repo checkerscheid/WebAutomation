@@ -90,6 +90,11 @@ namespace WebAutomation.Helper {
 				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
 			}
 		}
+		public static void ForceMqttUpdate() {
+			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceMqttUpdate));
+			}
+		}
 		public static string getServerSettings() {
 			return "{" + 
 				$"\"OnlineTogglerSendIntervall\":\"{OnlineTogglerSendIntervall}\"," +

@@ -377,6 +377,12 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public bool forceMqttUpdate() {
 			bool returns = true;
+			returns = shellyMqttUpdate();
+			d1MiniMqttUpdate();
+			return returns;
+		}
+		public bool shellyMqttUpdate() {
+			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
 			foreach(string mqtt_id in ShellyServer.ForceMqttUpdateAvailable) {
 				msg.Topic = $"{mqtt_id}/ForceMqttUpdate";
@@ -391,6 +397,11 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					returns = false;
 				}
 			}
+			return returns;
+		}
+		public bool d1MiniMqttUpdate() {
+			bool returns = true;
+			D1MiniServer.ForceMqttUpdate();
 			return returns;
 		}
 		private void doneMyMqttUpdate() {

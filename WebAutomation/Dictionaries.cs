@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 99 2024-05-15 14:57:32Z                  $ #
+//# File-ID      : $Id:: Dictionaries.cs 109 2024-06-16 15:59:41Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json.Linq;
@@ -90,7 +90,7 @@ namespace WebAutomation {
 					Int32.TryParse(erg[0][i++], out _idNamespace);
 				}
 			}
-			wpDebug.Write($"Datapoint Created {_name} ({_id})");
+			if(wpDebug.debugSystem) wpDebug.Write($"Datapoint Created {_name} ({_id})");
 		}
 		public void setValue(string value) {
 			setValue(value, "'Dictionary'");
@@ -110,8 +110,8 @@ namespace WebAutomation {
 					Trends.Get((int)_idTrend).SetTrendValue();
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(Program.MainProg.wpDebugWebSockets)
-					Debug.WriteLine($"Datenpunk gesetzt '{_name}': {_valueString} ({_value})");
+				if(wpDebug.debugWebSockets)
+					Debug.WriteLine($"Datenpunkt gesetzt '{_name}': {_valueString} ({_value})");
 			}
 		}
 		public string parseValueString() {

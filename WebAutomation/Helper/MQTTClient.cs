@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 108                                                     $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 108 2024-06-15 00:42:36Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 109 2024-06-16 15:59:41Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;
@@ -138,7 +138,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 						try {
 							await _mqttClient.SubscribeAsync(kvp1.Key);
 							subscribed.Add(kvp1.Key);
-							if(Program.MainProg.wpDebugMQTT) {
+							if(wpDebug.debugMQTT) {
 								wpDebug.Write($"Add MQTT Topic: {kvp1.Key}");
 							}
 						} catch(Exception ex) {
@@ -151,7 +151,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				if(!subscribed.Contains(d1m)) {
 					await _mqttClient.SubscribeAsync(d1m);
 					subscribed.Add(d1m);
-					if(Program.MainProg.wpDebugMQTT) {
+					if(wpDebug.debugMQTT) {
 						wpDebug.Write($"Add D1Mini MQTT Topic: {d1m}");
 					}
 				}
@@ -166,7 +166,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				if(!subscribed.Contains(d1m)) {
 					await _mqttClient.SubscribeAsync(d1m);
 					subscribed.Add(d1m);
-					if(Program.MainProg.wpDebugMQTT) {
+					if(wpDebug.debugMQTT) {
 						wpDebug.Write($"Add D1Mini MQTT Topic: {d1m}");
 					}
 				}
@@ -178,7 +178,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				foreach(string unsubscribe in subscribed) {
 					try {
 						await _mqttClient.UnsubscribeAsync(unsubscribe);
-						if(Program.MainProg.wpDebugMQTT) {
+						if(wpDebug.debugMQTT) {
 							wpDebug.Write($"Unsubscribe MQTT Topic: {unsubscribe}");
 						}
 					} catch(Exception ex) {
@@ -198,7 +198,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		private Task MqttClient_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e) {
 			string v = e.ApplicationMessage.ConvertPayloadToString();
-			if(Program.MainProg.wpDebugMQTT) {
+			if(wpDebug.debugMQTT) {
 				wpDebug.Write($"Topic: {e.ApplicationMessage.Topic}, value: {v}");
 			}
 			if(!_serverTopics.Contains(e.ApplicationMessage.Topic)) {
@@ -207,7 +207,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			if(e.ApplicationMessage.Topic == ForceUpdate && v != "0") {
 				publishSettings();
 				doneMyMqttUpdate();
-				if(Program.MainProg.wpDebugMQTT) {
+				if(wpDebug.debugMQTT) {
 					wpDebug.Write("ForceMqttUpdate finished");
 				}
 			}
@@ -215,7 +215,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			vcea.topic = e.ApplicationMessage.Topic;
 			vcea.idDatapoint = 0;
 			if(_topics.ContainsKey(e.ApplicationMessage.Topic)) {
-				if(Program.MainProg.wpDebugMQTT) {
+				if(wpDebug.debugMQTT) {
 					wpDebug.Write($"Topic: {e.ApplicationMessage.Topic}, value: {v}");
 				}
 				if(wpHelp.IsValidJson(v)) {
@@ -335,7 +335,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					QualityOfServiceLevel = QoS
 				};
 				_mqttClient.PublishAsync(msg);
-				if(Program.MainProg.wpDebugMQTT)
+				if(wpDebug.debugMQTT)
 					wpDebug.Write($"setValue: {msg.Topic} ({IdTopic}), value: {value}");
 			} else {
 				wpDebug.Write($"setValue: ID not found: {IdTopic}");
@@ -354,7 +354,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 						QualityOfServiceLevel = QoS
 					};
 					await _mqttClient.PublishAsync(msg);
-					if(Program.MainProg.wpDebugMQTT)
+					if(wpDebug.debugMQTT)
 						wpDebug.Write($"setValue: {topic}, value: {value}");
 				} catch(Exception ex) {
 					wpDebug.WriteError(ex);
@@ -392,10 +392,10 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				try {
 					msg.PayloadSegment = getFromString("1");
 					_mqttClient.PublishAsync(msg);
-					if(Program.MainProg.wpDebugMQTT)
+					if(wpDebug.debugMQTT)
 						wpDebug.Write($"ForceMqttUpdate: {mqtt_id}");
 				} catch(Exception ex) {
-					if(Program.MainProg.wpDebugMQTT)
+					if(wpDebug.debugMQTT)
 						wpDebug.WriteError(ex, msg.Topic);
 					returns = false;
 				}
@@ -407,7 +407,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			msg.Topic = ForceUpdate;
 			msg.PayloadSegment = new ArraySegment<byte>(Encoding.UTF8.GetBytes("0"));
 			_mqttClient.PublishAsync(msg);
-			if(Program.MainProg.wpDebugMQTT) {
+			if(wpDebug.debugMQTT) {
 				wpDebug.Write("write ForceMqttUpdate");
 			}
 		}
@@ -423,7 +423,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			debug = true;
 #endif
 			addSetting("Debugmode", debug ? "true" : "false");
-			addSetting("DebugModules", Program.MainProg.getDebugJson());
+			addSetting("DebugModules", wpDebug.getDebugJson());
 			MqttApplicationMessage msg = new MqttApplicationMessage();
 			msg.Retain = true;
 			foreach(KeyValuePair<string, string> kvp in _settings) {

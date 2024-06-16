@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 99 2024-05-15 14:57:32Z           $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 109 2024-06-16 15:59:41Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -75,70 +75,6 @@ namespace WebAutomation {
 		public bool BrowseMqtt {
 			set { _browseMqtt = value; }
 			get { return _browseMqtt; }
-		}
-
-		private bool _wpDebug;
-		public bool wpDebug {
-			get { return _wpDebug; }
-		}
-
-		private bool _wpDebugSQL;
-		public bool wpDebugSQL {
-			get { return _wpDebugSQL; }
-		}
-
-		private bool _wpDebugOPC;
-		public bool wpDebugOPC {
-			get { return _wpDebugOPC; }
-		}
-
-		private bool _wpDebugTransferID;
-		public bool wpDebugTransferID {
-			get { return _wpDebugTransferID; }
-		}
-
-		private bool _wpDebugWatchdog;
-		public bool wpDebugWatchdog {
-			get { return _wpDebugWatchdog; }
-		}
-
-		private bool _wpDebugFactor;
-		public bool wpDebugFactor {
-			get { return _wpDebugFactor; }
-		}
-
-		private bool _wpDebugTrend;
-		public bool wpDebugTrend {
-			get { return _wpDebugTrend; }
-		}
-
-		private bool _wpDebugCalendar;
-		public bool wpDebugCalendar {
-			get { return _wpDebugCalendar; }
-		}
-
-		private bool _wpDebugOpcRouter;
-		public bool wpDebugOpcRouter {
-			get { return _wpDebugOpcRouter; }
-		}
-
-		private bool _wpDebugWebSockets;
-		public bool wpDebugWebSockets {
-			get { return _wpDebugWebSockets; }
-		}
-
-		private bool _wpDebugShelly;
-		public bool wpDebugShelly {
-			get { return _wpDebugShelly; }
-		}
-		private bool _wpDebugD1Mini;
-		public bool wpDebugD1Mini {
-			get { return _wpDebugD1Mini; }
-		}
-
-		private bool _wpDebugMQTT;
-		public bool wpDebugMQTT {
-			get { return _wpDebugMQTT; }
 		}
 
 		private bool _wpBigProject;
@@ -543,111 +479,6 @@ namespace WebAutomation {
 				return returns;
 			}
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
-		public string getDebugJson() {
-			string returns = "{";
-			returns += $"\"wpDebug\":{(_wpDebug ? "true" : "false")},";
-			returns += $"\"wpDebugSQL\":{(_wpDebugSQL ? "true" : "false")},";
-			returns += $"\"wpDebugOPC\":{(_wpDebugOPC ? "true" : "false")},";
-			returns += $"\"wpDebugTransferID\":{(_wpDebugTransferID ? "true" : "false")},";
-			returns += $"\"wpDebugWatchdog\":{(_wpDebugWatchdog ? "true" : "false")},";
-			returns += $"\"wpDebugFactor\":{(_wpDebugFactor ? "true" : "false")},";
-			returns += $"\"wpDebugTrend\":{(_wpDebugTrend ? "true" : "false")},";
-			returns += $"\"wpDebugCalendar\":{(_wpDebugCalendar ? "true" : "false")},";
-			returns += $"\"wpDebugOpcRouter\":{(_wpDebugOpcRouter ? "true" : "false")},";
-			returns += $"\"wpDebugWebSockets\":{(_wpDebugWebSockets ? "true" : "false")},";
-			returns += $"\"wpDebugShelly\":{(_wpDebugShelly ? "true" : "false")},";
-			returns += $"\"wpDebugD1Mini\":{(_wpDebugD1Mini ? "true" : "false")},";
-			returns += $"\"wpDebugMQTT\":{(_wpDebugMQTT ? "true" : "false")}";
-			return returns + "}";
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="debugArea"></param>
-		/// <returns></returns>
-		public string setDebug(string[] wpDebug) {
-			string debugArea;
-			if(wpDebug == null)
-				debugArea = "";
-			else
-				debugArea = wpDebug[0];
-			string returns = "{";
-			switch(debugArea) {
-				case "wpDebug":
-					_wpDebug = !_wpDebug;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebug})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebug})\"";
-					break;
-				case "wpDebugSQL":
-					_wpDebugSQL = !_wpDebugSQL;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugSQL})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugSQL})\"";
-					break;
-				case "wpDebugOPC":
-					_wpDebugOPC = !_wpDebugOPC;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugOPC})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugOPC})\"";
-					break;
-				case "wpDebugTransferID":
-					_wpDebugTransferID = !_wpDebugTransferID;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugTransferID})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugTransferID})\"";
-					break;
-				case "wpDebugWatchdog":
-					_wpDebugWatchdog = !_wpDebugWatchdog;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugWatchdog})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugWatchdog})\"";
-					break;
-				case "wpDebugFactor":
-					_wpDebugFactor = !_wpDebugFactor;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugFactor})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugFactor})\"";
-					break;
-				case "wpDebugTrend":
-					_wpDebugTrend = !_wpDebugTrend;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugTrend})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugTrend})\"";
-					break;
-				case "wpDebugCalendar":
-					_wpDebugCalendar = !_wpDebugCalendar;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugCalendar})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugCalendar})\"";
-					break;
-				case "wpDebugOpcRouter":
-					_wpDebugOpcRouter = !_wpDebugOpcRouter;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugOpcRouter})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugOpcRouter})\"";
-					break;
-				case "wpDebugWebSockets":
-					_wpDebugWebSockets = !_wpDebugWebSockets;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugWebSockets})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugWebSockets})\"";
-					break;
-				case "wpDebugShelly":
-					_wpDebugShelly = !_wpDebugShelly;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugShelly})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugShelly})\"";
-					break;
-				case "wpDebugD1Mini":
-					_wpDebugD1Mini = !_wpDebugD1Mini;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugD1Mini})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugD1Mini})\"";
-					break;
-				case "wpDebugMQTT":
-					_wpDebugMQTT = !_wpDebugMQTT;
-					eventLog.Write($"success: Setting {debugArea} changed ({_wpDebugMQTT})");
-					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({_wpDebugMQTT})\"";
-					break;
-				default:
-					returns += "\"erg\":\"S_ERROR\",\"msg\":\"undefined command\"";
-					break;
-			}
-			return returns + "}";
-		}
 
 		#endregion
 
@@ -672,19 +503,6 @@ namespace WebAutomation {
 			_isInit = false;
 			eventLog = new Logger(wpEventLog.Automation);
 
-			_wpDebug = false;
-			_wpDebugSQL = false;
-			_wpDebugOPC = false;
-			_wpDebugTransferID = false;
-			_wpDebugWatchdog = false;
-			_wpDebugFactor = false;
-			_wpDebugTrend = false;
-			_wpDebugCalendar = false;
-			_wpDebugOpcRouter = false;
-			_wpDebugWebSockets = false;
-			_wpDebugShelly = false;
-			_wpDebugD1Mini = false;
-			_wpDebugMQTT = false;
 			_wpWartung = false;
 			_wpStartMinimized = false;
 			_wpAllowCloseBrowser = false;
@@ -693,73 +511,7 @@ namespace WebAutomation {
 			_wpPSOPC = false;
 			if (args.Length > 0) {
 				for (int i = 0; i < args.Length; i++) args[i] = args[i].ToLower();
-				if (Arrays.inArray("wpDebug".ToLower(), args)) {
-					_wpDebug = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugSQL".ToLower(), args)) {
-					_wpDebugSQL = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug SQL Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugOPC".ToLower(), args)) {
-					_wpDebugOPC = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug OPC Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugTransferID".ToLower(), args)) {
-					_wpDebugTransferID = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Transfer ID Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugWatchdog".ToLower(), args)) {
-					_wpDebugWatchdog = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Watchdog Modus' gestartet", Application.ProductName);
-				}
-				if (Arrays.inArray("wpDebugFactor".ToLower(), args)) {
-					_wpDebugFactor = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Factor Modus' gestartet", Application.ProductName);
-				}
-				if (Arrays.inArray("wpDebugTrend".ToLower(), args)) {
-					_wpDebugTrend = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Trend Modus' gestartet", Application.ProductName);
-				}
-				if (Arrays.inArray("wpDebugCalendar".ToLower(), args)) {
-					_wpDebugCalendar = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Calendar Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugOpcRouter".ToLower(), args)) {
-					_wpDebugOpcRouter = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug OPC Router Modus' gestartet", Application.ProductName);
-				}
-#if wpAutomation
-				if(Arrays.inArray("wpDebugWebSocket".ToLower(), args)) {
-					_wpDebugWebSockets = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug WebSockets Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugShelly".ToLower(), args)) {
-					_wpDebugShelly = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug Shelly Modus' gestartet", Application.ProductName);
-				}
-				if(Arrays.inArray("wpDebugD1Mini".ToLower(), args)) {
-					_wpDebugD1Mini = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug D1Mini Modus' gestartet", Application.ProductName);
-				}
-				if (Arrays.inArray("wpDebugMQTT".ToLower(), args)) {
-					_wpDebugMQTT = true;
-					eventLog.Write(EventLogEntryType.Warning,
-						"{0} Server im 'Debug MQTT Modus' gestartet", Application.ProductName);
-				}
-#endif
+				wpDebug.setDebugs(args);
 				if (Arrays.inArray("wpWartung".ToLower(), args)) {
 					_wpWartung = true;
 					eventLog.Write(EventLogEntryType.Warning,

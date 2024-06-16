@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 77                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 77 2024-03-13 18:22:41Z                      $ #
+//# File-ID      : $Id:: Calendar.cs 109 2024-06-16 15:59:41Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -66,7 +66,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			Stopwatch sw = new Stopwatch();
-			if(Program.MainProg.wpDebugCalendar) {
+			if(wpDebug.debugCalendar) {
 				sw.Start();
 				wpDebug.Write($"Start getCalendar {name} ({calid})");
 			}
@@ -142,7 +142,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 
-			if(Program.MainProg.wpDebugCalendar) {
+			if(wpDebug.debugCalendar) {
 				sw.Stop();
 				wpDebug.Write($"Stop getCalendar {name} ({calid}), Dauer: {sw.ElapsedMilliseconds} ms");
 			}
@@ -408,7 +408,7 @@ namespace WebAutomation.PlugIns {
 				_res.Add(0, _last);
 				_res.Add(1, _next);
 				int maxTime;
-				if(Program.MainProg.wpDebugCalendar) {
+				if(wpDebug.debugCalendar) {
 					maxTime = 1000 * 60 * 5; // in Millisekunden
 				} else {
 					maxTime = 1000 * 60 * 60 * 24 * 15; // in Millisekunden (ms * sek * min * stunden * tage)
@@ -541,10 +541,10 @@ namespace WebAutomation.PlugIns {
 						for(int iday = wds; iday <= 7; iday++) {
 							if(Array.IndexOf(_byday, iday) >= 0) {
 								dts = CalendarHelp.getNextDay(dts, iday);
-								if(Program.MainProg.wpDebugCalendar)
+								if(wpDebug.debugCalendar)
 									wpDebug.Write($"Calendar '{_calName}' ({_calId}) ByDay Schedule found: {dts}");
 								if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-									if(Program.MainProg.wpDebugCalendar)
+									if(wpDebug.debugCalendar)
 										wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 								} else {
 									if(_has_until && dts > _until) {
@@ -585,10 +585,10 @@ namespace WebAutomation.PlugIns {
 						for(int iday = wds; iday <= 7; iday++) {
 							if(Array.IndexOf(_byday, iday) >= 0) {
 								dts = CalendarHelp.getNextDay(dts, iday);
-								if(Program.MainProg.wpDebugCalendar)
+								if(wpDebug.debugCalendar)
 									wpDebug.Write($"Calendar '{_calName}' ({_calId}) ByDay Schedule found: {dts}");
 								if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-									if(Program.MainProg.wpDebugCalendar)
+									if(wpDebug.debugCalendar)
 										wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 								} else {
 									if(_has_until && dts > _until) {
@@ -639,10 +639,10 @@ namespace WebAutomation.PlugIns {
 				if(_has_count) {
 					for(int i = 0; i < _count; i++) {
 						dts = dts + new TimeSpan(days, 0, 0, 0);
-						if(Program.MainProg.wpDebugCalendar)
+						if(wpDebug.debugCalendar)
 							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Daily Schedule found: {dts}");
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {
@@ -669,10 +669,10 @@ namespace WebAutomation.PlugIns {
 					bool stop = false;
 					do {
 						dts = dts + new TimeSpan(days, 0, 0, 0);
-						if(Program.MainProg.wpDebugCalendar)
+						if(wpDebug.debugCalendar)
 							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Daily Schedule found: {dts}");
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {
@@ -715,10 +715,10 @@ namespace WebAutomation.PlugIns {
 								dts = dts.AddDays(1);
 							}
 						}
-						if(Program.MainProg.wpDebugCalendar)
+						if(wpDebug.debugCalendar)
 							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Monthly Schedule found: {dts}");
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {
@@ -751,10 +751,10 @@ namespace WebAutomation.PlugIns {
 								dts = dts.AddDays(1);
 							}
 						}
-						if(Program.MainProg.wpDebugCalendar)
+						if(wpDebug.debugCalendar)
 							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Monthly Schedule found: {dts}");
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {
@@ -791,7 +791,7 @@ namespace WebAutomation.PlugIns {
 					for(int i = 0; i < _count; i++) {
 						dts = dts.AddYears(year);
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {
@@ -819,7 +819,7 @@ namespace WebAutomation.PlugIns {
 					do {
 						dts = dts.AddYears(year);
 						if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
-							if(Program.MainProg.wpDebugCalendar)
+							if(wpDebug.debugCalendar)
 								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Ausnahme gefunden: {dts}");
 						} else {
 							if(_has_until && dts > _until) {

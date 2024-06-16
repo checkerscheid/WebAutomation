@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 99 2024-05-15 14:57:32Z                         $ #
+//# File-ID      : $Id:: Trend.cs 109 2024-06-16 15:59:41Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -155,11 +155,11 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
 			if(_active) onChangeMinValue.Start();
-			wpDebug.Write($"Trend Init {_trendname}");
+			if(wpDebug.debugTrend) wpDebug.Write($"Trend Init {_trendname}");
 		}
 		private int SetMinIntervall() {
 			if(_intervall == 0) {
-				if(Program.MainProg.wpDebugTrend)
+				if(wpDebug.debugTrend)
 					minMinutes = 1 * 60;
 				else
 					minMinutes = 14 * 60;
@@ -264,7 +264,7 @@ namespace WebAutomation.PlugIns {
 
 				TrendArchivFolder();
 
-				if (Program.MainProg.wpDebugTrend) {
+				if (wpDebug.debugTrend) {
 					_maxCounter = 1 * 60;
 				} else {
 					_maxCounter = 90 * 60;
@@ -394,13 +394,13 @@ namespace WebAutomation.PlugIns {
 							if (saveToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
 									saveToOld, t.TrendName, watchTrend.Elapsed);
-								if (Program.MainProg.wpDebugTrend) wpDebug.Write(saveedToOld);
+								if (wpDebug.debugTrend) wpDebug.Write(saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
 							}
 							if (saveToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
 									saveToMuch, t.TrendName, watchTrend.Elapsed);
-								if (Program.MainProg.wpDebugTrend) wpDebug.Write(saveedToMuch);
+								if (wpDebug.debugTrend) wpDebug.Write(saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
 							}
 						} else {
@@ -409,14 +409,14 @@ namespace WebAutomation.PlugIns {
 						if (deleteToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
 								deleteToOld, t.TrendName, watchTrend.Elapsed);
-							if (Program.MainProg.wpDebugTrend) wpDebug.Write(deletedToOld);
+							if (wpDebug.debugTrend) wpDebug.Write(deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
 							trendsToOld++;
 						}
 						if (deleteToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
 								deleteToMuch, t.TrendName, watchTrend.Elapsed);
-							if (Program.MainProg.wpDebugTrend) wpDebug.Write(deletedToMuch);
+							if (wpDebug.debugTrend) wpDebug.Write(deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
 							trendsToMuch++;
 						}

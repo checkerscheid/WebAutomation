@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 86                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 86 2024-03-24 01:56:33Z                    $ #
+//# File-ID      : $Id:: WebSockets.cs 109 2024-06-16 15:59:41Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -86,7 +86,7 @@ namespace WebAutomation.Helper {
 							if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
 								if(tcpClient.message != "") {
 									try {
-										if(Program.MainProg.wpDebugWebSockets)
+										if(wpDebug.debugWebSockets)
 											wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
 										byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
 										stream.Write(answerbytes, 0, answerbytes.Length);
@@ -131,7 +131,7 @@ namespace WebAutomation.Helper {
 							byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("PONG");
 							stream.Write(answerbytes, 0, answerbytes.Length);
 						} else {
-							if(Program.MainProg.wpDebugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
+							if(wpDebug.debugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
 							try {
 								dynamic stuff = JsonConvert.DeserializeObject(s);
 								executeJson(tcpClient, stuff);
@@ -170,12 +170,12 @@ namespace WebAutomation.Helper {
 				case "addDatapoints":
 					addDatapoints(tcpClient, cmd.data);
 					wpDebug.Write($"{WebSocketsServer.Name} command: addDatapoints");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("data: {0}", cmd.data);
 					break;
 				default:
 					wpDebug.Write($"{WebSocketsServer.Name} command not found");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("cmd: {0}", cmd);
 					break;
 			}
@@ -185,12 +185,12 @@ namespace WebAutomation.Helper {
 				case "getRegistered":
 					getRegistered(tcpClient);
 					wpDebug.Write($"{WebSocketsServer.Name} question: getRegistered");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("qst: {0}", cmd);
 					break;
 				default:
 					wpDebug.Write($"{WebSocketsServer.Name} question not found");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("qst: {0}", cmd);
 					break;
 			}
@@ -199,7 +199,7 @@ namespace WebAutomation.Helper {
 			client.Clear();
 			foreach(string dp in datapoints) {
 				client.Add(dp);
-				if(Program.MainProg.wpDebugWebSockets)
+				if(wpDebug.debugWebSockets)
 					wpDebug.Write($"Client {client.id}: Add Datapoint: {dp}");
 				using(SQL SQL = new SQL("get id from Datapoint")) {
 					string[][] Query1 = SQL.wpQuery("SELECT [id_dp] FROM [dp] WHERE [name] = '{0}'", dp);
@@ -242,41 +242,44 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public void sendDatapoint(string name) {
+			string msg = "";
+			using(SQL SQL = new SQL("get id from Datapoint")) {
+				string[][] Query = SQL.wpQuery($"SELECT [id_dp] FROM [dp] WHERE [name] = '{name}'");
+				int iddatapoint = 0;
+				Int32.TryParse(Query[0][0], out iddatapoint);
+				Datapoint datapoint = Datapoints.Get(iddatapoint); 
+				msg = "{" +
+					$"\"id\":{iddatapoint}," +
+					$"\"name\":\"{name}\"," +
+					$"\"value\":\"{datapoint.Value}\"," +
+					$"\"valuestring\":\"{datapoint.ValueString}\"," +
+					$"\"nks\":{datapoint.NKS}," +
+					$"\"unit\":\"{datapoint.Unit}\"," +
+					$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
+				"}";
+			}
 			foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
 				if(entry.Value.hasDatapoint(name)) {
-					using(SQL SQL = new SQL("get id from Datapoint")) {
-						string[][] Query = SQL.wpQuery($"SELECT [id_dp] FROM [dp] WHERE [name] = '{name}'");
-						int iddatapoint = 0;
-						Int32.TryParse(Query[0][0], out iddatapoint);
-						Datapoint datapoint = Datapoints.Get(iddatapoint);
-						entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
-						entry.Value.message += "{" +
-							$"\"id\":{iddatapoint}," +
-							$"\"name\":\"{name}\"," +
-							$"\"value\":\"{datapoint.Value}\"," +
-							$"\"valuestring\":\"{datapoint.ValueString}\"," +
-							$"\"nks\":{datapoint.NKS}," +
-							$"\"unit\":\"{datapoint.Unit}\"," +
-							$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
-						"}";
-					}
+					entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
+					entry.Value.message += msg;
 				}
 			}
 		}
 		public void sendDatapoint(Datapoint DP) {
 			try {
+				string msg = "{" +
+					$"\"id\":{DP.ID}," +
+					$"\"name\":\"{DP.Name}\"," +
+					$"\"value\":\"{DP.Value}\"," +
+					$"\"valuestring\":\"{DP.ValueString}\"," +
+					$"\"nks\":{DP.NKS}," +
+					$"\"unit\":\"{DP.Unit}\"," +
+					$"\"lastchange\":\"{DP.LastChange.ToString("s")}\"" +
+				"}";
 				foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
 					if(entry.Value.hasDatapoint(DP.Name)) {
 						entry.Value.message += entry.Value.message.Length == 0 ? "" : ",";
-						entry.Value.message += "{" +
-							$"\"id\":{DP.ID}," +
-							$"\"name\":\"{DP.Name}\"," +
-							$"\"value\":\"{DP.Value}\"," +
-							$"\"valuestring\":\"{DP.ValueString}\"," +
-							$"\"nks\":{DP.NKS}," +
-							$"\"unit\":\"{DP.Unit}\"," +
-							$"\"lastchange\":\"{DP.LastChange.ToString("s")}\"" +
-						"}";
+						entry.Value.message += msg;
 					}
 				}
 			} catch(Exception ex) {

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 99 2024-05-15 14:57:32Z                     $ #
+//# File-ID      : $Id:: OPCClient.cs 109 2024-06-16 15:59:41Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;
@@ -1065,7 +1065,7 @@ namespace WebAutomation.Helper {
 								ItemChanged.Value = erg.ToString();
 							}
 							ItemChanged.DBType = s.CanonicalDataType;
-							lastchange += String.Format($"(change) - {ItemChanged.OpcItemName} {ItemChanged.Value}\r\n");
+							lastchange += String.Format($"[wpOPCClient] '{ItemChanged.OpcItemName}' {ItemChanged.Value}\r\n");
 							valueChangedEventArgs vcea = new valueChangedEventArgs();
 							vcea.idOPCPoint = ItemChanged.Hclt;
 							vcea.name = ItemChanged.ItemName;
@@ -1144,15 +1144,15 @@ namespace WebAutomation.Helper {
 					if (transferreason == TransferId.TransferOpcRouter ||
 						transferreason == TransferId.TransferWatchdog ||
 						transferreason == TransferId.TransferMQTT) {
-						if(transferreason == TransferId.TransferOpcRouter && Program.MainProg.wpDebugOpcRouter) {
+						if(transferreason == TransferId.TransferOpcRouter && wpDebug.debugOpcRouter) {
 							wpDebug.Write("Write (TAID-{0}): Item '{1}': old: '{2}', new: '{3}'",
 								taid, Item.OpcItemName, Item.Value, value);
 						}
-						if(transferreason == TransferId.TransferWatchdog && Program.MainProg.wpDebugWatchdog) {
+						if(transferreason == TransferId.TransferWatchdog && wpDebug.debugWatchdog) {
 							wpDebug.Write("Write (TAID-{0}): Item '{1}': old: '{2}', new: '{3}'",
 								taid, Item.OpcItemName, Item.Value, value);
 						}
-						if(transferreason == TransferId.TransferMQTT && Program.MainProg.wpDebugMQTT) {
+						if(transferreason == TransferId.TransferMQTT && wpDebug.debugMQTT) {
 							wpDebug.Write("Write (TAID-{0}): Item '{1}': old: '{2}', new: '{3}'",
 								taid, Item.OpcItemName, Item.Value, value);
 						}

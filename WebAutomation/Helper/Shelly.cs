@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 91                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 91 2024-04-24 20:57:38Z                        $ #
+//# File-ID      : $Id:: Shelly.cs 109 2024-06-16 15:59:41Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -128,7 +128,7 @@ namespace WebAutomation.Helper {
 		}
 		private static void TCP_HandleClient(object client) {
 			TcpClient tcpClient = (TcpClient)client;
-			if(Program.MainProg.wpDebugShelly)
+			if(wpDebug.debugShelly)
 				wpDebug.Write(String.Format("Neue Shelly aktion: {0}", tcpClient.Client.RemoteEndPoint));
 			string newvalue = "";
 			try {
@@ -149,7 +149,7 @@ namespace WebAutomation.Helper {
 						if(Shellys.ContainsKey(mac)) {
 							setValue(Shellys[mac].id_onoff, Shellys[mac].name, m.Groups[2].Value == "true" ? "True" : "False");
 							newvalue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", Shellys[mac].name, m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -170,7 +170,7 @@ namespace WebAutomation.Helper {
 							newvalue += String.Format("\r\n\tNeuer Wert: Lux: {0}, ", m.Groups[3].Value);
 							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[4].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[4].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -189,7 +189,7 @@ namespace WebAutomation.Helper {
 							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", m.Groups[2].Value);
 							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[3].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[3].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -206,7 +206,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -223,7 +223,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -253,7 +253,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Temperatur: {0}, ", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -270,7 +270,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -287,7 +287,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: LDR: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -304,7 +304,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Licht: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -321,7 +321,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_rain, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Regen: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -338,7 +338,7 @@ namespace WebAutomation.Helper {
 							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
 							setValue(Shellys[mac].id_vol, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
 							newvalue += String.Format("\r\n\tNeuer Wert: Volume: {0}", m.Groups[2].Value);
-							if(Program.MainProg.wpDebugShelly)
+							if(wpDebug.debugShelly)
 								eventLog.Write(newvalue);
 							Program.MainProg.lastchange = newvalue;
 							macok = true;
@@ -493,69 +493,76 @@ namespace WebAutomation.Helper {
 						} else {
 							target = $"{url}/status";
 						}
-						result = webClient.DownloadString(new Uri(target));
-						status sds = JsonConvert.DeserializeObject<status>(result);
-						//if(sds.update.has_update) eventLog.Write("Hat Update: {0}", sds.update.new_version);
-						if(this.id_onoff > 0) {
-							if(ShellyType.isLight(this.type) && !ShellyType.isGen2(this.type))
-								Datapoints.Get(this.id_onoff).setValue(sds.lights[0].ison ? "True" : "False");
-							if(ShellyType.isRelay(this.type) && !ShellyType.isGen2(this.type))
-								Datapoints.Get(this.id_onoff).setValue(sds.relays[0].ison ? "True" : "False");
-							if(ShellyType.isGen2(this.type))
-								Datapoints.Get(this.id_onoff).setValue(sds.output ? "True" : "False");
-						}
-						eventLog.Write(result);
+						webClient.DownloadStringCompleted += (e, args) => {
+							if(args.Error == null) {
+								status sds = JsonConvert.DeserializeObject<status>(args.Result);
+								//if(sds.update.has_update) eventLog.Write("Hat Update: {0}", sds.update.new_version);
+								if(this.id_onoff > 0) {
+									if(ShellyType.isLight(this.type) && !ShellyType.isGen2(this.type))
+										Datapoints.Get(this.id_onoff).setValue(sds.lights[0].ison ? "True" : "False");
+									if(ShellyType.isRelay(this.type) && !ShellyType.isGen2(this.type))
+										Datapoints.Get(this.id_onoff).setValue(sds.relays[0].ison ? "True" : "False");
+									if(ShellyType.isGen2(this.type))
+										Datapoints.Get(this.id_onoff).setValue(sds.output ? "True" : "False");
+								}
+								if(wpDebug.debugShelly)
+									eventLog.Write(result);
 
-						if(ShellyType.isGen2(this.type)) {
-							target = $"{url}/rpc/Mqtt.GetConfig";
-						} else {
-							target = $"{url}/settings";
-						}
-						result = webClient.DownloadString(new Uri(target));
-						mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(result);
-						bool res_mqtt_enable, res_mqtt_writeable;
-						string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
-						if(ShellyType.isGen2(this.type)) {
-							res_mqtt_enable = sdms.enable;
-							res_mqtt_server = sdms.server;
-							res_mqtt_id = sdms.client_id;
-							res_mqtt_prefix = sdms.topic_prefix;
-							res_mqtt_writeable = sdms.enable_control;
-						} else {
-							res_mqtt_enable = sdms.mqtt.enable;
-							res_mqtt_server = sdms.mqtt.server;
-							res_mqtt_id = sdms.mqtt.id;
-							res_mqtt_prefix = "shellies/" + sdms.mqtt.id;
-							res_mqtt_writeable = true;
-						}
-						string updatesql = "";
-						if(_mqtt_enable != res_mqtt_enable) {
-							_mqtt_enable = res_mqtt_enable;
-							updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_active] = {(_mqtt_enable ? "1" : "0")}";
-						}
-						if(_mqtt_server != res_mqtt_server) {
-							_mqtt_server = res_mqtt_server;
-							updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_server] = '{_mqtt_server}'";
-						}
-						if(_mqtt_id != res_mqtt_id) {
-							_mqtt_id = res_mqtt_id;
-							updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_id] = '{_mqtt_id}'";
-						}
-						if(_mqtt_prefix != res_mqtt_prefix) {
-							_mqtt_prefix = res_mqtt_prefix;
-							updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_prefix] = '{_mqtt_prefix}'";
-						}
-						if(_mqtt_writeable != res_mqtt_writeable) {
-							_mqtt_writeable = res_mqtt_writeable;
-							updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_writeable] = {(_mqtt_writeable ? "1" : "0")}";
-						}
-						if(updatesql != "") {
-							using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
-								string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
-								wpDebug.Write(sql);
-								SQL.wpNonResponse(sql);
+								if(ShellyType.isGen2(this.type)) {
+									target = $"{url}/rpc/Mqtt.GetConfig";
+								} else {
+									target = $"{url}/settings";
+								}
+								result = webClient.DownloadString(new Uri(target));
+								mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(result);
+								bool res_mqtt_enable, res_mqtt_writeable;
+								string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
+								if(ShellyType.isGen2(this.type)) {
+									res_mqtt_enable = sdms.enable;
+									res_mqtt_server = sdms.server;
+									res_mqtt_id = sdms.client_id;
+									res_mqtt_prefix = sdms.topic_prefix;
+									res_mqtt_writeable = sdms.enable_control;
+								} else {
+									res_mqtt_enable = sdms.mqtt.enable;
+									res_mqtt_server = sdms.mqtt.server;
+									res_mqtt_id = sdms.mqtt.id;
+									res_mqtt_prefix = "shellies/" + sdms.mqtt.id;
+									res_mqtt_writeable = true;
+								}
+								string updatesql = "";
+								if(_mqtt_enable != res_mqtt_enable) {
+									_mqtt_enable = res_mqtt_enable;
+									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_active] = {(_mqtt_enable ? "1" : "0")}";
+								}
+								if(_mqtt_server != res_mqtt_server) {
+									_mqtt_server = res_mqtt_server;
+									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_server] = '{_mqtt_server}'";
+								}
+								if(_mqtt_id != res_mqtt_id) {
+									_mqtt_id = res_mqtt_id;
+									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_id] = '{_mqtt_id}'";
+								}
+								if(_mqtt_prefix != res_mqtt_prefix) {
+									_mqtt_prefix = res_mqtt_prefix;
+									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_prefix] = '{_mqtt_prefix}'";
+								}
+								if(_mqtt_writeable != res_mqtt_writeable) {
+									_mqtt_writeable = res_mqtt_writeable;
+									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_writeable] = {(_mqtt_writeable ? "1" : "0")}";
+								}
+								if(updatesql != "") {
+									using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
+										string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
+										wpDebug.Write(sql);
+										SQL.wpNonResponse(sql);
+									}
+								}
+							} else {
+								wpDebug.WriteError(args.Error);
 							}
-						}
+						};
+						webClient.DownloadStringAsync(new Uri(target));
 					}
 				} catch(Exception ex) {
 					eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");

@@ -306,6 +306,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			try {
 				Program.MainProg.BrowseMqtt = true;
 				await _mqttClient.SubscribeAsync("#");
+				wpDebug.Write("MQTT Subscribed #");
 				return "S_OK";
 			} catch(Exception ex) {
 				wpDebug.WriteError(ex);
@@ -316,6 +317,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			try {
 				Program.MainProg.BrowseMqtt = false;
 				await _mqttClient.UnsubscribeAsync("#");
+				wpDebug.Write("MQTT Unsubscribed #");
 				await registerDatapoints();
 				return "S_OK";
 			} catch(Exception ex) {

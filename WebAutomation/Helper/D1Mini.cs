@@ -201,7 +201,7 @@ namespace WebAutomation.Helper {
 			return Subscribtions;
 		}
 		public static string getJson() {
-			wpDebug.Write("D1Mini getJson Settings");
+			if(wpDebug.debugD1Mini) wpDebug.Write("D1Mini getJson Settings");
 			string returns = "{";
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
 				returns += $"\"{kvp.Key}\":{{";
@@ -221,7 +221,8 @@ namespace WebAutomation.Helper {
 			IPAddress _ip;
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
-				wpDebug.Write($"D1Mini getJson Status {_ip}");
+				if(wpDebug.debugD1Mini)
+					wpDebug.Write($"D1Mini getJson Status {_ip}");
 
 				string url = $"http://{_ip}/status";
 				try {
@@ -317,12 +318,12 @@ namespace WebAutomation.Helper {
 		public bool Online {
 			set {
 				if(value) {
-					if(Program.MainProg.wpDebugD1Mini)
+					if(wpDebug.debugD1Mini)
 						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 1");
 					setOnlineError(false);
 					toreset.Stop();
 				} else {
-					if(Program.MainProg.wpDebugD1Mini)
+					if(wpDebug.debugD1Mini)
 						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 					toreset.Start();
 				}
@@ -385,7 +386,7 @@ namespace WebAutomation.Helper {
 		public void Stop() {
 			t.Stop();
 			toreset.Stop();
-			if(Program.MainProg.wpDebugD1Mini)
+			if(wpDebug.debugD1Mini)
 				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
 		}
 		public void SetOnlineTogglerSendIntervall() {
@@ -403,7 +404,7 @@ namespace WebAutomation.Helper {
 			sendOnlineQuestion();
 		}
 		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
-			if(Program.MainProg.wpDebugD1Mini)
+			if(wpDebug.debugD1Mini)
 				wpDebug.Write($"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
@@ -423,7 +424,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(cmd.isValid) {
 				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.cmd, "1");
-				wpDebug.Write($"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
+				if(wpDebug.debugD1Mini)
+					wpDebug.Write($"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
 				returns = true;
 			} else {
 				wpDebug.Write($"D1 Mini `sendCmd` ERROR: {_name}, {cmd.cmd}");
@@ -431,12 +433,12 @@ namespace WebAutomation.Helper {
 			return returns;
 		}
 		private void sendOnlineQuestion() {
-			if(Program.MainProg.wpDebugD1Mini)
+			if(wpDebug.debugD1Mini)
 				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
 		private void setOnlineError(bool e) {
-			if(Program.MainProg.wpDebugD1Mini)
+			if(wpDebug.debugD1Mini)
 				wpDebug.Write($"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}

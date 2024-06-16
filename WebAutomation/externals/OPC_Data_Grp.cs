@@ -413,7 +413,7 @@ namespace OPC.Data {
 		/// <param name="bForce"></param>
 		public void Remove(bool bForce) {
 			string myname = this.Name;
-			if(Program.MainProg.wpDebugOPC)
+			if(wpDebug.debugOPC)
 				wpDebug.Write("OPC DATA GRP '{0}' - Beginn Remove", myname);
 			EventLog = null;
 			if (!(_countItem == null)) _countItem.Clear();
@@ -422,7 +422,7 @@ namespace OPC.Data {
 			_countItemState = null;
 			if(!(ifAsync == null)) SetEnable(false);
 			if(!(ifMgt == null)) Active = false;
-			if(Program.MainProg.wpDebugOPC)
+			if(wpDebug.debugOPC)
 				wpDebug.Write("OPC DATA GRP '{0}' - Unadvice Callbackcookie", myname);
 			if (!(callbackcpoint == null)) {
 				try {
@@ -443,16 +443,16 @@ namespace OPC.Data {
 			ifSync = null;
 			ifAsync = null;
 
-			if(Program.MainProg.wpDebugOPC)
+			if(wpDebug.debugOPC)
 				wpDebug.Write("OPC DATA GRP '{0}' - ReleaseComObject", myname);
 			if (!(ifMgt == null)) {
 				//int rc = Marshal.ReleaseComObject(ifMgt);
 				ifMgt = null;
 			}
-			if(Program.MainProg.wpDebugOPC)
+			if(wpDebug.debugOPC)
 				wpDebug.Write("OPC DATA GRP '{0}' - ReleasedComObject", myname);
 
-			if(Program.MainProg.wpDebugOPC)
+			if(wpDebug.debugOPC)
 				wpDebug.Write("OPC DATA GRP '{0}' - RemoveGroup", myname);
 			if (!(ifServer == null)) {
 				if (!state.Public) {
@@ -1042,7 +1042,7 @@ namespace OPC.Data {
 			arrErr = new int[count];
 			Marshal.Copy(ptrErr, arrErr, 0, count);
 			Marshal.FreeCoTaskMem(ptrErr);
-			if(Program.MainProg.wpDebugTransferID)
+			if(wpDebug.debugTransferID)
 				wpDebug.Write("Async Read (TAID-{0})", transactionID);
 			return hresult == HRESULTS.S_OK;
 		}
@@ -1071,7 +1071,7 @@ namespace OPC.Data {
 			arrErr = new int[count];
 			Marshal.Copy(ptrErr, arrErr, 0, count);
 			Marshal.FreeCoTaskMem(ptrErr);
-			if(Program.MainProg.wpDebugTransferID)
+			if(wpDebug.debugTransferID)
 				wpDebug.Write("Async Write (TAID-{0})", transactionID);
 			return hresult == HRESULTS.S_OK;
 		}
@@ -1121,7 +1121,7 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnDataChange(
 				int dwTransid, int hGroup, int hrMasterquality, int hrMastererror, int dwCount,
 				IntPtr phClientItems, IntPtr pvValues, IntPtr pwQualities, IntPtr pftTimeStamps, IntPtr ppErrors) {
-			if(Program.MainProg.wpDebugOPC) {
+			if(wpDebug.debugOPC) {
 				wpDebug.Write("OpcGroup.OnDataChange");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
@@ -1189,7 +1189,7 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnReadComplete(
 				int dwTransid, int hGroup, int hrMasterquality, int hrMastererror, int dwCount,
 				IntPtr phClientItems, IntPtr pvValues, IntPtr pwQualities, IntPtr pftTimeStamps, IntPtr ppErrors) {
-			if(Program.MainProg.wpDebugOPC) {
+			if(wpDebug.debugOPC) {
 				wpDebug.Write("OpcGroup.OnReadComplete");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
@@ -1253,7 +1253,7 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnWriteComplete(
 				int dwTransid, int hGroup, int hrMastererr, int dwCount,
 				IntPtr pClienthandles, IntPtr ppErrors) {
-			if(Program.MainProg.wpDebugOPC) {
+			if(wpDebug.debugOPC) {
 				wpDebug.Write("OpcGroup.OnWriteComplete");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
@@ -1284,7 +1284,7 @@ namespace OPC.Data {
 		}
 
 		void IOPCDataCallback.OnCancelComplete(int dwTransid, int hGroup) {
-			if(Program.MainProg.wpDebugOPC) {
+			if(wpDebug.debugOPC) {
 				wpDebug.Write("OpcGroup.OnCancelComplete");
 			}
 			if (hGroup != state.HandleClient)

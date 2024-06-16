@@ -66,7 +66,7 @@ namespace WebAutomation.Helper {
 				LastError = ex.Message;
 				_available = false;
 			}
-			if(Program.MainProg.wpDebugSQL) {
+			if(wpDebug.debugSQL) {
 				wpDebug.Write("SQL Client gestartet - {0}", _forwhat);
 			}
 		}
@@ -74,7 +74,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		public void Dispose() {
-			if(Program.MainProg.wpDebugSQL) {
+			if(wpDebug.debugSQL) {
 				wpDebug.Write("SQL Client gestoppt - {0}", _forwhat);
 			}
 			connection.Close();

@@ -86,7 +86,7 @@ namespace WebAutomation.Helper {
 							if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
 								if(tcpClient.message != "") {
 									try {
-										if(Program.MainProg.wpDebugWebSockets)
+										if(wpDebug.debugWebSockets)
 											wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
 										byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
 										stream.Write(answerbytes, 0, answerbytes.Length);
@@ -131,7 +131,7 @@ namespace WebAutomation.Helper {
 							byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("PONG");
 							stream.Write(answerbytes, 0, answerbytes.Length);
 						} else {
-							if(Program.MainProg.wpDebugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
+							if(wpDebug.debugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
 							try {
 								dynamic stuff = JsonConvert.DeserializeObject(s);
 								executeJson(tcpClient, stuff);
@@ -170,12 +170,12 @@ namespace WebAutomation.Helper {
 				case "addDatapoints":
 					addDatapoints(tcpClient, cmd.data);
 					wpDebug.Write($"{WebSocketsServer.Name} command: addDatapoints");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("data: {0}", cmd.data);
 					break;
 				default:
 					wpDebug.Write($"{WebSocketsServer.Name} command not found");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("cmd: {0}", cmd);
 					break;
 			}
@@ -185,12 +185,12 @@ namespace WebAutomation.Helper {
 				case "getRegistered":
 					getRegistered(tcpClient);
 					wpDebug.Write($"{WebSocketsServer.Name} question: getRegistered");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("qst: {0}", cmd);
 					break;
 				default:
 					wpDebug.Write($"{WebSocketsServer.Name} question not found");
-					if(Program.MainProg.wpDebugWebSockets)
+					if(wpDebug.debugWebSockets)
 						wpDebug.Write("qst: {0}", cmd);
 					break;
 			}
@@ -199,7 +199,7 @@ namespace WebAutomation.Helper {
 			client.Clear();
 			foreach(string dp in datapoints) {
 				client.Add(dp);
-				if(Program.MainProg.wpDebugWebSockets)
+				if(wpDebug.debugWebSockets)
 					wpDebug.Write($"Client {client.id}: Add Datapoint: {dp}");
 				using(SQL SQL = new SQL("get id from Datapoint")) {
 					string[][] Query1 = SQL.wpQuery("SELECT [id_dp] FROM [dp] WHERE [name] = '{0}'", dp);

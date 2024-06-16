@@ -198,25 +198,25 @@ namespace WebAutomation.Helper {
 				_forWhat = forWhat;
 				if(!WebAutomationServer.isInit) {
 					if(Program.MainProg.wpBigProject) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall (init): 240 s (TAID-{0})", id);
 						this.Interval = 240 * 1000;
 					} else {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall (init): 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					}
 				} else {
 					if(forWhat == TransferForceRead) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					} else if(Program.MainProg.wpBigProject) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 30 s (TAID-{0})", id);
 						this.Interval = 30 * 1000;
 					} else {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 10 s (TAID-{0})", id);
 						this.Interval = 10 * 1000;
 					}

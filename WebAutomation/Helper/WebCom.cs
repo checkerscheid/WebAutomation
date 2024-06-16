@@ -717,11 +717,11 @@ namespace WebAutomation.Helper {
 					returns = "{\"erg\":\"S_OK\"}";
 					break;
 				case wpBefehl.cGetDebug:
-					returns = Program.MainProg.getDebugJson();
+					returns = wpDebug.getDebugJson();
 					break;
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = Program.MainProg.setDebug(param);
+					returns = wpDebug.changeDebug(param);
 					break;
 				default:
 					returns = "{ERROR=undefined command}";

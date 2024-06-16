@@ -69,7 +69,7 @@ namespace WebAutomation.Helper {
 			if (Int32.TryParse(Ini.get("Watchdog", "DpId"), out watchdogId)) {
 				Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 					TransferId.TransferWatchdog);
-				if(Program.MainProg.wpDebugTransferID)
+				if(wpDebug.debugTransferID)
 					wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
 			} else {
 				string[] ids = Ini.get("Watchdog", "DpId").Split(',');
@@ -80,7 +80,7 @@ namespace WebAutomation.Helper {
 						if (Int32.TryParse(id.Trim(), out watchdogId)) {
 							Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 								TransferId.TransferWatchdog);
-							if(Program.MainProg.wpDebugWatchdog)
+							if(wpDebug.debugWatchdog)
 								wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
 						}
 					}

@@ -90,7 +90,7 @@ namespace WebAutomation {
 					Int32.TryParse(erg[0][i++], out _idNamespace);
 				}
 			}
-			wpDebug.Write($"Datapoint Created {_name} ({_id})");
+			if(wpDebug.debugSystem) wpDebug.Write($"Datapoint Created {_name} ({_id})");
 		}
 		public void setValue(string value) {
 			setValue(value, "'Dictionary'");
@@ -110,8 +110,8 @@ namespace WebAutomation {
 					Trends.Get((int)_idTrend).SetTrendValue();
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(Program.MainProg.wpDebugWebSockets)
-					Debug.WriteLine($"Datenpunk gesetzt '{_name}': {_valueString} ({_value})");
+				if(wpDebug.debugWebSockets)
+					Debug.WriteLine($"Datenpunkt gesetzt '{_name}': {_valueString} ({_value})");
 			}
 		}
 		public string parseValueString() {

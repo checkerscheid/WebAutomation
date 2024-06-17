@@ -306,6 +306,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			try {
 				Program.MainProg.BrowseMqtt = true;
 				await _mqttClient.SubscribeAsync("#");
+				wpDebug.Write("MQTT Subscribed #");
 				return "S_OK";
 			} catch(Exception ex) {
 				wpDebug.WriteError(ex);
@@ -316,6 +317,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			try {
 				Program.MainProg.BrowseMqtt = false;
 				await _mqttClient.UnsubscribeAsync("#");
+				wpDebug.Write("MQTT Unsubscribed #");
 				await registerDatapoints();
 				return "S_OK";
 			} catch(Exception ex) {
@@ -386,6 +388,14 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public bool forceMqttUpdate() {
 			bool returns = true;
+			if(!shellyMqttUpdate())
+				returns = false;
+			if(!d1MiniMqttUpdate()) 
+				returns = false;
+			return returns;
+		}
+		public bool shellyMqttUpdate() {
+			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
 			foreach(string mqtt_id in ShellyServer.ForceMqttUpdateAvailable) {
 				msg.Topic = $"{mqtt_id}/ForceMqttUpdate";
@@ -400,6 +410,11 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					returns = false;
 				}
 			}
+			return returns;
+		}
+		public bool d1MiniMqttUpdate() {
+			bool returns = true;
+			D1MiniServer.ForceMqttUpdate();
 			return returns;
 		}
 		private void doneMyMqttUpdate() {

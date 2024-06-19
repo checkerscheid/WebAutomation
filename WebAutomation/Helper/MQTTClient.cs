@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 110                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 109 2024-06-16 15:59:41Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 110 2024-06-17 15:17:17Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;

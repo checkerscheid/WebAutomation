@@ -197,6 +197,7 @@ namespace WebAutomation.Helper {
 		}
 		private void addDatapoints(wpTcpClient client, dynamic datapoints) {
 			client.Clear();
+			String response = "";
 			foreach(string dp in datapoints) {
 				client.Add(dp);
 				if(wpDebug.debugWebSockets)
@@ -208,8 +209,8 @@ namespace WebAutomation.Helper {
 						if(Int32.TryParse(Query1[0][0], out iddatapoint)) {
 							Datapoint datapoint = Datapoints.Get(iddatapoint);
 							try {
-								Clients[client.id].message += Clients[client.id].message.Length == 0 ? "" : ",";
-								Clients[client.id].message += "{" +
+								response += response.Length == 0 ? "" : ",";
+								response += "{" +
 									$"\"id\":{iddatapoint}," +
 									$"\"name\":\"{dp}\"," +
 									$"\"value\":\"{datapoint.Value}\"," +
@@ -227,6 +228,7 @@ namespace WebAutomation.Helper {
 					}
 				}
 			}
+			Clients[client.id].message = (Clients[client.id].message.Length == 0 ? "" : ",") + response;
 		}
 		private void getRegistered(wpTcpClient client) {
 			string answer = client.getDatapoints();

@@ -178,10 +178,10 @@
   <ItemGroup />
   <ItemGroup>
     <PackageReference Include="MQTTnet">
-      <Version>4.3.3.952</Version>
+      <Version>4.3.6.1152</Version>
     </PackageReference>
     <PackageReference Include="MQTTnet.Extensions.ManagedClient">
-      <Version>4.3.3.952</Version>
+      <Version>4.3.6.1152</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>

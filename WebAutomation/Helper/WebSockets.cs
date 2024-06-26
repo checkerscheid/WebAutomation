@@ -18,9 +18,11 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using static WebAutomation.Server;
 
 namespace WebAutomation.Helper {
@@ -74,81 +76,83 @@ namespace WebAutomation.Helper {
 				wpDebug.Write(ex.Message);
 			}
 		}
-		private void TCP_HandleClient(object client) {
+		private async void TCP_HandleClient(object client) {
 			wpTcpClient tcpClient = (wpTcpClient)client;
 			NetworkStream stream = tcpClient.tcpClient.GetStream();
-			while(!tcpClient.isFinished) {
-				// write to Client
-				try {
-					while(!stream.DataAvailable) {
-						if(isFinished) return;
-						try {
-							if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
-								if(tcpClient.message != "") {
-									try {
-										if(wpDebug.debugWebSockets)
-											wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
-										byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
-										stream.Write(answerbytes, 0, answerbytes.Length);
-									} catch(Exception ex) {
-										wpDebug.Write("Client {0}: {1}", tcpClient.id, ex.Message);
-										Clients.Remove(tcpClient.id);
-										stream.Close();
-										tcpClient.tcpClient.Close();
-									} finally {
-										tcpClient.message = "";
-									}
-								}
-							} else {
-								wpDebug.Write("Clients blockiert: setDatapoint");
-							}
-						} finally {
-							Monitor.Exit(tcpClient);
-						}
-						Thread.Sleep(ThreadSleep); //Prozessor 100%?
-					}
-				} catch(Exception ex) {
-					wpDebug.Write("Write to Client {0}: {1}", tcpClient.id, ex.Message);
-				}
-				// read from Client
-				try {
-					byte[] bytes = new byte[tcpClient.tcpClient.Available];
-					stream.Read(bytes, 0, tcpClient.tcpClient.Available);
-					string s = Encoding.UTF8.GetString(bytes);
-
-					if(Regex.IsMatch(s, "^GET", RegexOptions.IgnoreCase)) {
-						wpDebug.Write($"{WebSocketsServer.Name} Handshaking: new client {tcpClient.id}");
-						handshake(tcpClient, s);
-					} else {
-						s = WebsocketsProtokoll.GetDecodedData(bytes);
-						if(Regex.IsMatch(s, "^\u0003", RegexOptions.IgnoreCase)) {
-							stream.Close();
-							tcpClient.tcpClient.Close();
-							tcpClient.isFinished = true;
-							Thread.CurrentThread.Join(1000);
-							wpDebug.Write($"{WebSocketsServer.Name} Client {tcpClient.id} Closed: {s}");
-						} else if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
-							byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("PONG");
-							stream.Write(answerbytes, 0, answerbytes.Length);
-						} else {
-							if(wpDebug.debugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
+			await Task.Run(() => {
+				while(!tcpClient.isFinished) {
+					// write to Client
+					try {
+						while(!stream.DataAvailable) {
+							if(isFinished) return;
 							try {
-								dynamic stuff = JsonConvert.DeserializeObject(s);
-								executeJson(tcpClient, stuff);
-							} catch(Exception ex) {
-								wpDebug.Write("JSON not parseable: {0}", ex.Message);
+								if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
+									if(tcpClient.message != "") {
+										try {
+											if(wpDebug.debugWebSockets)
+												wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
+											byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
+											stream.Write(answerbytes, 0, answerbytes.Length);
+										} catch(Exception ex) {
+											wpDebug.Write("Client {0}: {1}", tcpClient.id, ex.Message);
+											Clients.Remove(tcpClient.id);
+											stream.Close();
+											tcpClient.tcpClient.Close();
+										} finally {
+											tcpClient.message = "";
+										}
+									}
+								} else {
+									wpDebug.Write("Clients blockiert: setDatapoint");
+								}
+							} finally {
+								Monitor.Exit(tcpClient);
+							}
+							Task.Delay(ThreadSleep); //Prozessor 100%?
+						}
+					} catch(Exception ex) {
+						wpDebug.Write("Write to Client {0}: {1}", tcpClient.id, ex.Message);
+					}
+					// read from Client
+					try {
+						byte[] bytes = new byte[tcpClient.tcpClient.Available];
+						stream.Read(bytes, 0, tcpClient.tcpClient.Available);
+						string s = Encoding.UTF8.GetString(bytes);
+
+						if(Regex.IsMatch(s, "^GET", RegexOptions.IgnoreCase)) {
+							wpDebug.Write($"{WebSocketsServer.Name} Handshaking: new client {tcpClient.id}");
+							handshake(tcpClient, s);
+						} else {
+							s = WebsocketsProtokoll.GetDecodedData(bytes);
+							if(Regex.IsMatch(s, "^\u0003", RegexOptions.IgnoreCase)) {
+								stream.Close();
+								tcpClient.tcpClient.Close();
+								tcpClient.isFinished = true;
+								Thread.CurrentThread.Join(1000);
+								wpDebug.Write($"{WebSocketsServer.Name} Client {tcpClient.id} Closed: {s}");
+							} else if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
+								byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("PONG");
+								stream.Write(answerbytes, 0, answerbytes.Length);
+							} else {
+								if(wpDebug.debugWebSockets) wpDebug.Write("Client {0}: {1}", tcpClient.id, s);
+								try {
+									dynamic stuff = JsonConvert.DeserializeObject(s);
+									executeJson(tcpClient, stuff);
+								} catch(Exception ex) {
+									wpDebug.Write("JSON not parseable: {0}", ex.Message);
+								}
 							}
 						}
+					} catch(Exception ex) {
+						stream.Close();
+						tcpClient.tcpClient.Close();
+						tcpClient.isFinished = true;
+						Thread.CurrentThread.Join(ThreadSleep * 2);
+						wpDebug.Write("Read from Client {0}: {1}", tcpClient.id, ex.Message);
 					}
-				} catch(Exception ex) {
-					stream.Close();
-					tcpClient.tcpClient.Close();
-					tcpClient.isFinished = true;
-					Thread.CurrentThread.Join(ThreadSleep * 2);
-					wpDebug.Write("Read from Client {0}: {1}", tcpClient.id, ex.Message);
+					Task.Delay(ThreadSleep); //Prozessor 100%?
 				}
-				Thread.Sleep(ThreadSleep); //Prozessor 100%?
-			}
+			});
 		}
 		private void executeJson(wpTcpClient tcpClient, dynamic cmd) {
 			switch(cmd.type.ToString()) {

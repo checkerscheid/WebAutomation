@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using WebAutomation.Helper;
 
 namespace WebAutomation.PlugIns {
@@ -190,11 +191,9 @@ namespace WebAutomation.PlugIns {
 		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
 		/// <summary></summary>
 		private static Logger _eventLog = new Logger(wpEventLog.PlugInTrend);
-		private static Thread _threadCleanDB;
+		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {
-			_threadCleanDB = new Thread(TrendCleanDB.Start);
-			_threadCleanDB.Priority = ThreadPriority.BelowNormal;
 			using(SQL SQL = new SQL("get Trend Dictionary")) {
 				string[][] erg = SQL.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
@@ -213,13 +212,12 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			wpDebug.Write($"Trends Init");
-			TrendCleanDB.Init();
+			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
 		}
 
 		public static void Stop() {
-			TrendCleanDB.Stop();
-			_threadCleanDB.Join(1500);
+			_threadCleanDB.Stop();
 			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}
@@ -248,14 +246,14 @@ namespace WebAutomation.PlugIns {
 		/// <summary>
 		/// Eingeschränkte Speicherkapazität bei MSSQL Express erfordert ein Auslagern der TrenddDaten in Dateien
 		/// </summary>
-		internal static class TrendCleanDB {
-			private static volatile bool _doStop;
-			private static int _counter;
-			private static int _maxCounter;
-			private static string _folderBase;
-			private static string _projekt;
-			private static int _maxEntries = 1000;
-			public static void Init() {
+		internal class TrendCleanDB {
+			private volatile bool _doStop;
+			private int _counter;
+			private int _maxCounter;
+			private string _folderBase;
+			private string _projekt;
+			private int _maxEntries = 1000;
+			public TrendCleanDB() {
 				_doStop = false;
 				_counter = 0;
 				_folderBase = Ini.get("Trend", "Pfad");
@@ -270,20 +268,22 @@ namespace WebAutomation.PlugIns {
 					_maxCounter = 90 * 60;
 				}
 			}
-			public static void Start() {
+			public async void Start() {
 				while (!_doStop) {
 					if (++_counter > _maxCounter) {
-						DBcleaner();
+						await Task.Run(() => {
+							DBcleaner();
+						});
 						_counter = 0;
 					} else {
-						Thread.Sleep(1000);
+						await Task.Delay(1000);
 					}
 				}
 			}
-			public static void Stop() {
+			public void Stop() {
 				_doStop = true;
 			}
-			private static void TrendArchivFolder() {
+			private void TrendArchivFolder() {
 				string p = Directory.GetDirectoryRoot(_folderBase);
 				if(Directory.Exists(p)) {
 					if(!Directory.Exists(_folderBase))
@@ -302,7 +302,7 @@ namespace WebAutomation.PlugIns {
 					_eventLog.Write(EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
 				}
 			}
-			private static void DBcleaner() {
+			private void DBcleaner() {
 				int deleteToOld = 0;
 				int deleteToMuch = 0;
 				int saveToOld = 0;
@@ -436,7 +436,7 @@ namespace WebAutomation.PlugIns {
 					_eventLog.Write("Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
 				}
 			}
-			private static bool writeToFile(string filename, DateTime DateForFolder, string text) {
+			private bool writeToFile(string filename, DateTime DateForFolder, string text) {
 				bool returns = false;
 				string y = DateForFolder.ToString("yyyy");
 				string m = DateForFolder.ToString("MM");

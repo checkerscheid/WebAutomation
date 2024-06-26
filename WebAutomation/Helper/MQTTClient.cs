@@ -299,6 +299,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					d1MiniChanged.Invoke(this, vcea);
 				}
 			}
+			vcea = null;
 			return Task.CompletedTask;
 		}
 
@@ -326,17 +327,17 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			}
 		}
 
-		public void setValue(int IdTopic, string value) {
-			setValue(IdTopic, value, MqttQualityOfServiceLevel.AtMostOnce);
+		public async Task setValue(int IdTopic, string value) {
+			await setValue(IdTopic, value, MqttQualityOfServiceLevel.AtMostOnce);
 		}
-		public void setValue(int IdTopic, string value, MqttQualityOfServiceLevel QoS) {
+		public async Task setValue(int IdTopic, string value, MqttQualityOfServiceLevel QoS) {
 			if(getTopicFromId(IdTopic) != null) {
 				MqttApplicationMessage msg = new MqttApplicationMessage {
 					Topic = getTopicFromId(IdTopic),
 					PayloadSegment = getFromString(value),
 					QualityOfServiceLevel = QoS
 				};
-				_mqttClient.PublishAsync(msg);
+				await _mqttClient.PublishAsync(msg);
 				if(wpDebug.debugMQTT)
 					wpDebug.Write($"setValue: {msg.Topic} ({IdTopic}), value: {value}");
 			} else {
@@ -417,14 +418,15 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			D1MiniServer.ForceMqttUpdate();
 			return returns;
 		}
-		private void doneMyMqttUpdate() {
+		private async void doneMyMqttUpdate() {
 			MqttApplicationMessage msg = new MqttApplicationMessage();
 			msg.Topic = ForceUpdate;
 			msg.PayloadSegment = new ArraySegment<byte>(Encoding.UTF8.GetBytes("0"));
-			_mqttClient.PublishAsync(msg);
+			await _mqttClient.PublishAsync(msg);
 			if(wpDebug.debugMQTT) {
 				wpDebug.Write("write ForceMqttUpdate");
 			}
+			msg = null;
 		}
 
 		public void publishSettings() {
@@ -446,6 +448,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				msg.PayloadSegment = new ArraySegment<byte>(Encoding.UTF8.GetBytes(kvp.Value));
 				_mqttClient.PublishAsync(msg);
 			}
+			msg = null;
 		}
 		private void addSetting(string s, string v) {
 			if(!_settings.ContainsKey(s))

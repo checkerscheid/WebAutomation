@@ -153,7 +153,7 @@ namespace WebAutomation {
 		/// setValue without driver
 		/// </summary>
 		/// <param name="value"></param>
-		public void writeValue(string value) {
+		public async void writeValue(string value) {
 			NumberStyles style = NumberStyles.Float;
 			CultureInfo culture = CultureInfo.InvariantCulture;
 			double dValue = 0.0;
@@ -174,7 +174,7 @@ namespace WebAutomation {
 			if(_idOpc != null) {
 				Program.MainProg.wpOPCClient.setValue((int)_idOpc, value);
 			} else if(_idMqtt != null) {
-				Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
+				await Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
 				// Simulate MQTT Subscribe
 				setValue(value);
 			} else {

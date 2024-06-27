@@ -13,7 +13,6 @@
 //# File-ID      : $Id:: Dictionaries.cs 109 2024-06-16 15:59:41Z                 $ #
 //#                                                                                 #
 //###################################################################################
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -110,7 +109,7 @@ namespace WebAutomation {
 					Trends.Get((int)_idTrend).SetTrendValue();
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(wpDebug.debugWebSockets)
+				if(wpDebug.debugTransferID)
 					Debug.WriteLine($"Datenpunkt gesetzt '{_name}': {_valueString} ({_value})");
 			}
 		}

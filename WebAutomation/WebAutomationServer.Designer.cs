@@ -129,14 +129,14 @@ namespace WebAutomation {
 			this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.lbl_message.Enabled = false;
 			this.lbl_message.Location = new System.Drawing.Point(149, 16);
 			this.lbl_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
 			this.lbl_message.Multiline = true;
 			this.lbl_message.Name = "lbl_message";
+			this.lbl_message.ReadOnly = true;
+			this.lbl_message.ScrollBars = System.Windows.Forms.ScrollBars.Both;
 			this.lbl_message.Size = new System.Drawing.Size(535, 73);
 			this.lbl_message.TabIndex = 4;
-			this.lbl_message.Text = "1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\n9\r\n10";
 			// 
 			// label3
 			// 

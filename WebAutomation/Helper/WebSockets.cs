@@ -213,42 +213,35 @@ namespace WebAutomation.Helper {
 		}
 		private void addDatapoints(wpTcpClient client, dynamic datapoints) {
 			client.Clear();
-			client.message = "";
-			string sqlwhere = "";
+			bool first = true;
+			string response = "";
 			foreach(string dp in datapoints) {
 				client.Add(dp);
-				sqlwhere += (String.IsNullOrEmpty(sqlwhere) ? " WHERE " : " OR ") + $"[name] = '{dp}'";
-				if(wpDebug.debugWebSockets)
-					wpDebug.Write($"Client {client.id}: Add Datapoint: {dp}");
-			}
-			string response = "";
-			using(SQL SQL = new SQL("get id from Datapoint")) {
-				string[][] erg = SQL.wpQuery($"SELECT [id_dp], [name] FROM [dp] {sqlwhere}");
-				for(int i = 0; i < erg.Length; i++) {
-					int iddatapoint = Int32.Parse(erg[i][0]);
-					string name = erg[i][1];
-					Datapoint datapoint = Datapoints.Get(iddatapoint);
-					if(datapoint != null) {
-						try {
-							response += String.IsNullOrEmpty(response) ? "" : ",";
-							response += "{" +
-								$"\"id\":{iddatapoint}," +
-								$"\"name\":\"{name}\"," +
-								$"\"value\":\"{datapoint.Value}\"," +
-								$"\"valuestring\":\"{datapoint.ValueString}\"," +
-								$"\"nks\":{datapoint.NKS}," +
-								$"\"unit\":\"{datapoint.Unit}\"," +
-								$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
-							"}";
-						} catch(Exception ex) {
-							eventLog.WriteError(ex);
+				Datapoint datapoint = Datapoints.Get(dp);
+				if(datapoint != null) {
+					try {
+						if(first) {
+							first = false;
+						} else {
+							response += ",";
 						}
-					} else {
-						wpDebug.Write($"Client {client.id}: Datapoint not found: {iddatapoint}");
+						response += "{" +
+							$"\"id\":{datapoint.ID}," +
+							$"\"name\":\"{dp}\"," +
+							$"\"value\":\"{datapoint.Value}\"," +
+							$"\"valuestring\":\"{datapoint.ValueString}\"," +
+							$"\"nks\":{datapoint.NKS}," +
+							$"\"unit\":\"{datapoint.Unit}\"," +
+							$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
+						"}";
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
 					}
+				} else {
+					wpDebug.Write($"Client {client.id}: Datapoint not found: {dp}");
 				}
 			}
-			client.message = (String.IsNullOrEmpty(client.message) ? "" : ",") + response;
+			client.message = response;
 			if(wpDebug.debugWebSockets)
 				wpDebug.Write($"addDatapoints {client.id} message: {client.message}");
 		}
@@ -266,39 +259,8 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public void sendDatapoint(string name) {
-			string msg = "";
-			using(SQL SQL = new SQL("get id from Datapoint")) {
-				string[][] Query = SQL.wpQuery($"SELECT [id_dp] FROM [dp] WHERE [name] = '{name}'");
-				int iddatapoint = 0;
-				Int32.TryParse(Query[0][0], out iddatapoint);
-				Datapoint datapoint = Datapoints.Get(iddatapoint); 
-				msg = "{" +
-					$"\"id\":{iddatapoint}," +
-					$"\"name\":\"{name}\"," +
-					$"\"value\":\"{datapoint.Value}\"," +
-					$"\"valuestring\":\"{datapoint.ValueString}\"," +
-					$"\"nks\":{datapoint.NKS}," +
-					$"\"unit\":\"{datapoint.Unit}\"," +
-					$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
-				"}";
-			}
-			if(Monitor.TryEnter(Clients, MonitorTimeout)) {
-				if(Clients.Count > 0) {
-					try {
-						foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
-							if(entry.Value.hasDatapoint(name)) {
-								entry.Value.message += String.IsNullOrEmpty(entry.Value.message) ? "" : ",";
-								entry.Value.message += msg;
-							}
-						}
-					} catch(Exception ex) {
-						wpDebug.WriteError(ex);
-					}
-				}
-				Monitor.Exit(Clients);
-			} else {
-				wpDebug.Write($"Angefordertes Item not Entered: WebSockets.Client, name: '{name}'");
-			}
+			Datapoint datapoint = Datapoints.Get(name);
+			sendDatapoint(datapoint);
 		}
 		public void sendDatapoint(Datapoint DP) {
 			try {

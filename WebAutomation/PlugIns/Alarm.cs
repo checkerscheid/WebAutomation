@@ -146,37 +146,37 @@ namespace WebAutomation.PlugIns {
 			set { _alarmgroups5 = value; }
 		}
 		/// <summary></summary>
-		private int _alarmnames1;
+		private string _alarmnames1;
 		/// <summary></summary>
-		public int Alarmnames1 {
+		public string Alarmnames1 {
 			get { return _alarmnames1; }
 			set { _alarmnames1 = value; }
 		}
 		/// <summary></summary>
-		private int _alarmnames2;
+		private string _alarmnames2;
 		/// <summary></summary>
-		public int Alarmnames2 {
+		public string Alarmnames2 {
 			get { return _alarmnames2; }
 			set { _alarmnames2 = value; }
 		}
 		/// <summary></summary>
-		private int _alarmnames3;
+		private string _alarmnames3;
 		/// <summary></summary>
-		public int Alarmnames3 {
+		public string Alarmnames3 {
 			get { return _alarmnames3; }
 			set { _alarmnames3 = value; }
 		}
 		/// <summary></summary>
-		private int _alarmnames4;
+		private string _alarmnames4;
 		/// <summary></summary>
-		public int Alarmnames4 {
+		public string Alarmnames4 {
 			get { return _alarmnames4; }
 			set { _alarmnames4 = value; }
 		}
 		/// <summary></summary>
-		private int _alarmnames5;
+		private string _alarmnames5;
 		/// <summary></summary>
-		public int Alarmnames5 {
+		public string Alarmnames5 {
 			get { return _alarmnames5; }
 			set { _alarmnames5 = value; }
 		}
@@ -637,11 +637,11 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[ialarms][16]);
 					TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[ialarms][17]);
 					TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[ialarms][18]);
-					TheAlarm.Alarmnames1 = Int32.Parse(DBAlarms[ialarms][19]);
-					TheAlarm.Alarmnames2 = Int32.Parse(DBAlarms[ialarms][20]);
-					TheAlarm.Alarmnames3 = Int32.Parse(DBAlarms[ialarms][21]);
-					TheAlarm.Alarmnames4 = Int32.Parse(DBAlarms[ialarms][22]);
-					TheAlarm.Alarmnames5 = Int32.Parse(DBAlarms[ialarms][23]);
+					TheAlarm.Alarmnames1 = DBAlarms[ialarms][19];
+					TheAlarm.Alarmnames2 = DBAlarms[ialarms][20];
+					TheAlarm.Alarmnames3 = DBAlarms[ialarms][21];
+					TheAlarm.Alarmnames4 = DBAlarms[ialarms][22];
+					TheAlarm.Alarmnames5 = DBAlarms[ialarms][23];
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
 					_alarmList.Add(idAlarm, TheAlarm);

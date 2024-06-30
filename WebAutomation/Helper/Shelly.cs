@@ -96,7 +96,7 @@ namespace WebAutomation.Helper {
 			wpDebug.Write("Shelly auf Port {0} gemappt", Ini.getInt("Shelly", "Port"));
 		}
 		public static void Stop() {
-			WebComListener.Stop();
+			if(WebComListener != null) WebComListener.Stop();
 			WebComListener = null;
 			isFinished = true;
 			WebComServer.Join(1500);

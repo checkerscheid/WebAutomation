@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using WebAutomation.Helper;
 
@@ -100,14 +99,16 @@ namespace WebAutomation.PlugIns {
 		}
 		public void Stop() {
 			onChangeMinValue.Stop();
-			wpDebug.Write($"Trend Stop {_trendname}");
+			if(wpDebug.debugTrend)
+				wpDebug.Write($"Trend Stop {_trendname}");
 		}
-		public void SetTrendValue(bool withReset) {
+		public async void SetTrendValue(bool withReset) {
 			if(_active) {
 				string v = Datapoints.Get(_iddp).Value;
 				if(v != null && v != "") {
-					using(SQL SQL = new SQL("Trend intervall")) {
-						string sql = @$"MERGE INTO [trendvalue] AS [TARGET]
+					await Task.Run(() => {
+						using(SQL SQL = new SQL("Trend intervall")) {
+							string sql = @$"MERGE INTO [trendvalue] AS [TARGET]
 	USING (
 		VALUES ({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')
 	) AS [SOURCE] ([id_trend], [value], [time])
@@ -115,12 +116,13 @@ namespace WebAutomation.PlugIns {
 	WHEN NOT MATCHED THEN
 		INSERT ([id_trend], [value], [time])
 		VALUES ([SOURCE].[id_trend], [SOURCE].[value], [SOURCE].[time]);";
-						//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
-						//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
-						if(SQL.wpNonResponse(sql) == 0) {
-							wpDebug.Write($"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
+							//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
+							//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
+							if(SQL.wpNonResponse(sql) == 0) {
+								wpDebug.Write($"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
+							}
 						}
-					}
+					});
 					if(withReset)
 						ResetMinValue();
 				}

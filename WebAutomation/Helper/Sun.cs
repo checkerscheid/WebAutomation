@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace WebAutomation.Helper {
 	public class Sun {
@@ -26,10 +28,10 @@ namespace WebAutomation.Helper {
 			if(Int32.TryParse(Ini.get("Projekt", "SunSet"), out testSunsetting)) {
 				SunSetId = testSunsetting;
 			}
-			StartSunriseSunsetTimer();
+			_ = StartSunriseSunsetTimer();
 		}
-		private void StartSunriseSunsetTimer() {
-			getSunsetSunrise();
+		private async Task StartSunriseSunsetTimer() {
+			await GetSunsetSunrise();
 
 			setNewSunriseSunsetTimer = new System.Timers.Timer();
 			setNewSunriseSunsetTimer.Elapsed += SunriseSunsetTimer_Elapsed;
@@ -56,14 +58,14 @@ namespace WebAutomation.Helper {
 			wpDebug.Write("setNewSunriseSunsetTimer gestartet - wird ausgelöst in {0}", firstStart);
 		}
 
-		private void SunriseSunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
+		private async void SunriseSunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			DateTime Now = DateTime.Now;
 			DateTime tomorrow = Now.AddDays(1);
 			TimeSpan nextStart = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 1, 0, 0) - Now;
 			setNewSunriseSunsetTimer.Interval = nextStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
 			wpDebug.Write("SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
-			getSunsetSunrise();
+			await GetSunsetSunrise();
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("True");
@@ -71,13 +73,7 @@ namespace WebAutomation.Helper {
 		private void SunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("False");
 		}
-
-		private void getSunsetSunrise() {
-			Thread SunsetSunrise = new Thread(new ThreadStart(handleGetSunsetSunrise));
-			SunsetSunrise.Name = "getSunsetSunrise";
-			SunsetSunrise.Start();
-		}
-		private void handleGetSunsetSunrise() {
+		private async Task GetSunsetSunrise() {
 			try {
 				WebClient webClient = new WebClient();
 				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", Ini.get("Projekt", "OpenWeatherCode"));
@@ -121,7 +117,9 @@ namespace WebAutomation.Helper {
 						wpDebug.WriteError(args.Error);
 					}
 				};
-				webClient.DownloadStringAsync(new Uri(url));
+				await Task.Run(() => {
+					webClient.DownloadStringAsync(new Uri(url));
+				});
 			} catch(Exception ex) {
 				wpDebug.WriteError(ex);
 			}

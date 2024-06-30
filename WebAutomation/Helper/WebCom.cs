@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 110                                                     $ #
+//# Revision     : $Rev:: 114                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 110 2024-06-17 15:17:17Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 114 2024-06-30 18:19:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -962,15 +962,15 @@ $"{{Alarme=";
 		$"{{Link={TheAlarm.Value.Alarmlink}}}" +
 		$"{{AlarmUpdate={TheAlarm.Value.AlarmUpdate.ToString()}}}" +
 		$"{(Alarms.UseAlarmGroup1 ?
-			$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Value.Alarmgroups1)}}}" : "")}" +
+			$"{{AlarmGroup1={TheAlarm.Value.Alarmnames1}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup2 ?
-			$"{{AlarmGroup2={Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Value.Alarmgroups2)}}}" : "")}" +
+			$"{{AlarmGroup2={TheAlarm.Value.Alarmnames2}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup3 ?
-			$"{{AlarmGroup3={Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Value.Alarmgroups3)}}}" : "")}" +
+			$"{{AlarmGroup3={TheAlarm.Value.Alarmnames3}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup4 ?
-			$"{{AlarmGroup4={Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Value.Alarmgroups4)}}}" : "")}" +
+			$"{{AlarmGroup4={TheAlarm.Value.Alarmnames4}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup5 ?
-			$"{{AlarmGroup5={Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Value.Alarmgroups5)}}}" : "")}" +
+			$"{{AlarmGroup5={TheAlarm.Value.Alarmnames5}}}" : "")}" +
 	$"}}";
 			}
 			returns +=

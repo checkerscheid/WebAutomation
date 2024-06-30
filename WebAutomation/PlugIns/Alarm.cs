@@ -146,6 +146,41 @@ namespace WebAutomation.PlugIns {
 			set { _alarmgroups5 = value; }
 		}
 		/// <summary></summary>
+		private int _alarmnames1;
+		/// <summary></summary>
+		public int Alarmnames1 {
+			get { return _alarmnames1; }
+			set { _alarmnames1 = value; }
+		}
+		/// <summary></summary>
+		private int _alarmnames2;
+		/// <summary></summary>
+		public int Alarmnames2 {
+			get { return _alarmnames2; }
+			set { _alarmnames2 = value; }
+		}
+		/// <summary></summary>
+		private int _alarmnames3;
+		/// <summary></summary>
+		public int Alarmnames3 {
+			get { return _alarmnames3; }
+			set { _alarmnames3 = value; }
+		}
+		/// <summary></summary>
+		private int _alarmnames4;
+		/// <summary></summary>
+		public int Alarmnames4 {
+			get { return _alarmnames4; }
+			set { _alarmnames4 = value; }
+		}
+		/// <summary></summary>
+		private int _alarmnames5;
+		/// <summary></summary>
+		public int Alarmnames5 {
+			get { return _alarmnames5; }
+			set { _alarmnames5 = value; }
+		}
+		/// <summary></summary>
 		private string _alarmtype;
 		/// <summary></summary>
 		public string Alarmtype {
@@ -559,18 +594,25 @@ namespace WebAutomation.PlugIns {
 					ISNULL(SUM([atm].[minutes]), 0) AS [emailminutes],
 					ISNULL([a].[id_alarmgroups1], 0), ISNULL([a].[id_alarmgroups2], 0),
 					ISNULL([a].[id_alarmgroups3], 0), ISNULL([a].[id_alarmgroups4], 0),
-					ISNULL([a].[id_alarmgroups5], 0)
+					ISNULL([a].[id_alarmgroups5], 0),
+					[g1].[name], [g2].[name], [g3].[name], [g4].[name], [g5].[name]
 				FROM [alarm] [a]
 				INNER JOIN [alarmtype] [t] ON [a].[id_alarmtype] = [t].[id_alarmtype]
 				INNER JOIN [alarmgroup] [g] ON [a].[id_alarmgroup] = [g].[id_alarmgroup]
 				INNER JOIN [dp] ON [a].[id_dp] = [dp].[id_dp]
 				INNER JOIN [alarmcondition] [c] ON [a].[id_alarmcondition] = [c].[id_alarmcondition]
+				LEFT JOIN [alarmgroups1] [g1] ON [a].[id_alarmgroups1] = [g1].[id_alarmgroups1]
+				LEFT JOIN [alarmgroups2] [g2] ON [a].[id_alarmgroups2] = [g2].[id_alarmgroups2]
+				LEFT JOIN [alarmgroups3] [g3] ON [a].[id_alarmgroups3] = [g3].[id_alarmgroups3]
+				LEFT JOIN [alarmgroups4] [g4] ON [a].[id_alarmgroups4] = [g4].[id_alarmgroups4]
+				LEFT JOIN [alarmgroups5] [g5] ON [a].[id_alarmgroups5] = [g5].[id_alarmgroups5]
 				LEFT JOIN [alarmtoemail] [atm] ON [atm].[id_alarm] = [a].[id_alarm]
 				GROUP BY [a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
 					[a].[min], [a].[max], [a].[delay],
 					[a].[id_alarmgroups1], [a].[id_alarmgroups2], [a].[id_alarmgroups3],
-					[a].[id_alarmgroups4], [a].[id_alarmgroups5]");
+					[a].[id_alarmgroups4], [a].[id_alarmgroups5],
+					[g1].[name], [g2].[name], [g3].[name], [g4].[name], [g5].[name]");
 				for (int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBAlarms[ialarms][0]);
 					int idDp = Int32.Parse(DBAlarms[ialarms][6]);
@@ -595,6 +637,11 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmgroups3 = Int32.Parse(DBAlarms[ialarms][16]);
 					TheAlarm.Alarmgroups4 = Int32.Parse(DBAlarms[ialarms][17]);
 					TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[ialarms][18]);
+					TheAlarm.Alarmnames1 = Int32.Parse(DBAlarms[ialarms][19]);
+					TheAlarm.Alarmnames2 = Int32.Parse(DBAlarms[ialarms][20]);
+					TheAlarm.Alarmnames3 = Int32.Parse(DBAlarms[ialarms][21]);
+					TheAlarm.Alarmnames4 = Int32.Parse(DBAlarms[ialarms][22]);
+					TheAlarm.Alarmnames5 = Int32.Parse(DBAlarms[ialarms][23]);
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
 					_alarmList.Add(idAlarm, TheAlarm);

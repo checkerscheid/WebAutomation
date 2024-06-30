@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 72                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: TransferId.cs 72 2024-01-11 23:53:17Z                    $ #
+//# File-ID      : $Id:: TransferId.cs 109 2024-06-16 15:59:41Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -198,25 +198,25 @@ namespace WebAutomation.Helper {
 				_forWhat = forWhat;
 				if(!WebAutomationServer.isInit) {
 					if(Program.MainProg.wpBigProject) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall (init): 240 s (TAID-{0})", id);
 						this.Interval = 240 * 1000;
 					} else {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall (init): 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					}
 				} else {
 					if(forWhat == TransferForceRead) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					} else if(Program.MainProg.wpBigProject) {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 30 s (TAID-{0})", id);
 						this.Interval = 30 * 1000;
 					} else {
-						if(Program.MainProg.wpDebugTransferID)
+						if(wpDebug.debugTransferID)
 							wpDebug.Write("TA intervall: 10 s (TAID-{0})", id);
 						this.Interval = 10 * 1000;
 					}

@@ -8,14 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: EventLog.cs 76 2024-01-24 07:36:57Z                      $ #
+//# File-ID      : $Id:: EventLog.cs 109 2024-06-16 15:59:41Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Diagnostics;
-using System.Text;
 using System.Windows.Forms;
 /**
 * @addtogroup WebAutomation
@@ -131,6 +130,182 @@ namespace WebAutomation.Helper {
 		}
 	}
 	public class wpDebug {
+
+		public static bool debugSystem = false;
+		public static bool debugSQL = false;
+		public static bool debugOPC = false;
+		public static bool debugTransferID = false;
+		public static bool debugWatchdog = false;
+		public static bool debugFactor = false;
+		public static bool debugTrend = false;
+		public static bool debugCalendar = false;
+		public static bool debugOpcRouter = false;
+		public static bool debugWebSockets = false;
+		public static bool debugShelly = false;
+		public static bool debugD1Mini = false;
+		public static bool debugMQTT = false;
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		public static string getDebugJson() {
+			string returns = "{";
+			returns += $"\"debug\":{(debugSystem ? "true" : "false")},";
+			returns += $"\"debugSQL\":{(debugSQL ? "true" : "false")},";
+			returns += $"\"debugOPC\":{(debugOPC ? "true" : "false")},";
+			returns += $"\"debugTransferID\":{(debugTransferID ? "true" : "false")},";
+			returns += $"\"debugWatchdog\":{(debugWatchdog ? "true" : "false")},";
+			returns += $"\"debugFactor\":{(debugFactor ? "true" : "false")},";
+			returns += $"\"debugTrend\":{(debugTrend ? "true" : "false")},";
+			returns += $"\"debugCalendar\":{(debugCalendar ? "true" : "false")},";
+			returns += $"\"debugOpcRouter\":{(debugOpcRouter ? "true" : "false")},";
+			returns += $"\"debugWebSockets\":{(debugWebSockets ? "true" : "false")},";
+			returns += $"\"debugShelly\":{(debugShelly ? "true" : "false")},";
+			returns += $"\"debugD1Mini\":{(debugD1Mini ? "true" : "false")},";
+			returns += $"\"debugMQTT\":{(debugMQTT ? "true" : "false")}";
+			return returns + "}";
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="debugArea"></param>
+		/// <returns></returns>
+		public static string changeDebug(string[] args) {
+			string debugArea;
+			if(args == null)
+				debugArea = "";
+			else
+				debugArea = args[0];
+			string returns = "{";
+			switch(debugArea) {
+				case "debugSystem":
+					debugSystem = !debugSystem;
+					Write($"success: Setting {debugArea} changed ({debugSystem})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugSystem})\"";
+					break;
+				case "debugSQL":
+					debugSQL = !debugSQL;
+					Write($"success: Setting {debugArea} changed ({debugSQL})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugSQL})\"";
+					break;
+				case "debugOPC":
+					debugOPC = !debugOPC;
+					Write($"success: Setting {debugArea} changed ({debugOPC})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugOPC})\"";
+					break;
+				case "debugTransferID":
+					debugTransferID = !debugTransferID;
+					Write($"success: Setting {debugArea} changed ({debugTransferID})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugTransferID})\"";
+					break;
+				case "debugWatchdog":
+					debugWatchdog = !debugWatchdog;
+					Write($"success: Setting {debugArea} changed ({debugWatchdog})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugWatchdog})\"";
+					break;
+				case "debugFactor":
+					debugFactor = !debugFactor;
+					Write($"success: Setting {debugArea} changed ({debugFactor})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugFactor})\"";
+					break;
+				case "debugTrend":
+					debugTrend = !debugTrend;
+					Write($"success: Setting {debugArea} changed ({debugTrend})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugTrend})\"";
+					break;
+				case "debugCalendar":
+					debugCalendar = !debugCalendar;
+					Write($"success: Setting {debugArea} changed ({debugCalendar})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugCalendar})\"";
+					break;
+				case "debugOpcRouter":
+					debugOpcRouter = !debugOpcRouter;
+					Write($"success: Setting {debugArea} changed ({debugOpcRouter})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugOpcRouter})\"";
+					break;
+				case "debugWebSockets":
+					debugWebSockets = !debugWebSockets;
+					Write($"success: Setting {debugArea} changed ({debugWebSockets})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugWebSockets})\"";
+					break;
+				case "debugShelly":
+					debugShelly = !debugShelly;
+					Write($"success: Setting {debugArea} changed ({debugShelly})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugShelly})\"";
+					break;
+				case "debugD1Mini":
+					debugD1Mini = !debugD1Mini;
+					Write($"success: Setting {debugArea} changed ({debugD1Mini})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugD1Mini})\"";
+					break;
+				case "debugMQTT":
+					debugMQTT = !debugMQTT;
+					Write($"success: Setting {debugArea} changed ({debugMQTT})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugMQTT})\"";
+					break;
+				default:
+					returns += "\"erg\":\"S_ERROR\",\"msg\":\"undefined command\"";
+					break;
+			}
+			return returns + "}";
+		}
+		public static void setDebugs(string[] args) {
+			if(Arrays.inArray("debugSystem".ToLower(), args)) {
+				debugSystem = true;
+				Write("{0} Server im 'Debug Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugSQL".ToLower(), args)) {
+				debugSQL = true;
+				Write("{0} Server im 'Debug SQL Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugOPC".ToLower(), args)) {
+				debugOPC = true;
+				Write("{0} Server im 'Debug OPC Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugTransferID".ToLower(), args)) {
+				debugTransferID = true;
+				Write("{0} Server im 'Debug Transfer ID Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugWatchdog".ToLower(), args)) {
+				debugWatchdog = true;
+				Write("{0} Server im 'Debug Watchdog Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugFactor".ToLower(), args)) {
+				debugFactor = true;
+				Write("{0} Server im 'Debug Factor Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugTrend".ToLower(), args)) {
+				debugTrend = true;
+				Write("{0} Server im 'Debug Trend Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugCalendar".ToLower(), args)) {
+				debugCalendar = true;
+				Write("{0} Server im 'Debug Calendar Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugOpcRouter".ToLower(), args)) {
+				debugOpcRouter = true;
+				Write("{0} Server im 'Debug OPC Router Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugWebSocket".ToLower(), args)) {
+				debugWebSockets = true;
+				Write("{0} Server im 'Debug WebSockets Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugShelly".ToLower(), args)) {
+				debugShelly = true;
+				Write("{0} Server im 'Debug Shelly Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugD1Mini".ToLower(), args)) {
+				debugD1Mini = true;
+				Write("{0} Server im 'Debug D1Mini Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugMQTT".ToLower(), args)) {
+				debugMQTT = true;
+				Write("{0} Server im 'Debug MQTT Modus' gestartet", Application.ProductName);
+			}
+		}
 		public static void Write(string msg) {
 			Debug.AutoFlush = true;
 			string dmsg = String.Format("{0:dd.MM.yy HH:mm:ss.fff} - {1}", DateTime.Now, msg);

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Watchdog.cs 76 2024-01-24 07:36:57Z                      $ #
+//# File-ID      : $Id:: Watchdog.cs 109 2024-06-16 15:59:41Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -69,7 +69,7 @@ namespace WebAutomation.Helper {
 			if (Int32.TryParse(Ini.get("Watchdog", "DpId"), out watchdogId)) {
 				Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 					TransferId.TransferWatchdog);
-				if(Program.MainProg.wpDebugTransferID)
+				if(wpDebug.debugTransferID)
 					wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
 			} else {
 				string[] ids = Ini.get("Watchdog", "DpId").Split(',');
@@ -80,7 +80,7 @@ namespace WebAutomation.Helper {
 						if (Int32.TryParse(id.Trim(), out watchdogId)) {
 							Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 								TransferId.TransferWatchdog);
-							if(Program.MainProg.wpDebugWatchdog)
+							if(wpDebug.debugWatchdog)
 								wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
 						}
 					}

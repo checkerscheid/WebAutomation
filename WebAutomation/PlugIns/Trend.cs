@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 99                                                      $ #
+//# Revision     : $Rev:: 109                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 99 2024-05-15 14:57:32Z                         $ #
+//# File-ID      : $Id:: Trend.cs 109 2024-06-16 15:59:41Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using WebAutomation.Helper;
 
 namespace WebAutomation.PlugIns {
@@ -155,11 +156,11 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
 			if(_active) onChangeMinValue.Start();
-			wpDebug.Write($"Trend Init {_trendname}");
+			if(wpDebug.debugTrend) wpDebug.Write($"Trend Init {_trendname}");
 		}
 		private int SetMinIntervall() {
 			if(_intervall == 0) {
-				if(Program.MainProg.wpDebugTrend)
+				if(wpDebug.debugTrend)
 					minMinutes = 1 * 60;
 				else
 					minMinutes = 14 * 60;
@@ -190,11 +191,9 @@ namespace WebAutomation.PlugIns {
 		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
 		/// <summary></summary>
 		private static Logger _eventLog = new Logger(wpEventLog.PlugInTrend);
-		private static Thread _threadCleanDB;
+		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {
-			_threadCleanDB = new Thread(TrendCleanDB.Start);
-			_threadCleanDB.Priority = ThreadPriority.BelowNormal;
 			using(SQL SQL = new SQL("get Trend Dictionary")) {
 				string[][] erg = SQL.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
@@ -213,13 +212,12 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			wpDebug.Write($"Trends Init");
-			TrendCleanDB.Init();
+			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
 		}
 
 		public static void Stop() {
-			TrendCleanDB.Stop();
-			_threadCleanDB.Join(1500);
+			_threadCleanDB.Stop();
 			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}
@@ -248,14 +246,14 @@ namespace WebAutomation.PlugIns {
 		/// <summary>
 		/// Eingeschränkte Speicherkapazität bei MSSQL Express erfordert ein Auslagern der TrenddDaten in Dateien
 		/// </summary>
-		internal static class TrendCleanDB {
-			private static volatile bool _doStop;
-			private static int _counter;
-			private static int _maxCounter;
-			private static string _folderBase;
-			private static string _projekt;
-			private static int _maxEntries = 1000;
-			public static void Init() {
+		internal class TrendCleanDB {
+			private volatile bool _doStop;
+			private int _counter;
+			private int _maxCounter;
+			private string _folderBase;
+			private string _projekt;
+			private int _maxEntries = 1000;
+			public TrendCleanDB() {
 				_doStop = false;
 				_counter = 0;
 				_folderBase = Ini.get("Trend", "Pfad");
@@ -264,26 +262,28 @@ namespace WebAutomation.PlugIns {
 
 				TrendArchivFolder();
 
-				if (Program.MainProg.wpDebugTrend) {
+				if (wpDebug.debugTrend) {
 					_maxCounter = 1 * 60;
 				} else {
 					_maxCounter = 90 * 60;
 				}
 			}
-			public static void Start() {
+			public async void Start() {
 				while (!_doStop) {
 					if (++_counter > _maxCounter) {
-						DBcleaner();
+						await Task.Run(() => {
+							DBcleaner();
+						});
 						_counter = 0;
 					} else {
-						Thread.Sleep(1000);
+						await Task.Delay(1000);
 					}
 				}
 			}
-			public static void Stop() {
+			public void Stop() {
 				_doStop = true;
 			}
-			private static void TrendArchivFolder() {
+			private void TrendArchivFolder() {
 				string p = Directory.GetDirectoryRoot(_folderBase);
 				if(Directory.Exists(p)) {
 					if(!Directory.Exists(_folderBase))
@@ -302,7 +302,7 @@ namespace WebAutomation.PlugIns {
 					_eventLog.Write(EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
 				}
 			}
-			private static void DBcleaner() {
+			private void DBcleaner() {
 				int deleteToOld = 0;
 				int deleteToMuch = 0;
 				int saveToOld = 0;
@@ -394,13 +394,13 @@ namespace WebAutomation.PlugIns {
 							if (saveToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
 									saveToOld, t.TrendName, watchTrend.Elapsed);
-								if (Program.MainProg.wpDebugTrend) wpDebug.Write(saveedToOld);
+								if (wpDebug.debugTrend) wpDebug.Write(saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
 							}
 							if (saveToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
 									saveToMuch, t.TrendName, watchTrend.Elapsed);
-								if (Program.MainProg.wpDebugTrend) wpDebug.Write(saveedToMuch);
+								if (wpDebug.debugTrend) wpDebug.Write(saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
 							}
 						} else {
@@ -409,14 +409,14 @@ namespace WebAutomation.PlugIns {
 						if (deleteToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
 								deleteToOld, t.TrendName, watchTrend.Elapsed);
-							if (Program.MainProg.wpDebugTrend) wpDebug.Write(deletedToOld);
+							if (wpDebug.debugTrend) wpDebug.Write(deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
 							trendsToOld++;
 						}
 						if (deleteToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
 								deleteToMuch, t.TrendName, watchTrend.Elapsed);
-							if (Program.MainProg.wpDebugTrend) wpDebug.Write(deletedToMuch);
+							if (wpDebug.debugTrend) wpDebug.Write(deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
 							trendsToMuch++;
 						}
@@ -436,7 +436,7 @@ namespace WebAutomation.PlugIns {
 					_eventLog.Write("Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
 				}
 			}
-			private static bool writeToFile(string filename, DateTime DateForFolder, string text) {
+			private bool writeToFile(string filename, DateTime DateForFolder, string text) {
 				bool returns = false;
 				string y = DateForFolder.ToString("yyyy");
 				string m = DateForFolder.ToString("MM");

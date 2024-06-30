@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 105                                                     $ #
+//# Revision     : $Rev:: 110                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 105 2024-05-26 02:22:00Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 110 2024-06-17 15:17:17Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -81,54 +81,6 @@ namespace WebAutomation.Helper {
 		/// <summary>
 		/// 
 		/// </summary>
-		private void TCP_Listener() {
-			try {
-				WebComListener.Start();
-				eventLog.Write(String.Format("{0} gestartet", WebComServer.Name));
-				do {
-					if (!WebComListener.Pending()) {
-						Thread.Sleep(250);
-						continue;
-					}
-					TcpClient Pclient = WebComListener.AcceptTcpClient();
-					Thread ClientThread = new Thread(new ParameterizedThreadStart(TCP_HandleClient));
-					ClientThread.Name = "WebcomHandleClient";
-					ClientThread.Start(Pclient);
-				} while (!isFinished);
-			} catch(Exception ex) {
-				eventLog.WriteError(ex);
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="client"></param>
-		private void TCP_HandleClient(object client) {
-			TcpClient tcpClient = (TcpClient)client;
-			try {
-				string s_message = "";
-				NetworkStream clientStream = tcpClient.GetStream();
-				byte[] message = new byte[tcpClient.ReceiveBufferSize];
-				int bytesRead = 0;
-				do {
-					bytesRead = clientStream.Read(message, bytesRead, (int)tcpClient.ReceiveBufferSize);
-					s_message += encoder.GetString(message, 0, bytesRead);
-				} while (clientStream.DataAvailable);
-				if (!isFinished) {
-					byte[] answer = getAnswer(s_message);
-					clientStream.Write(answer, 0, answer.Length);
-					clientStream.Flush();
-					clientStream.Close();
-				}
-			} catch (Exception ex) {
-				eventLog.WriteError(ex, tcpClient.ToString());
-			} finally {
-				tcpClient.Close();
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
 		private static class wpBefehl {
 			/// <summary></summary>
 			public const string cHello = "Hello Server";
@@ -189,6 +141,8 @@ namespace WebAutomation.Helper {
 			public const string cPublishTopic = "publishTopic";
 
 			public const string cForceMqttUpdate = "ForceMqttUpdate";
+			public const string cShellyMqttUpdate = "shellyMqttUpdate";
+			public const string cD1MiniMqttUpdate = "d1MiniMqttUpdate";
 			public const string cSetBrowseMqtt = "setBrowseMqtt";
 			public const string cUnsetBrowseMqtt = "unsetBrowseMqtt";
 			public const string cGetBrowseMqtt = "getBrowseMqtt";
@@ -221,7 +175,8 @@ namespace WebAutomation.Helper {
 				string[] a_befehl = rBefehl.Split(text);
 				string[] a_param = rParam.Split(text);
 				returns[0] = a_befehl.Length > 1 ? a_befehl[1] : "undefined";
-				if (a_param.Length > 1) returns[1] = a_param[1];
+				if(a_param.Length > 1)
+					returns[1] = a_param[1];
 				return returns;
 			}
 			/// <summary>
@@ -231,7 +186,7 @@ namespace WebAutomation.Helper {
 			/// <returns></returns>
 			public static string[] getParam(string param) {
 				Regex rParam = new Regex(@"%~%");
-				if (param != null)
+				if(param != null)
 					return rParam.Split(param);
 				else
 					return null;
@@ -240,9 +195,57 @@ namespace WebAutomation.Helper {
 		/// <summary>
 		/// 
 		/// </summary>
+		private void TCP_Listener() {
+			try {
+				WebComListener.Start();
+				eventLog.Write(String.Format("{0} gestartet", WebComServer.Name));
+				do {
+					if (!WebComListener.Pending()) {
+						Thread.Sleep(250);
+						continue;
+					}
+					TcpClient Pclient = WebComListener.AcceptTcpClient();
+					Thread ClientThread = new Thread(new ParameterizedThreadStart(TCP_HandleClient));
+					ClientThread.Name = "WebcomHandleClient";
+					ClientThread.Start(Pclient);
+				} while (!isFinished);
+			} catch(Exception ex) {
+				eventLog.WriteError(ex);
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="client"></param>
+		private async void TCP_HandleClient(object client) {
+			TcpClient tcpClient = (TcpClient)client;
+			try {
+				string s_message = "";
+				NetworkStream clientStream = tcpClient.GetStream();
+				byte[] message = new byte[tcpClient.ReceiveBufferSize];
+				int bytesRead = 0;
+				do {
+					bytesRead = clientStream.Read(message, bytesRead, (int)tcpClient.ReceiveBufferSize);
+					s_message += encoder.GetString(message, 0, bytesRead);
+				} while (clientStream.DataAvailable);
+				if (!isFinished) {
+					byte[] answer = await getAnswer(s_message);
+					clientStream.Write(answer, 0, answer.Length);
+					clientStream.Flush();
+					clientStream.Close();
+				}
+			} catch (Exception ex) {
+				eventLog.WriteError(ex, tcpClient.ToString());
+			} finally {
+				tcpClient.Close();
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private byte[] getAnswer(string text) {
+		private async Task<byte[]> getAnswer(string text) {
 			string returns = "{ERROR=undefined command}";
 			string[] s_befehl = wpBefehl.getBefehl(text);
 			string[] param;
@@ -281,16 +284,19 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cPublishTopic:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if(Int32.TryParse(param[1], out outint)) {
-						Program.MainProg.wpMQTTClient.setValue(param[0], outint.ToString());
-					}
+					returns = await Program.MainProg.wpMQTTClient.setValue(param[0], param[1]);
 					break;
 				case wpBefehl.cForceMqttUpdate:
 					returns = ForceMqttUpdate();
 					break;
+				case wpBefehl.cShellyMqttUpdate:
+					returns = ShellyMqttUpdate();
+					break;
+				case wpBefehl.cD1MiniMqttUpdate:
+					returns = D1MiniMqttUpdate();
+					break;
 				case wpBefehl.cSetBrowseMqtt:
-					_ = Program.MainProg.wpMQTTClient.setBrowseTopics();
-					returns = "S_OK";
+					returns = await Program.MainProg.wpMQTTClient.setBrowseTopics();
 					break;
 				case wpBefehl.cUnsetBrowseMqtt:
 					_ = Program.MainProg.wpMQTTClient.unsetBrowseTopics();
@@ -719,11 +725,11 @@ namespace WebAutomation.Helper {
 					returns = "{\"erg\":\"S_OK\"}";
 					break;
 				case wpBefehl.cGetDebug:
-					returns = Program.MainProg.getDebugJson();
+					returns = wpDebug.getDebugJson();
 					break;
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = Program.MainProg.setDebug(param);
+					returns = wpDebug.changeDebug(param);
 					break;
 				default:
 					returns = "{ERROR=undefined command}";
@@ -769,6 +775,18 @@ namespace WebAutomation.Helper {
 		private string ForceMqttUpdate() {
 			string returns = "S_ERROR";
 			if(Program.MainProg.wpMQTTClient.forceMqttUpdate())
+				returns = "S_OK";
+			return returns;
+		}
+		private string ShellyMqttUpdate() {
+			string returns = "S_ERROR";
+			if(Program.MainProg.wpMQTTClient.shellyMqttUpdate())
+				returns = "S_OK";
+			return returns;
+		}
+		private string D1MiniMqttUpdate() {
+			string returns = "S_ERROR";
+			if(Program.MainProg.wpMQTTClient.d1MiniMqttUpdate())
 				returns = "S_OK";
 			return returns;
 		}

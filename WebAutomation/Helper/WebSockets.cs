@@ -32,8 +32,6 @@ namespace WebAutomation.Helper {
 		private static int clientid = 0;
 		private static Dictionary<int, wpTcpClient> Clients;
 		private bool isFinished;
-		private const int MonitorTimeout = 50;
-		private const int MonitorCounter = 10;
 		private const int ThreadSleep = 250;
 		private const int ThreadJoin = 525; // (ThreadSleep * 2) + 25
 		public WebSockets() {
@@ -124,7 +122,7 @@ namespace WebAutomation.Helper {
 					stream.Close();
 					tcpClient.tcpClient.Close();
 				} finally {
-					tcpClient.message = null;
+					tcpClient.message = "";
 				}
 			}
 		}
@@ -302,7 +300,6 @@ namespace WebAutomation.Helper {
 			client.tcpClient.GetStream().Write(response, 0, response.Length);
 		}
 		public class wpTcpClient {
-			private const int MonitorTimeout = 50;
 			private TcpClient _tcpClient;
 			public TcpClient tcpClient {
 				get { return _tcpClient; }
@@ -315,30 +312,15 @@ namespace WebAutomation.Helper {
 			}
 			private string _message;
 			public string message {
-				get {
-					if(Monitor.TryEnter(_message, MonitorTimeout)) {
-						return _message;
-					} else {
-						wpDebug.Write($"get 'message' from Client '{_id}' blockiert, val: '{_message}'");
-					}
-					Monitor.Exit(_message);
-					return null;
-				}
-				set {
-					if(Monitor.TryEnter(_message, MonitorTimeout)) {
-						_message = value;
-					} else {
-						wpDebug.Write($"set 'message' from Client '{_id}' blockiert, val: '{value}'");
-					}
-					Monitor.Exit(_message);
-				}
+				get { return _message; }
+				set { _message = value; }
 			}
 			private List<string> myDatapoints;
 			public bool isFinished = false;
 			public wpTcpClient(int id, TcpClient tcpClient) {
 				_id = id;
 				_tcpClient = tcpClient;
-				_message = null;
+				_message = "";
 				myDatapoints = new List<string>();
 			}
 			public void Add(string Datapoints) {

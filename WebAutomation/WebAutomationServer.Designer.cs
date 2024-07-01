@@ -96,7 +96,7 @@ namespace WebAutomation {
 			// checkBoxForInvisibleFocus
 			// 
 			this.checkBoxForInvisibleFocus.AutoSize = true;
-			this.checkBoxForInvisibleFocus.Location = new System.Drawing.Point(0, 168);
+			this.checkBoxForInvisibleFocus.Location = new System.Drawing.Point(149, 22);
 			this.checkBoxForInvisibleFocus.Name = "checkBoxForInvisibleFocus";
 			this.checkBoxForInvisibleFocus.Size = new System.Drawing.Size(15, 14);
 			this.checkBoxForInvisibleFocus.TabIndex = 1;
@@ -214,7 +214,6 @@ namespace WebAutomation {
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.Control;
 			this.ClientSize = new System.Drawing.Size(698, 207);
-			this.Controls.Add(this.checkBoxForInvisibleFocus);
 			this.Controls.Add(this.lbl_volumeinfo);
 			this.Controls.Add(this.lbl_memory);
 			this.Controls.Add(this.lbl_prozessor);
@@ -226,6 +225,7 @@ namespace WebAutomation {
 			this.Controls.Add(this.lbl_lastchange);
 			this.Controls.Add(this.label_msg);
 			this.Controls.Add(this.label1);
+			this.Controls.Add(this.checkBoxForInvisibleFocus);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Icon = global::WebAutomation.Properties.Resources.wp;
 			this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);

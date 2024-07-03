@@ -63,7 +63,7 @@ namespace WebAutomation.Helper {
 		private Dictionary<string, string> _settings;
 		private string ForceUpdate;
 		public MQTTClient() {
-			wpDebug.Write("wpMQTTClient init");
+			wpDebug.Write("MQTT Client init");
 			string[][] DBBroker;
 			using(SQL SQL = new SQL("MQTT Server")) {
 				DBBroker = SQL.wpQuery(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
@@ -76,10 +76,10 @@ namespace WebAutomation.Helper {
 			ForceUpdate = $"{_clientId}/ForceMqttUpdate";
 			MqttFactory factory = new MqttFactory();
 			_mqttClient = factory.CreateMqttClient();
-			wpDebug.Write("wpMQTTClient inited");
+			wpDebug.Write("MQTT Client gestartet");
 		}
 		private void fillTopics() {
-			wpDebug.Write("wpMQTTClient fillTopics");
+			wpDebug.Write("MQTT Client fillTopics");
 			_topics = new Dictionary<string, Dictionary<string, topic>>();
 			subscribed = new List<string>();
 			_serverTopics = new List<string>();
@@ -108,10 +108,10 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					}
 				}
 			}
-			wpDebug.Write("wpMQTTClient fillTopics ok");
+			wpDebug.Write("MQTT Client fillTopics ok");
 		}
 		public async Task Start() {
-			wpDebug.Write("wpMQTTClient start");
+			wpDebug.Write("MQTT Client start work");
 			MqttClientOptions options = new MqttClientOptionsBuilder()
 				.WithTcpServer(_ipBroker, _port)
 				.WithClientId(_clientId)
@@ -128,8 +128,8 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			} catch(Exception ex) {
 				wpDebug.WriteError(ex);
 			}
-			wpDebug.Write("wpMQTTClient gestartet");
 			D1MiniServer.ForceRenewValue();
+			wpDebug.Write("MQTT Client start work OK");
 		}
 		private async Task<string> registerDatapoints() {
 			foreach(KeyValuePair<string, Dictionary<string, topic>> kvp1 in _topics) {

@@ -950,6 +950,7 @@ namespace WebAutomation.PlugIns {
 		private static Dictionary<int, Calendar> _calendarDic = new Dictionary<int, Calendar>();
 		private Logger eventLog;
 		public Calendars() {
+			wpDebug.Write("Calendars init");
 			eventLog = new Logger(wpEventLog.PlugInCalendar);
 			using(SQL SQL = new SQL("Calendars")) {
 				string[][] DBCalendar = SQL.wpQuery("SELECT [id_calendar], [id_dp], [name], [active] FROM [calendar]");
@@ -965,6 +966,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 			}
+			eventLog.Write("Calendars gestartet");
 		}
 		public string renewCalendar(int _id) {
 			if(_calendarDic.ContainsKey(_id)) {

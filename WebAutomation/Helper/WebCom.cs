@@ -58,6 +58,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
+			wpDebug.Write("WebCom init");
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
@@ -65,14 +66,15 @@ namespace WebAutomation.Helper {
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
+			wpDebug.Write("WebCom gestartet, auf Port {0} gemappt", Ini.getInt("TCP", "Port"));
 			WebComServer.Start();
-			wpDebug.Write("WebCom auf Port {0} gemappt", Ini.getInt("TCP", "Port"));
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		public void finished() {
-			WebComListener.Stop();
+			if(WebComListener != null)
+				WebComListener.Stop();
 			WebComListener = null;
 			isFinished = true;
 			WebComServer.Join(1500);

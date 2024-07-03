@@ -51,6 +51,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
+			wpDebug.Write("EMail Client init");
 			eventLog = new Logger(wpEventLog.Mail);
 			mailMessage = new MailMessage();
 			reset();

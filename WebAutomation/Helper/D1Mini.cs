@@ -58,7 +58,7 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public static void Start() {
-			wpDebug.Write("D1 Mini Server Start");
+			wpDebug.Write("D1Mini Server init");
 			D1Minis = new Dictionary<string, D1MiniDevice>();
 			using(SQL SQL = new SQL("Select Shellys")) {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
@@ -83,6 +83,7 @@ namespace WebAutomation.Helper {
 			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
 			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait");
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
+			wpDebug.Write("D1Mini Server gestartet");
 		}
 		public static void Stop() {
 			stopSearch();

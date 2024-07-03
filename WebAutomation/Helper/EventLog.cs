@@ -27,7 +27,7 @@ namespace WebAutomation.Helper {
 	public class Logger: IDisposable {
 		public const string ErrorString = "Message: {0}\r\nTrace:\r\n{1}";
 		/// <summary></summary>
-		private System.Diagnostics.EventLog eventLog;
+		private EventLog eventLog;
 		/// <summary></summary>
 		private int EventLogID;
 		/// <summary></summary>
@@ -42,7 +42,7 @@ namespace WebAutomation.Helper {
 		/// <param name="Source"></param>
 		public Logger(int Source) {
 			try {
-				eventLog = new System.Diagnostics.EventLog();
+				eventLog = new EventLog();
 				eventLog.Source = wpEventLog.getSrc(Source);
 				EventLogID = Source;
 				eventLog.Log = wpEventLog.LogName;

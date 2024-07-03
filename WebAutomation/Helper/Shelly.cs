@@ -16,11 +16,9 @@
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace WebAutomation.Helper {
@@ -31,10 +29,6 @@ namespace WebAutomation.Helper {
 		private static Dictionary<string, ShellyDeviceHelper> Shellys;
 		private static List<string> _ForceMqttUpdateAvailable;
 		public static List<string> ForceMqttUpdateAvailable { get { return _ForceMqttUpdateAvailable; } }
-		private static TcpListener WebComListener;
-		private static Thread WebComServer;
-		private static UTF8Encoding encoder = new UTF8Encoding();
-		private static bool isFinished;
 
 		public static event EventHandler<valueChangedEventArgs> valueChanged;
 		public class valueChangedEventArgs: EventArgs {
@@ -43,8 +37,8 @@ namespace WebAutomation.Helper {
 			public string value { get; set; }
 		}
 		public static void Start() {
+			wpDebug.Write("Shelly Server Init");
 			eventLog = new Logger(wpEventLog.PlugInShelly);
-			isFinished = false;
 			Shellys = new Dictionary<string, ShellyDeviceHelper>();
 			_ForceMqttUpdateAvailable = new List<string>();
 			using(SQL SQL = new SQL("Select Shellys")) {
@@ -89,282 +83,13 @@ namespace WebAutomation.Helper {
 					}
 				}
 			}
-			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("Shelly", "Port"));
-			WebComServer = new Thread(new ThreadStart(TCP_Listener));
-			WebComServer.Name = "ShellyServer";
-			WebComServer.Start();
-			wpDebug.Write("Shelly auf Port {0} gemappt", Ini.getInt("Shelly", "Port"));
-		}
-		public static void Stop() {
-			if(WebComListener != null) WebComListener.Stop();
-			WebComListener = null;
-			isFinished = true;
-			WebComServer.Join(1500);
-			eventLog.Write("Shelly Server gestoppt");
+			wpDebug.Write("Shelly Server gestartet");
 		}
 		public static string getAllStatus() {
 			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in Shellys) {
 				kvp.Value.getStatus();
 			}
 			return "S_OK";
-		}
-		private static void TCP_Listener() {
-			try {
-				WebComListener.Start();
-				eventLog.Write("Shelly Server started");
-				do {
-					if(!WebComListener.Pending()) {
-						Thread.Sleep(250);
-						continue;
-					}
-					TcpClient Pclient = WebComListener.AcceptTcpClient();
-					Thread ClientThread = new Thread(new ParameterizedThreadStart(TCP_HandleClient));
-					ClientThread.Name = "ShellyServerHandleClient";
-					ClientThread.Start(Pclient);
-				} while(!isFinished);
-			} catch(Exception ex) {
-				eventLog.WriteError(ex);
-			}
-		}
-		private static void TCP_HandleClient(object client) {
-			TcpClient tcpClient = (TcpClient)client;
-			if(wpDebug.debugShelly)
-				wpDebug.Write(String.Format("Neue Shelly aktion: {0}", tcpClient.Client.RemoteEndPoint));
-			string newvalue = "";
-			try {
-				string s_message = "";
-				NetworkStream clientStream = tcpClient.GetStream();
-				byte[] message = new byte[tcpClient.ReceiveBufferSize];
-				int bytesRead = 0;
-				do {
-					bytesRead = clientStream.Read(message, bytesRead, (int)tcpClient.ReceiveBufferSize);
-					s_message += encoder.GetString(message, 0, bytesRead);
-				} while(clientStream.DataAvailable);
-				bool found = false;
-				bool macok = false;
-				string mac;
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							setValue(Shellys[mac].id_onoff, Shellys[mac].name, m.Groups[2].Value == "true" ? "True" : "False");
-							newvalue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", Shellys[mac].name, m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&state\=(open|close)&lux\=([0-9.]*)&temp\=([0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_onoff, Shellys[mac].name, m.Groups[2].Value == "open" ? "True" : "False");
-							newvalue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", m.Groups[2].Value);
-							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[3].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Lux: {0}, ", m.Groups[3].Value);
-							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[4].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[4].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)&temp\=([0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", m.Groups[2].Value);
-							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[3].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[3].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Temp: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&a\=lp")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							Shellys[mac].setLongPress();
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				// D1 Mini
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&temp\=([-0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Temperatur: {0}, ", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&ldr\=([0-9]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: LDR: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&light\=([0-9]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Licht: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rain\=([0-9]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_rain, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Regen: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&vol\=([0-9]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_vol, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Volume: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
-					}
-				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
-					if(m.Success) {
-						mac = m.Groups[1].Value.ToLower();
-						wpDebug.Write($"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
-						found = true;
-					}
-				}
-				if(!found) eventLog.Write("Shelly Message not found: {0}", s_message);
-				byte[] answer = encoder.GetBytes($"HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n{{\"Message\":\"{(found ? "S_OK" : "S_ERROR")}\",\"MAC\":\"{(macok ? "S_OK" : "S_ERROR")}\"}}");
-				clientStream.Write(answer, 0, answer.Length);
-				clientStream.Flush();
-				clientStream.Close();
-			} catch(Exception ex) {
-				eventLog.WriteError(ex);
-			} finally {
-				tcpClient.Close();
-			}
 		}
 		private static void setValue(int idDp, string name, string value) {
 			valueChangedEventArgs vcea = new valueChangedEventArgs();
@@ -373,6 +98,100 @@ namespace WebAutomation.Helper {
 			vcea.value = value;
 			if(valueChanged != null)
 				valueChanged.Invoke(idDp, vcea);
+		}
+		public static bool SetState(string mac, bool state) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_onoff, Shellys[mac].name, state ? "True" : "False");
+				string DebugNewValue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", Shellys[mac].name, state);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetDoor(string mac, bool state, string temp, string ldr) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_onoff, Shellys[mac].name, state ? "True" : "False");
+				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
+				setValue(Shellys[mac].id_lux, Shellys[mac].name, ldr.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", state ? "True" : "False");
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetHumTemp(string mac, string hum, string temp) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_feuchte, Shellys[mac].name, hum.Replace(".", ","));
+				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", hum);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetTemp(string mac, string temp) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetHum(string mac, string hum) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_feuchte, Shellys[mac].name, hum.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", hum);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetLongPress(string mac) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				Shellys[mac].setLongPress();
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
 		}
 		private class ShellyDeviceHelper {
 			private int _id;

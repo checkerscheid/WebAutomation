@@ -55,6 +55,7 @@ namespace WebAutomation {
 			this.statusStrip = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.SystemIcon = new System.Windows.Forms.NotifyIcon(this.components);
+			this.checkBoxForInvisibleFocus = new System.Windows.Forms.CheckBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label_msg = new System.Windows.Forms.Label();
 			this.lbl_lastchange = new System.Windows.Forms.Label();
@@ -91,6 +92,15 @@ namespace WebAutomation {
 			this.SystemIcon.Icon = global::WebAutomation.Properties.Resources.wp;
 			this.SystemIcon.Visible = true;
 			this.SystemIcon.MouseClick += new System.Windows.Forms.MouseEventHandler(this.SystemIcon_MouseClick);
+			// 
+			// checkBoxForInvisibleFocus
+			// 
+			this.checkBoxForInvisibleFocus.AutoSize = true;
+			this.checkBoxForInvisibleFocus.Location = new System.Drawing.Point(149, 22);
+			this.checkBoxForInvisibleFocus.Name = "checkBoxForInvisibleFocus";
+			this.checkBoxForInvisibleFocus.Size = new System.Drawing.Size(15, 14);
+			this.checkBoxForInvisibleFocus.TabIndex = 1;
+			this.checkBoxForInvisibleFocus.UseVisualStyleBackColor = true;
 			// 
 			// label1
 			// 
@@ -215,6 +225,7 @@ namespace WebAutomation {
 			this.Controls.Add(this.lbl_lastchange);
 			this.Controls.Add(this.label_msg);
 			this.Controls.Add(this.label1);
+			this.Controls.Add(this.checkBoxForInvisibleFocus);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Icon = global::WebAutomation.Properties.Resources.wp;
 			this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -232,22 +243,6 @@ namespace WebAutomation {
 		}
 
 #endregion
-		/// <summary></summary>
-		private System.Windows.Forms.StatusStrip statusStrip;
-		/// <summary></summary>
-		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-		/// <summary></summary>
-		private System.Windows.Forms.NotifyIcon SystemIcon;
-		/// <summary></summary>
-		private System.Windows.Forms.Label label1;
-		/// <summary></summary>
-		private System.Windows.Forms.Label label_msg;
-		/// <summary></summary>
-		private System.Windows.Forms.Label lbl_lastchange;
-		/// <summary></summary>
-		private System.Windows.Forms.TextBox lbl_message;
-		private System.Windows.Forms.Label label3;
-		private System.Windows.Forms.Label lbl_db;
 
 
 #region UI
@@ -362,6 +357,17 @@ namespace WebAutomation {
 
 #endregion
 
+		/// <summary></summary>
+		private StatusStrip statusStrip;
+		private ToolStripStatusLabel toolStripStatusLabel1;
+		private NotifyIcon SystemIcon;
+		private CheckBox checkBoxForInvisibleFocus;
+		private Label label1;
+		private Label label_msg;
+		private Label lbl_lastchange;
+		private TextBox lbl_message;
+		private Label label3;
+		private Label lbl_db;
 		private Label label4;
 		private Label lbl_prozessor;
 		private Label lbl_memory;

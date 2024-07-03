@@ -32,8 +32,8 @@ namespace WebAutomation.Helper {
 		private static int clientid = 0;
 		private static Dictionary<int, wpTcpClient> Clients;
 		private bool isFinished;
-		private const int MonitorTimeout = 200;
-		private int ThreadSleep = 250;
+		private const int ThreadSleep = 250;
+		private const int ThreadJoin = 525; // (ThreadSleep * 2) + 25
 		public WebSockets() {
 			init();
 		}
@@ -51,7 +51,7 @@ namespace WebAutomation.Helper {
 			WebSocketsListener.Stop();
 			WebSocketsListener = null;
 			isFinished = true;
-			WebSocketsServer.Join(ThreadSleep);
+			WebSocketsServer.Join(ThreadJoin);
 			eventLog.Write($"{WebSocketsServer.Name} gestoppt");
 		}
 		private void TCP_Listener() {
@@ -83,7 +83,7 @@ namespace WebAutomation.Helper {
 						stream.Close();
 						tcpClient.tcpClient.Close();
 						tcpClient.isFinished = true;
-						Thread.CurrentThread.Join(ThreadSleep * 2);
+						Thread.CurrentThread.Join(ThreadJoin);
 						return;
 					}
 					// write to Client
@@ -106,33 +106,24 @@ namespace WebAutomation.Helper {
 			});
 		}
 		private void WriteToClient(NetworkStream stream, wpTcpClient tcpClient) {
-			try {
-				if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
-					if(tcpClient.message != "") {
-						try {
-							byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
-							if(stream.CanWrite) {
-								stream.Write(answerbytes, 0, answerbytes.Length);
-								if(wpDebug.debugWebSockets)
-									wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
-							} else {
-								if(wpDebug.debugWebSockets)
-									wpDebug.Write("Server to {0} failed: {1}", tcpClient.id, tcpClient.message);
-							}
-						} catch(Exception ex) {
-							wpDebug.Write("Client {0}: {1}", tcpClient.id, ex.Message);
-							Clients.Remove(tcpClient.id);
-							stream.Close();
-							tcpClient.tcpClient.Close();
-						} finally {
-							tcpClient.message = "";
-						}
+			if(!String.IsNullOrEmpty(tcpClient.message)) {
+				try {
+					byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
+					if(stream.CanWrite) {
+						stream.Write(answerbytes, 0, answerbytes.Length);
+						if(wpDebug.debugWebSockets)
+							wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
+					} else {
+						wpDebug.Write("Server to {0} failed: {1}", tcpClient.id, tcpClient.message);
 					}
-				} else {
-					wpDebug.Write("Clients blockiert: setDatapoint");
+				} catch(Exception ex) {
+					wpDebug.Write("Client {0}: {1}", tcpClient.id, ex.Message);
+					Clients.Remove(tcpClient.id);
+					stream.Close();
+					tcpClient.tcpClient.Close();
+				} finally {
+					tcpClient.message = "";
 				}
-			} finally {
-				Monitor.Exit(tcpClient);
 			}
 		}
 		private void ReadFromClient(NetworkStream stream, wpTcpClient tcpClient) {
@@ -149,7 +140,7 @@ namespace WebAutomation.Helper {
 					stream.Close();
 					tcpClient.tcpClient.Close();
 					tcpClient.isFinished = true;
-					Thread.CurrentThread.Join(MonitorTimeout);
+					Thread.CurrentThread.Join(ThreadJoin);
 					wpDebug.Write($"{WebSocketsServer.Name} Client {tcpClient.id} Closed: {s}");
 				} else if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
 					byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("PONG");
@@ -253,7 +244,10 @@ namespace WebAutomation.Helper {
 
 		public void sendText(wpTcpClient client, string text) {
 			try {
-				client.message += text;
+				if(String.IsNullOrEmpty(client.message))
+					client.message = text;
+				else
+					client.message += text;
 			} catch(Exception ex) {
 				eventLog.WriteError(ex);
 			}
@@ -273,22 +267,19 @@ namespace WebAutomation.Helper {
 					$"\"unit\":\"{DP.Unit}\"," +
 					$"\"lastchange\":\"{DP.LastChange.ToString("s")}\"" +
 				"}";
-				if(Monitor.TryEnter(Clients, MonitorTimeout)) {
-					if(Clients.Count > 0) {
-						try {
-							foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
-								if(entry.Value.hasDatapoint(DP.Name)) {
-									entry.Value.message += String.IsNullOrEmpty(entry.Value.message) ? "" : ",";
-									entry.Value.message += msg;
-								}
+				foreach(KeyValuePair<int, wpTcpClient> entry in Clients) {
+					try {
+						if(entry.Value.hasDatapoint(DP.Name)) {
+							if(String.IsNullOrEmpty(entry.Value.message)) {
+								entry.Value.message = "";
+							} else {
+								entry.Value.message += ",";
 							}
-						} catch(Exception ex) {
-							wpDebug.WriteError(ex);
+							entry.Value.message += msg;
 						}
+					} catch(Exception ex) {
+						wpDebug.WriteError(ex);
 					}
-					Monitor.Exit(Clients);
-				} else {
-					wpDebug.Write($"Angefordertes Item not Entered: WebSockets.Client, DP: '{DP.Name} ({DP.ID})'");
 				}
 			} catch(Exception ex) {
 				wpDebug.WriteError(ex);
@@ -309,15 +300,27 @@ namespace WebAutomation.Helper {
 			client.tcpClient.GetStream().Write(response, 0, response.Length);
 		}
 		public class wpTcpClient {
-			public TcpClient tcpClient { get; set; }
-			public int id { get; set; }
-			public string message { get; set; }
+			private TcpClient _tcpClient;
+			public TcpClient tcpClient {
+				get { return _tcpClient; }
+				set { _tcpClient = value; }
+			}
+			private int _id;
+			public int id {
+				get{ return _id; }
+				set{ _id = value; }
+			}
+			private string _message;
+			public string message {
+				get { return _message; }
+				set { _message = value; }
+			}
 			private List<string> myDatapoints;
 			public bool isFinished = false;
 			public wpTcpClient(int id, TcpClient tcpClient) {
-				this.id = id;
-				this.tcpClient = tcpClient;
-				this.message = "";
+				_id = id;
+				_tcpClient = tcpClient;
+				_message = "";
 				myDatapoints = new List<string>();
 			}
 			public void Add(string Datapoints) {

@@ -31,6 +31,7 @@ namespace WebAutomation.Helper {
 		private System.Timers.Timer SunriseTimer;
 		private System.Timers.Timer SunsetTimer;
 		public Sun() {
+			wpDebug.Write("Sun init");
 			int testSunIsShining, testSunRising, testSunsetting;
 			if(Int32.TryParse(Ini.get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
@@ -42,6 +43,7 @@ namespace WebAutomation.Helper {
 				SunSetId = testSunsetting;
 			}
 			_ = StartSunriseSunsetTimer();
+			wpDebug.Write("Sun gestartet");
 		}
 		private async Task StartSunriseSunsetTimer() {
 			await GetSunsetSunrise();

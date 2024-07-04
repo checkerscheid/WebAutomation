@@ -582,6 +582,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		public static void Init() {
+			wpDebug.Write("Alarms Init");
 			_eventLog = new Logger(wpEventLog.PlugInAlarm);
 			FillAlarmGroups();
 			using (SQL SQL = new SQL("Init Alarms")) {
@@ -682,7 +683,7 @@ FROM (
 					}
 				}
 			}
-			_eventLog.Write("Alarm PlugIn geladen");
+			_eventLog.Write("Alarms gestartet");
 		}
 		public static Dictionary<int, Alarm> getActiveAlarms() {
 			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();

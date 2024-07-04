@@ -187,6 +187,7 @@ namespace WebAutomation {
 		private static Dictionary<string, int> DPnames = new Dictionary<string, int>();
 		private static Dictionary<int, int> OPCList = new Dictionary<int, int>();
 		public static void Init() {
+			wpDebug.Write("Datapoints Init");
 			using(SQL sql = new SQL("fill Datapoints")) {
 				string[][] erg = sql.wpQuery("SELECT [id_dp], [id_opcdatapoint] FROM [dp]");
 				for(int idp = 0; idp < erg.Length; idp++) {
@@ -201,13 +202,13 @@ namespace WebAutomation {
 					}
 				}
 			}
-			wpDebug.Write("Datapoints Init");
+			wpDebug.Write("Datapoints gestartet");
 		}
 		public static void Start() {
 			Program.MainProg.wpMQTTClient.valueChanged += MQTTClient_valueChanged;
 			Program.MainProg.wpOPCClient.valueChanged += wpOPCClient_valueChanged;
 			ShellyServer.valueChanged += ShellyServer_valueChanged;
-			wpDebug.Write("Datapoints Start");
+			wpDebug.Write("Datapoints Start work");
 		}
 
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {

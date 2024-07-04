@@ -38,6 +38,7 @@ namespace WebAutomation.Helper {
 			init();
 		}
 		private void init() {
+			wpDebug.Write("WebSockets Server Init");
 			isFinished = false;
 			Clients = new Dictionary<int, wpTcpClient>();
 			eventLog = new Logger(wpEventLog.WebSockets);
@@ -45,7 +46,7 @@ namespace WebAutomation.Helper {
 			WebSocketsServer = new Thread(new ThreadStart(TCP_Listener));
 			WebSocketsServer.Name = "WebSocketsServer";
 			WebSocketsServer.Start();
-			eventLog.Write($"{WebSocketsServer.Name} auf Port {Ini.getInt("Websockets", "Port")} gemappt");
+			eventLog.Write($"WebSockets Server gestartet, auf Port {Ini.getInt("Websockets", "Port")} gemappt");
 		}
 		public void finished() {
 			WebSocketsListener.Stop();

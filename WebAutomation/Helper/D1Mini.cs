@@ -115,6 +115,7 @@ namespace WebAutomation.Helper {
 			OnlineTogglerSendIntervall = Ini.getInt("D1Mini", "OnlineTogglerSendIntervall");
 			OnlineTogglerWait = Ini.getInt("D1Mini", "OnlineTogglerWait");
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
+			wpDebug.Write("D1Mini Server gestartet");
 		}
 		public static void Stop() {
 			stopSearch();

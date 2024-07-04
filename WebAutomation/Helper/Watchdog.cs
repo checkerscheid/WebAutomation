@@ -28,7 +28,7 @@ namespace WebAutomation.Helper {
 		private int maxWatchdogByte;
 		public Watchdog() {
 			eventLog = new Logger(wpEventLog.PlugInWatchdog);
-			eventLog.Write("PlugIn Watchdog gestartet");
+			wpDebug.Write("Watchdog init");
 			int watchdogVerz;
 			if (Int32.TryParse(Ini.get("Watchdog", "Verz"), out watchdogVerz)) {
 				if (watchdogVerz <= 0) watchdogVerz = 1;
@@ -49,6 +49,7 @@ namespace WebAutomation.Helper {
 				System.Threading.Thread.Sleep(1000);
 				setWDB();
 			}
+			eventLog.Write("Watchdog gestartet");
 		}
 		public void finished() {
 			if (watchdogTimer != null) {

@@ -196,6 +196,7 @@ namespace WebAutomation.PlugIns {
 		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {
+			wpDebug.Write("Trends Init");
 			using(SQL SQL = new SQL("get Trend Dictionary")) {
 				string[][] erg = SQL.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
@@ -213,9 +214,9 @@ namespace WebAutomation.PlugIns {
 					Datapoints.Get(idDp).idTrend = idTrend;
 				}
 			}
-			wpDebug.Write($"Trends Init");
 			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
+			wpDebug.Write("Trends gestartet");
 		}
 
 		public static void Stop() {
@@ -223,7 +224,7 @@ namespace WebAutomation.PlugIns {
 			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}
-			wpDebug.Write($"Trends Stop");
+			wpDebug.Write("Trends Stop");
 		}
 		public static Trend Get(int idTrend) {
 			return _trendList[idTrend];

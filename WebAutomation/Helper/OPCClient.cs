@@ -86,7 +86,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		private void init() {
 			eventLog = new Logger(wpEventLog.OPC);
-			eventLog.Write("OPC Client gestartet");
+			eventLog.Write("OPC Client init");
 				
 			TheServer = new Dictionary<int, PGAOPCServer>();
 			TheGroup = new Dictionary<int, Dictionary<int, OpcGroup>>();
@@ -169,7 +169,7 @@ namespace WebAutomation.Helper {
 			running = true;
 			activate();
 
-			eventLog.Write("OPC Client initialisiert");
+			eventLog.Write("OPC Client gestartet");
 
 			//OpcChecker = new CheckOpcServerState();
 			//ThreadOpcChecker = new Thread(OpcChecker.doWork);

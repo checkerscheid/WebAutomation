@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 115 2024-07-04 00:02:57Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 118 2024-07-04 14:20:41Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -124,17 +124,17 @@ namespace WebAutomation {
 		public string Message {
 			set {
 				try {
-					if(lbl_message.InvokeRequired) {
-						lbl_message.Invoke(new MethodInvoker(() => Message = value));
+					if(lbl_msg.InvokeRequired) {
+						lbl_msg.Invoke(new MethodInvoker(() => Message = value));
 					} else {
-						string[] oldMessage = lbl_message.Lines;
+						string[] oldMessage = lbl_msg.Lines;
 						List<string> newMessage = new List<string>();
 						newMessage.Add(value);
 						for(int i = 0; i < 100; i++) {
 							if(oldMessage.Length >= i + 1)
 								newMessage.Add(oldMessage[i]);
 						}
-						lbl_message.Lines = newMessage.ToArray();
+						lbl_msg.Lines = newMessage.ToArray();
 					}
 				} catch(Exception) { };
 			}
@@ -763,6 +763,10 @@ namespace WebAutomation {
 			} catch (Exception ex) {
 				Helper.wpDebug.Write(ex.ToString());
 			}
+		}
+
+		private void lbl_msg_Enter(object sender, EventArgs e) {
+			nonsens.Focus();
 		}
 	}
 }

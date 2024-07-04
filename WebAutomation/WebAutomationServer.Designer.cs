@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 115 2024-07-04 00:02:57Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 118 2024-07-04 14:20:41Z#$ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -55,16 +55,17 @@ namespace WebAutomation {
 			this.statusStrip = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.SystemIcon = new System.Windows.Forms.NotifyIcon(this.components);
-			this.label1 = new System.Windows.Forms.Label();
-			this.label_msg = new System.Windows.Forms.Label();
+			this.txt_lastchange = new System.Windows.Forms.Label();
+			this.txt_msg = new System.Windows.Forms.Label();
 			this.lbl_lastchange = new System.Windows.Forms.Label();
-			this.lbl_message = new System.Windows.Forms.TextBox();
-			this.label3 = new System.Windows.Forms.Label();
+			this.lbl_msg = new System.Windows.Forms.TextBox();
+			this.txt_db = new System.Windows.Forms.Label();
 			this.lbl_db = new System.Windows.Forms.Label();
-			this.label4 = new System.Windows.Forms.Label();
+			this.txt_System = new System.Windows.Forms.Label();
 			this.lbl_prozessor = new System.Windows.Forms.Label();
 			this.lbl_memory = new System.Windows.Forms.Label();
 			this.lbl_volumeinfo = new System.Windows.Forms.Label();
+			this.nonsens = new System.Windows.Forms.TextBox();
 			this.statusStrip.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -92,26 +93,26 @@ namespace WebAutomation {
 			this.SystemIcon.Visible = true;
 			this.SystemIcon.MouseClick += new System.Windows.Forms.MouseEventHandler(this.SystemIcon_MouseClick);
 			// 
-			// label1
+			// txt_lastchange
 			// 
-			this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(13, 131);
-			this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(83, 13);
-			this.label1.TabIndex = 1;
-			this.label1.Text = "Last Change:";
+			this.txt_lastchange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.txt_lastchange.AutoSize = true;
+			this.txt_lastchange.Location = new System.Drawing.Point(13, 131);
+			this.txt_lastchange.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.txt_lastchange.Name = "txt_lastchange";
+			this.txt_lastchange.Size = new System.Drawing.Size(83, 13);
+			this.txt_lastchange.TabIndex = 1;
+			this.txt_lastchange.Text = "Last Change:";
 			// 
-			// label_msg
+			// txt_msg
 			// 
-			this.label_msg.AutoSize = true;
-			this.label_msg.Location = new System.Drawing.Point(13, 22);
-			this.label_msg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.label_msg.Name = "label_msg";
-			this.label_msg.Size = new System.Drawing.Size(88, 13);
-			this.label_msg.TabIndex = 2;
-			this.label_msg.Text = "Last Message:";
+			this.txt_msg.AutoSize = true;
+			this.txt_msg.Location = new System.Drawing.Point(13, 16);
+			this.txt_msg.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.txt_msg.Name = "txt_msg";
+			this.txt_msg.Size = new System.Drawing.Size(88, 13);
+			this.txt_msg.TabIndex = 2;
+			this.txt_msg.Text = "Last Message:";
 			// 
 			// lbl_lastchange
 			// 
@@ -124,29 +125,31 @@ namespace WebAutomation {
 			this.lbl_lastchange.TabIndex = 3;
 			this.lbl_lastchange.Text = "-";
 			// 
-			// lbl_message
+			// lbl_msg
 			// 
-			this.lbl_message.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.lbl_msg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.lbl_message.Location = new System.Drawing.Point(149, 16);
-			this.lbl_message.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-			this.lbl_message.Multiline = true;
-			this.lbl_message.Name = "lbl_message";
-			this.lbl_message.ReadOnly = true;
-			this.lbl_message.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.lbl_message.Size = new System.Drawing.Size(535, 73);
-			this.lbl_message.TabIndex = 4;
+			this.lbl_msg.Location = new System.Drawing.Point(149, 16);
+			this.lbl_msg.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+			this.lbl_msg.Multiline = true;
+			this.lbl_msg.Name = "lbl_msg";
+			this.lbl_msg.ReadOnly = true;
+			this.lbl_msg.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+			this.lbl_msg.Size = new System.Drawing.Size(535, 73);
+			this.lbl_msg.TabIndex = 4;
+			this.lbl_msg.TabStop = false;
+			this.lbl_msg.Enter += new System.EventHandler(this.lbl_msg_Enter);
 			// 
-			// label3
+			// txt_db
 			// 
-			this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(13, 118);
-			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(130, 13);
-			this.label3.TabIndex = 5;
-			this.label3.Text = "geladene Datenbank:";
+			this.txt_db.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.txt_db.AutoSize = true;
+			this.txt_db.Location = new System.Drawing.Point(13, 118);
+			this.txt_db.Name = "txt_db";
+			this.txt_db.Size = new System.Drawing.Size(130, 13);
+			this.txt_db.TabIndex = 5;
+			this.txt_db.Text = "geladene Datenbank:";
 			// 
 			// lbl_db
 			// 
@@ -158,15 +161,15 @@ namespace WebAutomation {
 			this.lbl_db.TabIndex = 6;
 			this.lbl_db.Text = "-";
 			// 
-			// label4
+			// txt_System
 			// 
-			this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(13, 92);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(55, 13);
-			this.label4.TabIndex = 7;
-			this.label4.Text = "System:";
+			this.txt_System.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.txt_System.AutoSize = true;
+			this.txt_System.Location = new System.Drawing.Point(13, 92);
+			this.txt_System.Name = "txt_System";
+			this.txt_System.Size = new System.Drawing.Size(55, 13);
+			this.txt_System.TabIndex = 7;
+			this.txt_System.Text = "System:";
 			// 
 			// lbl_prozessor
 			// 
@@ -198,23 +201,32 @@ namespace WebAutomation {
 			this.lbl_volumeinfo.TabIndex = 10;
 			this.lbl_volumeinfo.Text = "-";
 			// 
+			// nonsens
+			// 
+			this.nonsens.Location = new System.Drawing.Point(159, 26);
+			this.nonsens.Name = "nonsens";
+			this.nonsens.ReadOnly = true;
+			this.nonsens.Size = new System.Drawing.Size(100, 21);
+			this.nonsens.TabIndex = 0;
+			// 
 			// WebAutomationServer
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.Control;
 			this.ClientSize = new System.Drawing.Size(698, 207);
-			this.Controls.Add(this.lbl_volumeinfo);
-			this.Controls.Add(this.lbl_memory);
+			this.Controls.Add(this.txt_msg);
+			this.Controls.Add(this.lbl_msg);
+			this.Controls.Add(this.txt_System);
 			this.Controls.Add(this.lbl_prozessor);
-			this.Controls.Add(this.label4);
+			this.Controls.Add(this.lbl_memory);
+			this.Controls.Add(this.lbl_volumeinfo);
+			this.Controls.Add(this.txt_db);
 			this.Controls.Add(this.lbl_db);
-			this.Controls.Add(this.label3);
-			this.Controls.Add(this.statusStrip);
-			this.Controls.Add(this.lbl_message);
+			this.Controls.Add(this.txt_lastchange);
 			this.Controls.Add(this.lbl_lastchange);
-			this.Controls.Add(this.label_msg);
-			this.Controls.Add(this.label1);
+			this.Controls.Add(this.nonsens);
+			this.Controls.Add(this.statusStrip);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Icon = global::WebAutomation.Properties.Resources.wp;
 			this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -239,14 +251,14 @@ namespace WebAutomation {
 		/// <summary></summary>
 		private System.Windows.Forms.NotifyIcon SystemIcon;
 		/// <summary></summary>
-		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Label txt_lastchange;
 		/// <summary></summary>
-		private System.Windows.Forms.Label label_msg;
+		private System.Windows.Forms.Label txt_msg;
 		/// <summary></summary>
 		private System.Windows.Forms.Label lbl_lastchange;
 		/// <summary></summary>
-		private System.Windows.Forms.TextBox lbl_message;
-		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.TextBox lbl_msg;
+		private System.Windows.Forms.Label txt_db;
 		private System.Windows.Forms.Label lbl_db;
 
 
@@ -363,10 +375,11 @@ namespace WebAutomation {
 
 #endregion
 
-		private Label label4;
+		private Label txt_System;
 		private Label lbl_prozessor;
 		private Label lbl_memory;
 		private Label lbl_volumeinfo;
+		private TextBox nonsens;
 	}
 }
 /** @} */

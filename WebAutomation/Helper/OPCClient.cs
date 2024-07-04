@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 120                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 115 2024-07-04 00:02:57Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 120 2024-07-04 15:08:20Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;

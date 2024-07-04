@@ -43,12 +43,13 @@ namespace WebAutomation.Helper {
 			_ForceMqttUpdateAvailable = new List<string>();
 			using(SQL SQL = new SQL("Select Shellys")) {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
-					[id_shelly], [ip], [mac], [id_shellyroom],
-					[id_onoff], [id_temp], [id_feuchte], [id_lux], [id_rain], [id_vol],
-					[name], [type],
-					[mqtt_active], [mqtt_server], [mqtt_id], [mqtt_prefix], [mqtt_writeable]
-					FROM [shelly] WHERE [active] = 1");
-				int id_shelly, idroom, idonoff, idtemp, idfeuchte, idlux, idrain, idvol;
+					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_shellyroom], [s].[name], [s].[type],
+					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
+					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_bat]
+					FROM [shelly] [s]
+					LEFT JOIN [rest] [r] ON [s].[id_shelly] = [r].[id_shelly]
+					WHERE [s].[active] = 1");
+				int id_shelly, idroom;
 				string ip, shmac, name, type, mqttserver, idmqtt, mqttprefix;
 				bool mqttactive, mqttwriteable;
 				for(int ishelly = 0; ishelly < Query1.Length; ishelly++) {
@@ -57,24 +58,24 @@ namespace WebAutomation.Helper {
 						ip = Query1[ishelly][1];
 						shmac = Query1[ishelly][2].ToLower();
 						Int32.TryParse(Query1[ishelly][3], out idroom);
-						Int32.TryParse(Query1[ishelly][4], out idonoff);
-						Int32.TryParse(Query1[ishelly][5], out idtemp);
-						Int32.TryParse(Query1[ishelly][6], out idfeuchte);
-						Int32.TryParse(Query1[ishelly][7], out idlux);
-						Int32.TryParse(Query1[ishelly][8], out idrain);
-						Int32.TryParse(Query1[ishelly][9], out idvol);
-						name = Query1[ishelly][10];
-						type = Query1[ishelly][11];
-						mqttactive = Query1[ishelly][12] == "True";
-						mqttserver = Query1[ishelly][13];
-						idmqtt = Query1[ishelly][14];
-						mqttprefix = Query1[ishelly][15];
-						mqttwriteable = Query1[ishelly][16] == "True";
+						name = Query1[ishelly][4];
+						type = Query1[ishelly][5];
+
+						mqttactive = Query1[ishelly][6] == "True";
+						mqttserver = Query1[ishelly][7];
+						idmqtt = Query1[ishelly][8];
+						mqttprefix = Query1[ishelly][9];
+						mqttwriteable = Query1[ishelly][10] == "True";
 						Shellys.Add(shmac,
-							new ShellyDeviceHelper(id_shelly, ip, shmac, idroom,
-								idonoff, idtemp, idfeuchte, idlux, idrain, idvol,
-								name, type,
+							new ShellyDeviceHelper(id_shelly, ip, shmac, idroom, name, type,
 								mqttactive, mqttserver, idmqtt, mqttprefix, mqttwriteable));
+
+						if(!String.IsNullOrEmpty(Query1[ishelly][11])) Shellys[shmac].id_onoff = Int32.Parse(Query1[ishelly][11]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][12])) Shellys[shmac].id_temp = Int32.Parse(Query1[ishelly][12]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][13])) Shellys[shmac].id_hum = Int32.Parse(Query1[ishelly][13]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][14])) Shellys[shmac].id_ldr = Int32.Parse(Query1[ishelly][14]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][15])) Shellys[shmac].id_bat = Int32.Parse(Query1[ishelly][15]);
+
 						if(ShellyType.isGen2(type))
 							_ForceMqttUpdateAvailable.Add(idmqtt);
 						Shellys[shmac].getStatus();
@@ -118,7 +119,7 @@ namespace WebAutomation.Helper {
 			if(Shellys.ContainsKey(mac)) {
 				setValue(Shellys[mac].id_onoff, Shellys[mac].name, state ? "True" : "False");
 				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
-				setValue(Shellys[mac].id_lux, Shellys[mac].name, ldr.Replace(".", ","));
+				setValue(Shellys[mac].id_ldr, Shellys[mac].name, ldr.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", state ? "True" : "False");
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
@@ -135,10 +136,10 @@ namespace WebAutomation.Helper {
 		public static bool SetHumTemp(string mac, string hum, string temp) {
 			bool returns = false;
 			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_feuchte, Shellys[mac].name, hum.Replace(".", ","));
+				setValue(Shellys[mac].id_hum, Shellys[mac].name, hum.Replace(".", ","));
 				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", hum);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
@@ -167,9 +168,9 @@ namespace WebAutomation.Helper {
 		public static bool SetHum(string mac, string hum) {
 			bool returns = false;
 			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_feuchte, Shellys[mac].name, hum.Replace(".", ","));
+				setValue(Shellys[mac].id_hum, Shellys[mac].name, hum.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}, ", hum);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
@@ -207,26 +208,27 @@ namespace WebAutomation.Helper {
 			private int _id_onoff;
 			public int id_onoff {
 				get { return _id_onoff; }
+				set { _id_onoff = value; }
 			}
 			private int _id_temp;
 			public int id_temp {
 				get { return _id_temp; }
+				set { _id_temp = value; }
 			}
-			private int _id_feuchte;
-			public int id_feuchte {
-				get { return _id_feuchte; }
+			private int _id_hum;
+			public int id_hum {
+				get { return _id_hum; }
+				set { _id_hum = value; }
 			}
-			private int _id_lux;
-			public int id_lux {
-				get { return _id_lux; }
+			private int _id_ldr;
+			public int id_ldr {
+				get { return _id_ldr; }
+				set { _id_ldr = value; }
 			}
-			private int _id_rain;
-			public int id_rain {
-				get { return _id_rain; }
-			}
-			private int _id_vol;
-			public int id_vol {
-				get { return _id_vol; }
+			private int _id_bat;
+			public int id_bat {
+				get { return _id_bat; }
+				set { _id_bat = value; }
 			}
 			private string _name;
 			public string name {
@@ -249,9 +251,7 @@ namespace WebAutomation.Helper {
 			}
 
 
-			public ShellyDeviceHelper(int id, string ip, string mac,
-				int id_room, int id_onoff, int id_temp, int id_feuchte, int id_lux, int id_rain, int id_vol,
-				string name, string type,
+			public ShellyDeviceHelper(int id, string ip, string mac, int id_room, string name, string type,
 				bool mqtt_enable, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable) {
 				_id = id;
 				IPAddress ipaddress;
@@ -260,12 +260,6 @@ namespace WebAutomation.Helper {
 				}
 				_mac = mac;
 				_room = id_room;
-				_id_onoff = id_onoff;
-				_id_temp = id_temp;
-				_id_feuchte = id_feuchte;
-				_id_lux = id_lux;
-				_id_rain = id_rain;
-				_id_vol = id_vol;
 				_name = name;
 				_type = type;
 				_mqtt_enable = mqtt_enable;
@@ -378,7 +372,7 @@ namespace WebAutomation.Helper {
 									}
 								}
 							} else {
-								wpDebug.WriteError(args.Error);
+								wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
 							}
 						};
 						webClient.DownloadStringAsync(new Uri(target));

@@ -47,6 +47,8 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public MQTTClient wpMQTTClient;
 		/// <summary></summary>
+		public RestServer wpRest;
+		/// <summary></summary>
 		public Watchdog wpWatchdog;
 		public Sun wpSun;
 		/// <summary></summary>
@@ -501,7 +503,7 @@ namespace WebAutomation {
 			this.Text += " [Debug]";
 #endif
 			_isInit = false;
-			eventLog = new Logger(wpEventLog.Automation);
+			eventLog = new Logger(wpEventLog.WebAutomation);
 
 			_wpWartung = false;
 			_wpStartMinimized = false;
@@ -631,11 +633,12 @@ namespace WebAutomation {
 			Trends.Init();
 			Alarms.Init();
 			wpWebSockets = new WebSockets();
-			ShellyServer.Start();
 			wpMQTTClient = new MQTTClient();
 			wpOPCClient = new OPCClient();
-			D1MiniServer.Start();
 			Datapoints.Start();
+			ShellyServer.Start();
+			D1MiniServer.Start();
+			wpRest = new RestServer();
 			await wpMQTTClient.Start();
 
 			wpWatchdog = new Watchdog();

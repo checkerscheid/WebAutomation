@@ -40,7 +40,7 @@ namespace WebAutomation.Helper {
 		private void init() {
 			isFinished = false;
 			Clients = new Dictionary<int, wpTcpClient>();
-			eventLog = new Logger(wpEventLog.Com);
+			eventLog = new Logger(wpEventLog.WebSockets);
 			WebSocketsListener = new TcpListener(IPAddress.Any, Ini.getInt("Websockets", "Port"));
 			WebSocketsServer = new Thread(new ThreadStart(TCP_Listener));
 			WebSocketsServer.Name = "WebSocketsServer";

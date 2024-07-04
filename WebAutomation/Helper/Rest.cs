@@ -39,7 +39,7 @@ namespace WebAutomation.Helper {
 			RestServerThread.Start();
 			wpDebug.Write("Rest Server gestartet");
 		}
-		public void Stop() {
+		public void finished() {
 			_isFinished = true;
 			if(RestServerListener != null) {
 				RestServerListener.Stop();
@@ -47,8 +47,8 @@ namespace WebAutomation.Helper {
 			RestServerListener = null;
 			if(RestServerThread != null)
 				RestServerThread.Join(threadTimeOut * 2);
-			(RestServerThread = null;
-			eventLog.Write("Shelly Server gestoppt");
+			RestServerThread = null;
+			eventLog.Write("Rest Server gestoppt");
 		}
 		private void RestServer_Listen() {
 			try {
@@ -72,7 +72,6 @@ namespace WebAutomation.Helper {
 			TcpClient tcpClient = (TcpClient)client;
 			if(wpDebug.debugShelly)
 				wpDebug.Write(String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
-			string newvalue = "";
 			try {
 				string s_message = "";
 				NetworkStream clientStream = tcpClient.GetStream();
@@ -136,113 +135,91 @@ namespace WebAutomation.Helper {
 					}
 				}
 				// D1 Mini
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&temp\=([-0-9.]*)")) {
-					if(m.Success) {
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&bm\=(true|false)")) {
+					if(m.Success) { // found D1Mini State
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_temp, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Temperatur: {0}, ", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						bool state = m.Groups[2].Value == "true" ? true : false;
+						macok = D1MiniServer.SetBM(mac, state);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini temp
+						mac = m.Groups[1].Value.ToLower();
+						string temp = m.Groups[3].Value;
+						macok = D1MiniServer.SetTemp(mac, temp);
+						cmdfound = true;
 					}
 				}
 				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
-					if(m.Success) {
+					if(m.Success) { // found D1Mini hum
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_feuchte, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Feuchte: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						string hum = m.Groups[2].Value;
+						macok = D1MiniServer.SetHum(mac, hum);
+						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&ldr\=([0-9]*)")) {
-					if(m.Success) {
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&ldr\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini ldr
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: LDR: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						string ldr = m.Groups[2].Value;
+						macok = D1MiniServer.SetLdr(mac, ldr);
+						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&light\=([0-9]*)")) {
-					if(m.Success) {
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&light\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini light
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_lux, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Licht: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						string light = m.Groups[2].Value;
+						macok = D1MiniServer.SetLight(mac, light);
+						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rain\=([0-9]*)")) {
-					if(m.Success) {
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&relais\=(true|false)")) {
+					if(m.Success) { // found D1Mini Relais
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_rain, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Regen: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						bool relais = m.Groups[2].Value == "true" ? true : false;
+						macok = D1MiniServer.SetRelais(mac, relais);
+						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&vol\=([0-9]*)")) {
-					if(m.Success) {
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rain\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini rain
 						mac = m.Groups[1].Value.ToLower();
-						if(Shellys.ContainsKey(mac)) {
-							newvalue = String.Format("Raum: {0}", Shellys[mac].name);
-							setValue(Shellys[mac].id_vol, Shellys[mac].name, m.Groups[2].Value.Replace(".", ","));
-							newvalue += String.Format("\r\n\tNeuer Wert: Volume: {0}", m.Groups[2].Value);
-							if(wpDebug.debugShelly)
-								eventLog.Write(newvalue);
-							Program.MainProg.lastchange = newvalue;
-							macok = true;
-						} else {
-							eventLog.Write($"Shelly nicht gefunden: {mac}");
-						}
-						found = true;
+						string rain = m.Groups[2].Value;
+						macok = D1MiniServer.SetRain(mac, rain);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&moisture\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini moisture
+						mac = m.Groups[1].Value.ToLower();
+						string moisture = m.Groups[2].Value;
+						macok = D1MiniServer.SetMoisture(mac, moisture);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&vol\=([0-9.]*)")) {
+					if(m.Success) { // found D1Mini moisture
+						mac = m.Groups[1].Value.ToLower();
+						string volume = m.Groups[2].Value;
+						macok = D1MiniServer.SetVolume(mac, volume);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&window\=(true|false)")) {
+					if(m.Success) { // found D1Mini Window
+						mac = m.Groups[1].Value.ToLower();
+						bool window = m.Groups[2].Value == "true" ? true : false;
+						macok = D1MiniServer.SetWindow(mac, window);
+						cmdfound = true;
 					}
 				}
 				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();
 						wpDebug.Write($"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
-						found = true;
+						cmdfound = true;
 					}
 				}
 				if(!cmdfound)

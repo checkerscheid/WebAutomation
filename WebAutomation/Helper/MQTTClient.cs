@@ -72,7 +72,7 @@ namespace WebAutomation.Helper {
 			_port = Int32.Parse(DBBroker[0][2]);
 			_ipBroker = DBBroker[0][1];
 			fillTopics();
-			_clientId = $"{Application.ProductName}";
+			_clientId = $"{Application.ProductName}-{Environment.MachineName}";
 			ForceUpdate = $"{_clientId}/ForceMqttUpdate";
 			MqttFactory factory = new MqttFactory();
 			_mqttClient = factory.CreateMqttClient();

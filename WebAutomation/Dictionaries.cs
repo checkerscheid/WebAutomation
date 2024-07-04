@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 109 2024-06-16 15:59:41Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 115 2024-07-04 00:02:57Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using System;

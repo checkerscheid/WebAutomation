@@ -13,7 +13,6 @@
 //# File-ID      : $Id:: Dictionaries.cs 109 2024-06-16 15:59:41Z                 $ #
 //#                                                                                 #
 //###################################################################################
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -110,7 +109,7 @@ namespace WebAutomation {
 					Trends.Get((int)_idTrend).SetTrendValue();
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(wpDebug.debugWebSockets)
+				if(wpDebug.debugTransferID)
 					Debug.WriteLine($"Datenpunkt gesetzt '{_name}': {_valueString} ({_value})");
 			}
 		}
@@ -153,7 +152,7 @@ namespace WebAutomation {
 		/// setValue without driver
 		/// </summary>
 		/// <param name="value"></param>
-		public void writeValue(string value) {
+		public async void writeValue(string value) {
 			NumberStyles style = NumberStyles.Float;
 			CultureInfo culture = CultureInfo.InvariantCulture;
 			double dValue = 0.0;
@@ -174,7 +173,7 @@ namespace WebAutomation {
 			if(_idOpc != null) {
 				Program.MainProg.wpOPCClient.setValue((int)_idOpc, value);
 			} else if(_idMqtt != null) {
-				Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
+				await Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
 				// Simulate MQTT Subscribe
 				setValue(value);
 			} else {
@@ -185,6 +184,7 @@ namespace WebAutomation {
 	
 	public static class Datapoints {
 		private static Dictionary<int, Datapoint> DP = new Dictionary<int, Datapoint>();
+		private static Dictionary<string, int> DPnames = new Dictionary<string, int>();
 		private static Dictionary<int, int> OPCList = new Dictionary<int, int>();
 		public static void Init() {
 			using(SQL sql = new SQL("fill Datapoints")) {
@@ -224,10 +224,20 @@ namespace WebAutomation {
 				DP[id] = dp;
 			else
 				DP.Add(id, dp);
+			if(DPnames.ContainsKey(dp.Name))
+				DPnames[dp.Name] = id;
+			else
+				DPnames.Add(dp.Name, id);
 		}
 		public static Datapoint Get(int id) {
 			if(DP.ContainsKey(id))
 				return DP[id];
+			return null;
+		}
+		public static Datapoint Get(string name) {
+			if(DPnames.ContainsKey(name))
+				if(DP.ContainsKey(DPnames[name]))
+					return DP[DPnames[name]];
 			return null;
 		}
 		public static void writeValues(List<int> DpIds, string value) {

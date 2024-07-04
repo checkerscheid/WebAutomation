@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 114                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 109 2024-06-16 15:59:41Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 114 2024-06-30 18:19:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -96,7 +96,7 @@ namespace WebAutomation.Helper {
 			wpDebug.Write("Shelly auf Port {0} gemappt", Ini.getInt("Shelly", "Port"));
 		}
 		public static void Stop() {
-			WebComListener.Stop();
+			if(WebComListener != null) WebComListener.Stop();
 			WebComListener = null;
 			isFinished = true;
 			WebComServer.Join(1500);

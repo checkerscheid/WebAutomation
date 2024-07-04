@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 110                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 109 2024-06-16 15:59:41Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 110 2024-06-17 15:17:17Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -92,6 +92,14 @@ namespace WebAutomation.Helper {
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
 				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
 			}
+		}
+		public static bool ForceMqttUpdate() {
+			bool returns = false;
+			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
+				if(!kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceMqttUpdate)))
+					returns = false;
+			}
+			return returns;
 		}
 		public static string getServerSettings() {
 			return "{" + 

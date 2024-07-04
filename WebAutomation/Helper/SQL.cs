@@ -15,6 +15,7 @@
 //###################################################################################
 using System;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 /**
 * @addtogroup WebAutomation
 * @{

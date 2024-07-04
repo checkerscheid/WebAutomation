@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 109 2024-06-16 15:59:41Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 118 2024-07-04 14:20:41Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -209,6 +209,7 @@ namespace WebAutomation.Helper {
 			public const string cReloadSettings = "ReloadSettings"; // cfg from SQL
 			public const string cGetDebug = "wpGetDebug";
 			public const string cSetDebug = "wpSetDebug";
+			public const string cHistoryCleaner = "HistoryCleaner";
 			/// <summary>
 			/// 
 			/// </summary>
@@ -722,6 +723,14 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = wpDebug.changeDebug(param);
+					break;
+				case wpBefehl.cHistoryCleaner:
+					await Task.Run(() => {
+						using(SQL s = new SQL("HistoryCleaner")) {
+							s.HistoryCleaner();
+						}
+					});
+					returns = "S_OK";
 					break;
 				default:
 					returns = "{ERROR=undefined command}";

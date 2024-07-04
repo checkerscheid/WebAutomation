@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Net;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace WebAutomation.Helper {
 	public class Sun {
@@ -63,7 +63,13 @@ namespace WebAutomation.Helper {
 			setNewSunriseSunsetTimer.Interval = nextStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
 			wpDebug.Write("SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
-			getSunsetSunrise();
+			await GetSunsetSunrise();
+			// clean Database once a night
+			await Task.Run(() => {
+				using(SQL s = new SQL("HistoryCleaner")) {
+					s.HistoryCleaner();
+				}
+			});
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("True");

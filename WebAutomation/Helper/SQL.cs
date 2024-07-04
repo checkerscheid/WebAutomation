@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: SQL.cs 109 2024-06-16 15:59:41Z                          $ #
+//# File-ID      : $Id:: SQL.cs 118 2024-07-04 14:20:41Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -223,6 +223,21 @@ namespace WebAutomation.Helper {
 			string temp_numeric = "";
 			if (s_numeric != null) temp_numeric = s_numeric.ToString();
 			return temp_numeric;
+		}
+
+		public void HistoryCleaner() {
+			string sql;
+			DateTime OneYearAgo = DateTime.Now.AddMonths(-3);
+			wpDebug.Write("start HistoryCleaner");
+			sql = $"DELETE FROM [alarmhistoric] WHERE [come] < '{OneYearAgo.ToString(DateFormat)}'";
+			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [alarmhistoric]");
+			sql = $"DELETE FROM [emailhistoric] WHERE [send] < '{OneYearAgo.ToString(DateFormat)}'";
+			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [emailhistoric]");
+			sql = $"DELETE FROM [useractivity] WHERE [writetime] < '{OneYearAgo.ToString(DateFormat)}'";
+			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [useractivity]");
+			sql = $"DELETE FROM [visitors] WHERE [datetime] < '{OneYearAgo.ToString(DateFormat)}'";
+			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [visitors]");
+			wpDebug.Write("start HistoryCleaner finished");
 		}
 	}
 }

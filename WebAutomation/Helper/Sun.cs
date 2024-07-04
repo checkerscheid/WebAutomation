@@ -1,8 +1,21 @@
-﻿using Newtonsoft.Json;
+﻿//###################################################################################
+//#                                                                                 #
+//#              (C) FreakaZone GmbH                                                #
+//#              =======================                                            #
+//#                                                                                 #
+//###################################################################################
+//#                                                                                 #
+//# Author       : Christian Scheid                                                 #
+//# Date         : 12.01.2024                                                       #
+//#                                                                                 #
+//# Revision     : $Rev:: 119                                                     $ #
+//# Author       : $Author::                                                      $ #
+//# File-ID      : $Id:: Sun.cs 119 2024-07-04 14:55:06Z                          $ #
+//#                                                                                 #
+//###################################################################################
+using Newtonsoft.Json;
 using System;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebAutomation.Helper {
@@ -66,6 +79,12 @@ namespace WebAutomation.Helper {
 			setNewSunriseSunsetTimer.Enabled = true;
 			wpDebug.Write("SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
 			await GetSunsetSunrise();
+			// clean Database once a night
+			await Task.Run(() => {
+				using(SQL s = new SQL("HistoryCleaner")) {
+					s.HistoryCleaner();
+				}
+			});
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("True");

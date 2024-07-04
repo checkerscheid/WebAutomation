@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 109 2024-06-16 15:59:41Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 115 2024-07-04 00:02:57Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -24,7 +24,7 @@ using WebAutomation.PlugIns;
 
 namespace WebAutomation {
 	public class DatapointsCollection {
-		private static Logger EventLog = new Logger(wpEventLog.Automation);
+		private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
 		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
 	}
 	public class Datapoint {
@@ -191,9 +191,13 @@ namespace WebAutomation {
 				string[][] erg = sql.wpQuery("SELECT [id_dp], [id_opcdatapoint] FROM [dp]");
 				for(int idp = 0; idp < erg.Length; idp++) {
 					int iddp = Int32.Parse(erg[idp][0]);
-					Add(iddp, new Datapoint(iddp));
-					if(erg[idp][1] != "") {
-						OPCList.Add(Int32.Parse(erg[idp][1]), iddp);
+					try {
+						Add(iddp, new Datapoint(iddp));
+						if(erg[idp][1] != "") {
+							OPCList.Add(Int32.Parse(erg[idp][1]), iddp);
+						}
+					} catch(Exception ex) {
+						wpDebug.WriteError(ex, $"is verkehrt: {iddp}?");
 					}
 				}
 			}
@@ -209,6 +213,10 @@ namespace WebAutomation {
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {
 			if(DP.ContainsKey(e.idDatapoint))
 				Get(e.idDatapoint).setValue(e.value, "wpShellyServer");
+		}
+		private static void D1MiniServer_valueChanged(object sender, D1MiniServer.valueChangedEventArgs e) {
+			if(DP.ContainsKey(e.idDatapoint))
+				Get(e.idDatapoint).setValue(e.value, "wpD1MiniServer");
 		}
 
 		private static void MQTTClient_valueChanged(object sender, MQTTClient.valueChangedEventArgs e) {
@@ -255,7 +263,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public class Dictionaries {
 			/// <summary>WebAutomationServer Event Log</summary>
-			private static Logger EventLog = new Logger(wpEventLog.Automation);
+			private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
 			private static Dictionary<int, OPCItem> _items = new Dictionary<int, OPCItem>();
 			public static Dictionary<int, OPCItem> Items {
 				get { return _items; }

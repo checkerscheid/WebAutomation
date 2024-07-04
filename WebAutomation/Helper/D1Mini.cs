@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 110                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 110 2024-06-17 15:17:17Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 115 2024-07-04 00:02:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -25,7 +26,12 @@ using System.Timers;
 
 namespace WebAutomation.Helper {
 	public static class D1MiniServer {
+		/// <summary></summary>
+		private static Logger eventLog;
+
 		private static Dictionary<string, D1MiniDevice> D1Minis;
+		// key: mac, value: name
+		private static Dictionary<string, string> D1MinisMac;
 		private static List<string> Subscribtions = new List<string>();
 
 		private static UdpClient udpClient;
@@ -57,13 +63,25 @@ namespace WebAutomation.Helper {
 				return _onlineTogglerWait;
 			}
 		}
+		public static event EventHandler<valueChangedEventArgs> valueChanged;
+		public class valueChangedEventArgs: EventArgs {
+			public int idDatapoint { get; set; }
+			public string name { get; set; }
+			public string value { get; set; }
+		}
 		public static void Start() {
 			wpDebug.Write("D1 Mini Server Start");
+			eventLog = new Logger(wpEventLog.PlugInD1Mini);
 			D1Minis = new Dictionary<string, D1MiniDevice>();
+			D1MinisMac = new Dictionary<string, string>();
 			using(SQL SQL = new SQL("Select Shellys")) {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
-						[id_d1mini], [name], [description], [ip], [mac]
-					FROM [d1mini] WHERE [active] = 1");
+						[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac],
+						[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
+						[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window]
+					FROM [d1mini] [d]
+					LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]
+					WHERE [active] = 1");
 				string name, description, mac;
 				int id_d1mini;
 				IPAddress ip;
@@ -76,6 +94,20 @@ namespace WebAutomation.Helper {
 					D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
 					d1md.readDeviceDescription = description;
 					D1Minis.Add(name, d1md);
+					D1MinisMac.Add(mac, name);
+
+					if(!String.IsNullOrEmpty(Query1[i][5])) d1md.id_onoff = Int32.Parse(Query1[i][5]);
+					if(!String.IsNullOrEmpty(Query1[i][6])) d1md.id_temp = Int32.Parse(Query1[i][6]);
+					if(!String.IsNullOrEmpty(Query1[i][7])) d1md.id_hum = Int32.Parse(Query1[i][7]);
+					if(!String.IsNullOrEmpty(Query1[i][8])) d1md.id_ldr = Int32.Parse(Query1[i][8]);
+					if(!String.IsNullOrEmpty(Query1[i][9])) d1md.id_light = Int32.Parse(Query1[i][9]);
+
+					if(!String.IsNullOrEmpty(Query1[i][10])) d1md.id_relais = Int32.Parse(Query1[i][10]);
+					if(!String.IsNullOrEmpty(Query1[i][11])) d1md.id_rain = Int32.Parse(Query1[i][11]);
+					if(!String.IsNullOrEmpty(Query1[i][12])) d1md.id_moisture = Int32.Parse(Query1[i][12]);
+					if(!String.IsNullOrEmpty(Query1[i][13])) d1md.id_vol = Int32.Parse(Query1[i][13]);
+					if(!String.IsNullOrEmpty(Query1[i][14])) d1md.id_window = Int32.Parse(Query1[i][14]);
+
 					addSubscribtions(d1md.getSubscribtions());
 					//d1md.sendCmd("ForceMqttUpdate");
 				}
@@ -186,8 +218,6 @@ namespace WebAutomation.Helper {
 					D1Minis[name].readDeviceName = e.value;
 				if(setting == "info/DeviceDescription")
 					D1Minis[name].readDeviceDescription = e.value;
-				if(setting == "info/wpFreakaZone")
-					D1Minis[name].readwpFreakaZoneVersion = e.value;
 				if(setting == "info/Version")
 					D1Minis[name].readVersion = e.value;
 				if(setting == "info/WiFi/Ip")
@@ -215,7 +245,6 @@ namespace WebAutomation.Helper {
 				returns += $"\"{kvp.Key}\":{{";
 				returns += $"\"DeviceName\":\"{kvp.Value.readDeviceName}\",";
 				returns += $"\"DeviceDescription\":\"{kvp.Value.readDeviceDescription}\",";
-				returns += $"\"wpFreakaZoneVersion\":\"{kvp.Value.readwpFreakaZoneVersion}\",";
 				returns += $"\"Version\":\"{kvp.Value.readVersion}\",";
 				returns += $"\"Ip\":\"{kvp.Value.readIp}\",";
 				returns += $"\"Mac\":\"{kvp.Value.readMac}\",";
@@ -308,21 +337,239 @@ namespace WebAutomation.Helper {
 				wpDebug.WriteError(ex);
 			}
 		}
+		private static void setValue(int idDp, string name, string value) {
+			valueChangedEventArgs vcea = new valueChangedEventArgs();
+			vcea.idDatapoint = idDp;
+			vcea.name = name;
+			vcea.value = value;
+			if(valueChanged != null)
+				valueChanged.Invoke(idDp, vcea);
+		}
+		public static bool SetBM(string mac, bool state) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
+				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetTemp(string mac, string temp) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_temp, d1m.Name, temp.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetHum(string mac, string hum) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_hum, d1m.Name, hum.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetLdr(string mac, string ldr) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_ldr, d1m.Name, ldr.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetLight(string mac, string light) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_light, d1m.Name, light.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetRelais(string mac, bool state) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
+				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetRain(string mac, string rain) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_rain, d1m.Name, rain.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetMoisture(string mac, string moisture) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_moisture, d1m.Name, moisture.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetVolume(string mac, string volume) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_vol, d1m.Name, volume.Replace(".", ","));
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetWindow(string mac, bool state) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
+				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
 	}
 	public class D1MiniDevice {
 		private string _name;
+		public string Name {
+			get { return _name; }
+		}
 		private IPAddress _ipAddress;
 		private string _mac;
 		private string _description;
 
 		public string readDeviceName;
 		public string readDeviceDescription;
-		public string readwpFreakaZoneVersion;
 		public string readVersion;
 		public string readIp;
 		public string readMac;
 		public string readSsid;
 		public string readUpdateMode;
+
+		private int _id_onoff;
+		public int id_onoff {
+			get { return _id_onoff; }
+			set { _id_onoff = value; }
+		}
+		private int _id_temp;
+		public int id_temp {
+			get { return _id_temp; }
+			set { _id_temp = value; }
+		}
+		private int _id_hum;
+		public int id_hum {
+			get { return _id_hum; }
+			set { _id_hum = value; }
+		}
+		private int _id_ldr;
+		public int id_ldr {
+			get { return _id_ldr; }
+			set { _id_ldr = value; }
+		}
+		private int _id_light;
+		public int id_light {
+			get { return _id_light; }
+			set { _id_light = value; }
+		}
+		private int _id_relais;
+		public int id_relais {
+			get { return _id_relais; }
+			set { _id_relais = value; }
+		}
+		private int _id_rain;
+		public int id_rain {
+			get { return _id_rain; }
+			set { _id_rain = value; }
+		}
+		private int _id_moisture;
+		public int id_moisture {
+			get { return _id_moisture; }
+			set { _id_moisture = value; }
+		}
+		private int _id_vol;
+		public int id_vol {
+			get { return _id_vol; }
+			set { _id_vol = value; }
+		}
+		private int _id_window;
+		public int id_window {
+			get { return _id_window; }
+			set { _id_window = value; }
+		}
 		public bool Online {
 			set {
 				if(value) {

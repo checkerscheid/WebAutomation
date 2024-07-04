@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 114                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 114 2024-06-30 18:19:57Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 118 2024-07-04 14:20:41Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -61,7 +61,7 @@ namespace WebAutomation.Helper {
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(wpEventLog.Com);
+			eventLog = new Logger(wpEventLog.WEBcom);
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
@@ -163,6 +163,7 @@ namespace WebAutomation.Helper {
 			public const string cReloadSettings = "ReloadSettings"; // cfg from SQL
 			public const string cGetDebug = "wpGetDebug";
 			public const string cSetDebug = "wpSetDebug";
+			public const string cHistoryCleaner = "HistoryCleaner";
 			/// <summary>
 			/// 
 			/// </summary>
@@ -730,6 +731,14 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = wpDebug.changeDebug(param);
+					break;
+				case wpBefehl.cHistoryCleaner:
+					await Task.Run(() => {
+						using(SQL s = new SQL("HistoryCleaner")) {
+							s.HistoryCleaner();
+						}
+					});
+					returns = "S_OK";
 					break;
 				default:
 					returns = "{ERROR=undefined command}";

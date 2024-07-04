@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Grp.cs 109 2024-06-16 15:59:41Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Grp.cs 115 2024-07-04 00:02:57Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;
@@ -413,8 +413,8 @@ namespace OPC.Data {
 		/// <param name="bForce"></param>
 		public void Remove(bool bForce) {
 			string myname = this.Name;
-			if(wpDebug.debugOPC)
-				wpDebug.Write("OPC DATA GRP '{0}' - Beginn Remove", myname);
+			//if(wpDebug.debugOPC)
+			//	wpDebug.Write("OPC DATA GRP '{0}' - Beginn Remove", myname);
 			EventLog = null;
 			if (!(_countItem == null)) _countItem.Clear();
 			_countItem = null;
@@ -422,8 +422,8 @@ namespace OPC.Data {
 			_countItemState = null;
 			if(!(ifAsync == null)) SetEnable(false);
 			if(!(ifMgt == null)) Active = false;
-			if(wpDebug.debugOPC)
-				wpDebug.Write("OPC DATA GRP '{0}' - Unadvice Callbackcookie", myname);
+			//if(wpDebug.debugOPC)
+			//	wpDebug.Write("OPC DATA GRP '{0}' - Unadvice Callbackcookie", myname);
 			if (!(callbackcpoint == null)) {
 				try {
 					if (callbackcookie != 0) {
@@ -443,17 +443,17 @@ namespace OPC.Data {
 			ifSync = null;
 			ifAsync = null;
 
-			if(wpDebug.debugOPC)
-				wpDebug.Write("OPC DATA GRP '{0}' - ReleaseComObject", myname);
+			//if(wpDebug.debugOPC)
+			//	wpDebug.Write("OPC DATA GRP '{0}' - ReleaseComObject", myname);
 			if (!(ifMgt == null)) {
 				//int rc = Marshal.ReleaseComObject(ifMgt);
 				ifMgt = null;
 			}
-			if(wpDebug.debugOPC)
-				wpDebug.Write("OPC DATA GRP '{0}' - ReleasedComObject", myname);
+			//if(wpDebug.debugOPC)
+			//	wpDebug.Write("OPC DATA GRP '{0}' - ReleasedComObject", myname);
 
-			if(wpDebug.debugOPC)
-				wpDebug.Write("OPC DATA GRP '{0}' - RemoveGroup", myname);
+			//if(wpDebug.debugOPC)
+			//	wpDebug.Write("OPC DATA GRP '{0}' - RemoveGroup", myname);
 			if (!(ifServer == null)) {
 				if (!state.Public) {
 					try {

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 114                                                     $ #
+//# Revision     : $Rev:: 117                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 114 2024-06-30 18:19:57Z                       $ #
+//# File-ID      : $Id:: Rest.cs 117 2024-07-04 00:05:54Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using System;

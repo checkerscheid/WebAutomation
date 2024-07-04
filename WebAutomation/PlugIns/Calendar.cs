@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 109 2024-06-16 15:59:41Z                     $ #
+//# File-ID      : $Id:: Calendar.cs 115 2024-07-04 00:02:57Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -390,16 +390,19 @@ namespace WebAutomation.PlugIns {
 				}
 				if(!hasReminder) {
 					if(_dtStart > DateTime.Now) {
-						wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start liegt in der Zukunft - start timer");
+						if(wpDebug.debugCalendar)
+							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start liegt in der Zukunft - start timer");
 						_nextIs = c_rrule._isStart;
 						_next = _dtStart;
 					} else if(_dtStart < DateTime.Now && _dtEnd > DateTime.Now) {
-						wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start war schon - Stop liegt in der Zukunft - start timer");
+						if(wpDebug.debugCalendar)
+							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start war schon - Stop liegt in der Zukunft - start timer");
 						_nextIs = c_rrule._isEnd;
 						_last = _dtStart;
 						_next = _dtEnd;
 					} else {
-						wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start und Stop war schon - ermittle rrule");
+						if(wpDebug.debugCalendar)
+							wpDebug.Write($"Calendar '{_calName}' ({_calId}) Start und Stop war schon - ermittle rrule");
 						encodeString();
 						getDates();
 					}
@@ -436,7 +439,8 @@ namespace WebAutomation.PlugIns {
 						_renew.Enabled = true;
 					}
 				} else {
-					wpDebug.Write($"Calendar '{_calName}' ({_calId}) Keine Schaltpunkte (mehr) gefunden");
+					if(wpDebug.debugCalendar)
+						wpDebug.Write($"Calendar '{_calName}' ({_calId}) Keine Schaltpunkte (mehr) gefunden");
 				}
 
 
@@ -449,48 +453,57 @@ namespace WebAutomation.PlugIns {
 						switch(m.Groups[1].Value.ToLower()) {
 							case "freq":
 								_freq = new c_frequenz(m.Groups[2].Value);
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found freq: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found freq: {m.Groups[2].Value}");
 								break;
 							case "intervall":
 								Int32.TryParse(m.Groups[2].Value, out _intervall);
 								_has_intervall = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found intervall: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found intervall: {m.Groups[2].Value}");
 								break;
 							case "count":
 								Int32.TryParse(m.Groups[2].Value, out _count);
 								_has_count = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found count: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found count: {m.Groups[2].Value}");
 								break;
 							case "until":
 								_until = CalendarHelp.parse(m.Groups[2].Value);
 								_until = _until.Add(new TimeSpan(1, 0, 0, 0));
 								_has_until = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found until: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found until: {m.Groups[2].Value}");
 								break;
 							case "bymonth":
 								_bymonth = CalendarHelp.getIntArray(m.Groups[2].Value);
 								_has_bymonth = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found bymonth: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found bymonth: {m.Groups[2].Value}");
 								break;
 							case "bymonthday":
 								_bymonthday = CalendarHelp.getIntArray(m.Groups[2].Value);
 								_has_bymonthday = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found bymonthday: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found bymonthday: {m.Groups[2].Value}");
 								break;
 							case "byyearday":
 								_byyearday = CalendarHelp.getIntArray(m.Groups[2].Value);
 								_has_byyearday = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found byyearday: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found byyearday: {m.Groups[2].Value}");
 								break;
 							case "byday":
 								_byday = CalendarHelp.getWeekDayArray(m.Groups[2].Value);
 								_has_byday = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found byday: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found byday: {m.Groups[2].Value}");
 								break;
 							case "wkst":
 								_weekstring = new c_weekday(m.Groups[2].Value);
 								_has_weekstring = true;
-								wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found wkst: {m.Groups[2].Value}");
+								if(wpDebug.debugCalendar)
+									wpDebug.Write($"Calendar '{_calName}' ({_calId}) Found wkst: {m.Groups[2].Value}");
 								break;
 						}
 					}

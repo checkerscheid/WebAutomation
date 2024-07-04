@@ -95,6 +95,7 @@
     <Compile Include="Helper\MQTTClient.cs" />
     <Compile Include="Helper\OPCClient.cs" />
     <Compile Include="Helper\OPCHelper.cs" />
+    <Compile Include="Helper\Rest.cs" />
     <Compile Include="Helper\Sun.cs" />
     <Compile Include="Helper\TransferId.cs" />
     <Compile Include="Helper\WebSockets.cs" />

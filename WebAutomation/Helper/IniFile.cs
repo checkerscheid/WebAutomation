@@ -67,7 +67,7 @@ namespace WebAutomation.Helper {
 			if(group == "Log") {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
-				using(Logger INILog = new Logger(wpEventLog.Automation)) {
+				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
 					INILog.Write(EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}
@@ -88,7 +88,7 @@ namespace WebAutomation.Helper {
 			if(group == "Log") {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
-				using(Logger INILog = new Logger(wpEventLog.Automation)) {
+				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
 					INILog.Write(EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}

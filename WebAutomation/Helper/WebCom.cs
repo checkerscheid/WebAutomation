@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 110                                                     $ #
+//# Revision     : $Rev:: 118                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 110 2024-06-17 15:17:17Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 118 2024-07-04 14:20:41Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -62,7 +62,7 @@ namespace WebAutomation.Helper {
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(wpEventLog.Com);
+			eventLog = new Logger(wpEventLog.WEBcom);
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
@@ -165,6 +165,7 @@ namespace WebAutomation.Helper {
 			public const string cReloadSettings = "ReloadSettings"; // cfg from SQL
 			public const string cGetDebug = "wpGetDebug";
 			public const string cSetDebug = "wpSetDebug";
+			public const string cHistoryCleaner = "HistoryCleaner";
 			/// <summary>
 			/// 
 			/// </summary>
@@ -733,6 +734,14 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = wpDebug.changeDebug(param);
 					break;
+				case wpBefehl.cHistoryCleaner:
+					await Task.Run(() => {
+						using(SQL s = new SQL("HistoryCleaner")) {
+							s.HistoryCleaner();
+						}
+					});
+					returns = "S_OK";
+					break;
 				default:
 					returns = "{ERROR=undefined command}";
 					break;
@@ -964,15 +973,15 @@ $"{{Alarme=";
 		$"{{Link={TheAlarm.Value.Alarmlink}}}" +
 		$"{{AlarmUpdate={TheAlarm.Value.AlarmUpdate.ToString()}}}" +
 		$"{(Alarms.UseAlarmGroup1 ?
-			$"{{AlarmGroup1={Alarms.GetReadableGroup(Alarms.ALARMGROUP1, TheAlarm.Value.Alarmgroups1)}}}" : "")}" +
+			$"{{AlarmGroup1={TheAlarm.Value.Alarmnames1}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup2 ?
-			$"{{AlarmGroup2={Alarms.GetReadableGroup(Alarms.ALARMGROUP2, TheAlarm.Value.Alarmgroups2)}}}" : "")}" +
+			$"{{AlarmGroup2={TheAlarm.Value.Alarmnames2}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup3 ?
-			$"{{AlarmGroup3={Alarms.GetReadableGroup(Alarms.ALARMGROUP3, TheAlarm.Value.Alarmgroups3)}}}" : "")}" +
+			$"{{AlarmGroup3={TheAlarm.Value.Alarmnames3}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup4 ?
-			$"{{AlarmGroup4={Alarms.GetReadableGroup(Alarms.ALARMGROUP4, TheAlarm.Value.Alarmgroups4)}}}" : "")}" +
+			$"{{AlarmGroup4={TheAlarm.Value.Alarmnames4}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup5 ?
-			$"{{AlarmGroup5={Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Value.Alarmgroups5)}}}" : "")}" +
+			$"{{AlarmGroup5={TheAlarm.Value.Alarmnames5}}}" : "")}" +
 	$"}}";
 			}
 			returns +=

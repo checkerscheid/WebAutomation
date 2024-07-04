@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 109 2024-06-16 15:59:41Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 115 2024-07-04 00:02:57Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;
@@ -621,10 +621,14 @@ namespace WebAutomation.Helper {
 		}
 		private void removeEvents(OpcGroup og, int serverid, int groupid) {
 			if(TheServer[serverid].Active && TheGroup[serverid][groupid].Active) {
-				og.ReadCompleted -= new ReadCompleteEventHandler(TheGroup_ReadCompleted);
-				og.DataChanged -= new DataChangeEventHandler(TheGroup_DataChanged);
-				og.WriteCompleted -= new WriteCompleteEventHandler(TheGroup_WriteCompleted);
-				og.CancelCompleted -= new CancelCompleteEventHandler(TheGroup_CancelCompleted);
+				if(og.hasReadCompleted())
+					og.ReadCompleted -= new ReadCompleteEventHandler(TheGroup_ReadCompleted);
+				if(og.hasDataChanged())
+					og.DataChanged -= new DataChangeEventHandler(TheGroup_DataChanged);
+				if(og.hasWriteCompleted())
+					og.WriteCompleted -= new WriteCompleteEventHandler(TheGroup_WriteCompleted);
+				if(og.hasCancelCompleted())
+					og.CancelCompleted -= new CancelCompleteEventHandler(TheGroup_CancelCompleted);
 				if(Program.MainProg.wpForceRead) {
 					og.forceRead.Elapsed -=
 						new System.Timers.ElapsedEventHandler((sender, e) =>
@@ -923,14 +927,17 @@ namespace WebAutomation.Helper {
 							if (opcgroup.Value != null) {
 								int[] aErr;
 								removeEvents(opcgroup.Value, opcserver.Key, opcgroup.Key);
-								try {
-									if (opcgroup.Value.RemoveItems(Hsrv[opcserver.Key][opcgroup.Key].ToArray(),
-										out aErr)) {
-										opcgroup.Value.Remove(true);
-									}
-								} catch (Exception ex) {
-									eventLog.WriteError(ex);
-								}
+								//try {
+								//	if (opcgroup.Value.RemoveItems(Hsrv[opcserver.Key][opcgroup.Key].ToArray(),
+								//		out aErr)) {
+								//		opcgroup.Value.Remove(true);
+								//	} else {
+								//		wpDebug.Write($"RemoveItems Error, {opcgroup.Value.Name}");
+								//	}
+								//} catch (Exception ex) {
+								//	eventLog.WriteError(ex);
+								//}
+								wpDebug.Write($"Group '{opcgroup.Value.Name}' Removed from '{opcserver.Value.Name}'");
 								TheLog += String.Format("\r\n\tGroup '{0}' Removed from '{1}'",
 									opcgroup.Value.Name,
 									opcserver.Value.Name);

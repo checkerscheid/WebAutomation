@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 111                                                     $ #
+//# Revision     : $Rev:: 115                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 111 2024-06-20 23:25:28Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 115 2024-07-04 00:02:57Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -41,7 +41,7 @@ namespace WebAutomation.Helper {
 			wpDebug.Write("WebSockets Server Init");
 			isFinished = false;
 			Clients = new Dictionary<int, wpTcpClient>();
-			eventLog = new Logger(wpEventLog.Com);
+			eventLog = new Logger(wpEventLog.WebSockets);
 			WebSocketsListener = new TcpListener(IPAddress.Any, Ini.getInt("Websockets", "Port"));
 			WebSocketsServer = new Thread(new ThreadStart(TCP_Listener));
 			WebSocketsServer.Name = "WebSocketsServer";

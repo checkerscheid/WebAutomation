@@ -61,7 +61,7 @@ namespace WebAutomation.Helper {
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(wpEventLog.Com);
+			eventLog = new Logger(wpEventLog.WEBcom);
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";

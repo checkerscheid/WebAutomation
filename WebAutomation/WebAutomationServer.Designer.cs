@@ -342,7 +342,8 @@ namespace WebAutomation {
 				wpWatchdog.finished();
 			if(wpOPCClient != null)
 				wpOPCClient.finished();
-			ShellyServer.Stop();
+			if(wpRest != null)
+				wpRest.finished();
 			D1MiniServer.Stop();
 			if(wpMQTTClient != null)
 				wpMQTTClient.Stop();

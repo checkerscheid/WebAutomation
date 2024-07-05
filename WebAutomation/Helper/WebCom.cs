@@ -324,7 +324,7 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cStartD1MiniSearch:
-					returns = D1MiniServer.startSearch();
+					//returns = D1MiniServer.startSearch();
 					break;
 				case wpBefehl.cAddD1Mini:
 					returns = "S_ERROR";

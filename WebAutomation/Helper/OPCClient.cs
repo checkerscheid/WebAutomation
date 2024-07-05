@@ -925,7 +925,7 @@ namespace WebAutomation.Helper {
 					foreach(KeyValuePair<int, OpcGroup> opcgroup in TheGroup[opcserver.Key]) {
 						try {
 							if (opcgroup.Value != null) {
-								int[] aErr;
+								//int[] aErr;
 								removeEvents(opcgroup.Value, opcserver.Key, opcgroup.Key);
 								//try {
 								//	if (opcgroup.Value.RemoveItems(Hsrv[opcserver.Key][opcgroup.Key].ToArray(),

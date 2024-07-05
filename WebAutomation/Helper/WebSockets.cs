@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 121                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 120 2024-07-04 15:08:20Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 121 2024-07-05 02:16:00Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;

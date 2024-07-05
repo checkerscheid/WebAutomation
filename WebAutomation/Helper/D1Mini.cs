@@ -8,15 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 121                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 120 2024-07-04 15:08:20Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 121 2024-07-05 02:16:00Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -298,6 +297,7 @@ namespace WebAutomation.Helper {
 							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null &&
 								!D1Minis.ContainsKey(D1MiniRecieved.Iam.FreakaZoneClient)) {
 								foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
+								
 								wpDebug.Write($"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
 							}
 						}
@@ -320,6 +320,54 @@ namespace WebAutomation.Helper {
 			sendSearch();
 			task.Wait();
 			string returns = JsonConvert.SerializeObject(foundNewD1Mini);
+			return returns;
+		}
+		public static string startSearch(Guid id) {
+			wpDebug.Write("Start WS - FreakaZone search");
+			searchActive = true;
+			udpClient = new UdpClient();
+			udpClient.Client.SendTimeout = 2000;
+			udpClient.Client.ReceiveTimeout = 2000;
+			udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, udpPort));
+			//Dictionary<string, D1MiniBroadcast> foundNewD1Mini = new Dictionary<string, D1MiniBroadcast>();
+
+			var from = new IPEndPoint(0, 0);
+			var task = Task.Run(() => {
+				while(searchActive) {
+					try {
+						var recvBuffer = udpClient.Receive(ref from);
+						string recieved = Encoding.UTF8.GetString(recvBuffer);
+						if(wpHelp.IsValidJson(recieved)) {
+							D1MiniBroadcast D1MiniRecieved = JsonConvert.DeserializeObject<D1MiniBroadcast>(recieved);
+							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null) {
+								Program.MainProg.wpWebSockets.sendText(id, "SearchD1Mini",
+									"{\"exists\":" + (D1Minis.ContainsKey(D1MiniRecieved.Iam.FreakaZoneClient) ? "true" : "false") + "," +
+									$"\"recieved\":{recieved}" + "}");
+								//foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
+
+								wpDebug.Write($"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
+							}
+						}
+						wpDebug.Write(Encoding.UTF8.GetString(recvBuffer));
+					} catch(SocketException ex) {
+						if(ex.SocketErrorCode == SocketError.TimedOut) {
+							searchActive = false;
+							Program.MainProg.wpWebSockets.sendText(id, "SearchD1MiniFinished", "\"S_OK\"");
+							wpDebug.Write("Search finished, cause: Timeout");
+						} else {
+							searchActive = false;
+							wpDebug.WriteError(ex);
+						}
+					} catch(Exception ex) {
+						searchActive = false;
+						wpDebug.WriteError(ex);
+					}
+				}
+				stopSearch();
+			});
+			sendSearch();
+			task.Wait();
+			string returns = "S_OK";
 			return returns;
 		}
 		private static void sendSearch() {

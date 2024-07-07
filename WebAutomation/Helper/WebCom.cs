@@ -1059,28 +1059,29 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		/// <param name="param"></param>
 		/// <returns></returns>
 		private string getActiveDP(string[] param) {
-			if (param == null) return null;
+			if (param == null) return String.Empty;
 
-			string returns = "{Datenpunkte=";
+			string returns = "{\"Datenpunkte\":{";
 			for (int i = 0; i < param.Length; i++) {
 				int parsedint;
 				if(Int32.TryParse(param[i], out parsedint)) {
-					OPCItem TheItem = Server.Dictionaries.getItem(parsedint);
+					Datapoint TheItem = Datapoints.Get(parsedint);
 					if (TheItem != null) {
-						returns += String.Format("{{{0}={{Value={1}}}}}",
-							param[i],
-							(TheItem.DBType == VarEnum.VT_BSTR) ? "\"" + TheItem.Value + "\"" : TheItem.Value
-						);
+						returns += $"\"{parsedint}\":{{" +
+							"\"erg\":\"S_OK\"," +
+							$"\"Value\":\"{TheItem.Value}\"," +
+							$"\"ValueString\":\"{TheItem.ValueString}\"," +
+							$"\"LastChange\":\"{TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}\"" +
+						"},";
 					} else {
-						returns += String.Format("{{{0}={{Value={1}}}}}",
-							param[i],
-							"error"
-						);
+						returns += $"\"{parsedint}\":{{" +
+							"\"erg\"=\"S_ERROR\"" +
+						"},";
 					}
 				}
 			}
-			//return String.Format("{0}}}{{Wartung={1}}}", returns, Me.Wartung ? "True" : "False");
-			return returns + "}";
+			if(returns.EndsWith(",")) returns = returns.Remove(returns.Length - 1);
+			return returns + "}}";
 		}
 		/// <summary>
 		/// 
@@ -1096,14 +1097,10 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 				if (Int32.TryParse(param[i], out DPid)) {
 					if (Server.Dictionaries.checkItem(DPid)) {
 						OPCItem TheItem = Server.Dictionaries.getItem(DPid);
-						returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}{{Quality={3}}}
-							{{QualityString={4}}}{{Type={5}}}}}",
+						returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}{{Type={5}}}}}",
 							param[i],
 							(TheItem.DBType == VarEnum.VT_BSTR) ? "\"" + TheItem.Value + "\"" : TheItem.Value,
-							TheItem.Lastupdate,
-							TheItem.Quality,
-							OPCQuality.get(TheItem.Quality),
-							TheItem.DBType);
+							TheItem.Lastupdate.ToString("yyyy-MM-ddTHH:mm:ss"));
 					}
 				} else {
 					eventLog.Write(EventLogEntryType.Warning,
@@ -1132,7 +1129,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			return String.Format(@"{{WatchDog={0}}}{{DateTime={1}}}{{Date={2}}}{{Time={3}}}
 				{{AlarmsCome={4}}}{{AlarmsGone={5}}}{{AlarmsQuit={6}}}",
 				WatchDogByte,
-				Now.ToString("MM, dd, yyyy HH:mm:ss"),
+				Now.ToString("yyyy-MM-ddTHH:mm:ss"),
 				Now.ToString("dd.MM.yyyy"),
 				Now.ToString("HH:mm:ss"),
 				AlarmsCome,

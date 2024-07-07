@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 121                                                     $ #
+//# Revision     : $Rev:: 122                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 121 2024-07-05 02:16:00Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 122 2024-07-07 20:05:28Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -31,26 +31,31 @@ namespace WebAutomation.Helper {
 		private static Dictionary<Guid, wpTcpClient> WatsonClients;
 
 		private int MonitorTimeout = 250;
-
-		private bool isFinished;
-		private int ThreadSleep = 250;
 		public WebSockets() {
 			init();
 		}
 		private void init() {
 			wpDebug.Write("WebSockets Server Init");
-			isFinished = false;
-			eventLog = new Logger(wpEventLog.WebSockets);
+			string name = Ini.get("Websockets", "Name");
+			int port = Ini.getInt("Websockets", "Port");
+			try {
+				eventLog = new Logger(wpEventLog.WebSockets);
 
-			WatsonClients = new Dictionary<Guid, wpTcpClient>();
-			ws = new WatsonWsServer("127.0.0.1", Ini.getInt("Websockets", "Port"), false);
-			ws.ClientConnected += Ws_ClientConnected;
-			ws.ClientDisconnected += Ws_ClientDisconnected;
-			ws.MessageReceived += Ws_MessageReceived;
-			ws.Start();
-			eventLog.Write($"WebSockets Server gestartet, auf Port {Ini.getInt("Websockets", "Port")} gemappt");
+				WatsonClients = new Dictionary<Guid, wpTcpClient>();
+				ws = new WatsonWsServer(name, port, false);
+				ws.ClientConnected += Ws_ClientConnected;
+				ws.ClientDisconnected += Ws_ClientDisconnected;
+				ws.MessageReceived += Ws_MessageReceived;
+				ws.Start();
+				eventLog.Write($"WebSockets Server '{name}' gestartet, auf Port {port} gemappt");
+			} catch(Exception ex) {
+				wpDebug.WriteError(ex);
+			}
 		}
-
+		public void finished() {
+			if(ws.IsListening)
+				ws.Stop();
+		}
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {
 			string s = Encoding.UTF8.GetString(e.Data.Array);
 			if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
@@ -71,10 +76,6 @@ namespace WebAutomation.Helper {
 		private void Ws_ClientDisconnected(object sender, DisconnectionEventArgs e) {
 			WatsonClients.Remove(e.Client.Guid);
 			wpDebug.Write($"WebSockets Server Client disconnected: {e.Client.Guid}");
-		}
-
-		public void finished() {
-			ws.Stop();
 		}
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			switch(cmd.command.ToString()) {

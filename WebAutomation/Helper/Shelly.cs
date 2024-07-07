@@ -8,15 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 122                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 115 2024-07-04 00:02:57Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 122 2024-07-07 20:05:28Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -45,7 +44,7 @@ namespace WebAutomation.Helper {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
 					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_shellyroom], [s].[name], [s].[type],
 					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
-					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_bat]
+					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window]
 					FROM [shelly] [s]
 					LEFT JOIN [rest] [r] ON [s].[id_shelly] = [r].[id_shelly]
 					WHERE [s].[active] = 1");
@@ -74,7 +73,7 @@ namespace WebAutomation.Helper {
 						if(!String.IsNullOrEmpty(Query1[ishelly][12])) Shellys[shmac].id_temp = Int32.Parse(Query1[ishelly][12]);
 						if(!String.IsNullOrEmpty(Query1[ishelly][13])) Shellys[shmac].id_hum = Int32.Parse(Query1[ishelly][13]);
 						if(!String.IsNullOrEmpty(Query1[ishelly][14])) Shellys[shmac].id_ldr = Int32.Parse(Query1[ishelly][14]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][15])) Shellys[shmac].id_bat = Int32.Parse(Query1[ishelly][15]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][15])) Shellys[shmac].id_window = Int32.Parse(Query1[ishelly][15]);
 
 						if(ShellyType.isGen2(type))
 							_ForceMqttUpdateAvailable.Add(idmqtt);
@@ -110,7 +109,7 @@ namespace WebAutomation.Helper {
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write($"Shelly nicht gefunden: {mac}\r\n{Shellys}");
 			}
 			return returns;
 		}
@@ -225,10 +224,10 @@ namespace WebAutomation.Helper {
 				get { return _id_ldr; }
 				set { _id_ldr = value; }
 			}
-			private int _id_bat;
-			public int id_bat {
-				get { return _id_bat; }
-				set { _id_bat = value; }
+			private int _id_window;
+			public int id_window {
+				get { return _id_window; }
+				set { _id_window = value; }
 			}
 			private string _name;
 			public string name {
@@ -509,6 +508,7 @@ namespace ShellyDevice {
 		public const string DOOR = "SHDW";
 		public const string HT = "SHHT-1";
 		public const string HT_PLUS = "PlusHT";
+		public const string HT3 = "HTG3";
 
 		public const string SW = "SHSW";
 		public const string PM = "SHSW-PM";
@@ -524,7 +524,7 @@ namespace ShellyDevice {
 
 		public const string D1Mini = "D1Mini";
 
-		private static List<string> bat = [DOOR, HT, HT_PLUS, D1Mini];
+		private static List<string> bat = [DOOR, HT, HT_PLUS, HT3, D1Mini];
 		private static List<string> relay = [SW, PM, PM_PLUS, PM_MINI, PM_MINI_G3, PLG, EM];
 		private static List<string> light = [DIMMER, DIMMER_2, RGBW, RGBW2];
 		private static List<string> gen1 = [SW, PM, PLG, EM, DIMMER, DIMMER_2, RGBW, RGBW2];

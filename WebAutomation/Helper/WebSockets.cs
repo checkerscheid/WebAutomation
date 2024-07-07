@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 121                                                     $ #
+//# Revision     : $Rev:: 122                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 121 2024-07-05 02:16:00Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 122 2024-07-07 20:05:28Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -56,92 +56,6 @@ namespace WebAutomation.Helper {
 			if(ws.IsListening)
 				ws.Stop();
 		}
-		private void TCP_Listener() {
-			try {
-				WebSocketsListener.Start();
-				eventLog.Write(String.Format($"{WebSocketsServer.Name} gestartet"));
-				do {
-					if(!WebSocketsListener.Pending()) {
-						Thread.Sleep(ThreadSleep);
-						continue;
-					}
-					wpTcpClient TCPclient = new wpTcpClient(clientid++, WebSocketsListener.AcceptTcpClient());
-					Thread ClientThread = new Thread(new ParameterizedThreadStart(TCP_HandleClient));
-					ClientThread.Name = "WebSocketsHandleClient";
-					Clients.Add(TCPclient.id, TCPclient);
-					wpDebug.Write($"{WebSocketsServer.Name} new client {TCPclient.id}?");
-					ClientThread.Start(TCPclient);
-				} while(!isFinished);
-			} catch(Exception ex) {
-				wpDebug.Write(ex.Message);
-			}
-		}
-		private async void TCP_HandleClient(object client) {
-			wpTcpClient tcpClient = (wpTcpClient)client;
-			NetworkStream stream = tcpClient.tcpClient.GetStream();
-			await Task.Run(() => {
-				while(!tcpClient.isFinished) { //tcpClient is connected
-					if(isFinished) { // Program exited
-						stream.Close();
-						tcpClient.tcpClient.Close();
-						tcpClient.isFinished = true;
-						Thread.CurrentThread.Join(ThreadSleep * 2);
-						return;
-					}
-					// write to Client
-					try {
-						while(!stream.DataAvailable) {
-							WriteToClient(stream, tcpClient);
-							Task.Delay(ThreadSleep); //Prozessor 100%?
-						}
-					} catch(Exception ex) {
-						wpDebug.Write("Write to Client {0}: {1}", tcpClient.id, ex.Message);
-					}
-					// read from Client
-					try {
-						if(stream.CanRead) ReadFromClient(stream, tcpClient);
-					} catch(Exception ex) {
-						wpDebug.Write("Read from Client {0}: {1}", tcpClient.id, ex.Message);
-					}
-					Task.Delay(ThreadSleep); //Prozessor 100%?
-				}
-			});
-		}
-		private void WriteToClient(NetworkStream stream, wpTcpClient tcpClient) {
-			try {
-				if(Monitor.TryEnter(tcpClient, MonitorTimeout)) {
-					if(tcpClient.message != "") {
-						try {
-							byte[] answerbytes = WebsocketsProtokoll.GetFrameFromString("{\"data\":[" + tcpClient.message + "]}");
-							if(stream.CanWrite) {
-								stream.Write(answerbytes, 0, answerbytes.Length);
-								if(wpDebug.debugWebSockets)
-									wpDebug.Write("Server to {0}: {1}", tcpClient.id, tcpClient.message);
-							} else {
-								if(wpDebug.debugWebSockets)
-									wpDebug.Write("Server to {0} failed: {1}", tcpClient.id, tcpClient.message);
-							}
-						} catch(Exception ex) {
-							wpDebug.Write("Client {0}: {1}", tcpClient.id, ex.Message);
-							Clients.Remove(tcpClient.id);
-							stream.Close();
-							tcpClient.tcpClient.Close();
-						} finally {
-							tcpClient.message = "";
-						}
-					}
-				} else {
-					wpDebug.Write("Clients blockiert: setDatapoint");
-				}
-			} finally {
-				Monitor.Exit(tcpClient);
-			}
-		}
-		private void ReadFromClient(NetworkStream stream, wpTcpClient tcpClient) {
-			byte[] bytes = new byte[tcpClient.tcpClient.Available];
-			stream.Read(bytes, 0, tcpClient.tcpClient.Available);
-			string s = Encoding.UTF8.GetString(bytes);
-
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {
 			string s = Encoding.UTF8.GetString(e.Data.Array);
 			if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
@@ -162,10 +76,6 @@ namespace WebAutomation.Helper {
 		private void Ws_ClientDisconnected(object sender, DisconnectionEventArgs e) {
 			WatsonClients.Remove(e.Client.Guid);
 			wpDebug.Write($"WebSockets Server Client disconnected: {e.Client.Guid}");
-		}
-
-		public void finished() {
-			ws.Stop();
 		}
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			switch(cmd.command.ToString()) {

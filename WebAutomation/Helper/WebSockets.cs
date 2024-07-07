@@ -27,33 +27,35 @@ namespace WebAutomation.Helper {
 	public class WebSockets {
 		/// <summary></summary>
 		private Logger eventLog;
-		private TcpListener WebSocketsListener;
-		private Thread WebSocketsServer;
-		private static int clientid = 0;
-		private static Dictionary<int, wpTcpClient> Clients;
-		private bool isFinished;
-		private const int MonitorTimeout = 200;
-		private int ThreadSleep = 250;
+
+		private WatsonWsServer ws;
+		private static Dictionary<Guid, wpTcpClient> WatsonClients;
+
+		private int MonitorTimeout = 250;
 		public WebSockets() {
 			init();
 		}
 		private void init() {
 			wpDebug.Write("WebSockets Server Init");
-			isFinished = false;
-			Clients = new Dictionary<int, wpTcpClient>();
-			eventLog = new Logger(wpEventLog.WebSockets);
-			WebSocketsListener = new TcpListener(IPAddress.Any, Ini.getInt("Websockets", "Port"));
-			WebSocketsServer = new Thread(new ThreadStart(TCP_Listener));
-			WebSocketsServer.Name = "WebSocketsServer";
-			WebSocketsServer.Start();
-			eventLog.Write($"WebSockets Server gestartet, auf Port {Ini.getInt("Websockets", "Port")} gemappt");
+			string name = Ini.get("Websockets", "Name");
+			int port = Ini.getInt("Websockets", "Port");
+			try {
+				eventLog = new Logger(wpEventLog.WebSockets);
+
+				WatsonClients = new Dictionary<Guid, wpTcpClient>();
+				ws = new WatsonWsServer(name, port, false);
+				ws.ClientConnected += Ws_ClientConnected;
+				ws.ClientDisconnected += Ws_ClientDisconnected;
+				ws.MessageReceived += Ws_MessageReceived;
+				ws.Start();
+				eventLog.Write($"WebSockets Server '{name}' gestartet, auf Port {port} gemappt");
+			} catch(Exception ex) {
+				wpDebug.WriteError(ex);
+			}
 		}
 		public void finished() {
-			WebSocketsListener.Stop();
-			WebSocketsListener = null;
-			isFinished = true;
-			WebSocketsServer.Join(ThreadSleep);
-			eventLog.Write($"{WebSocketsServer.Name} gestoppt");
+			if(ws.IsListening)
+				ws.Stop();
 		}
 		private void TCP_Listener() {
 			try {

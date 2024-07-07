@@ -16,7 +16,6 @@
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -509,6 +508,7 @@ namespace ShellyDevice {
 		public const string DOOR = "SHDW";
 		public const string HT = "SHHT-1";
 		public const string HT_PLUS = "PlusHT";
+		public const string HT3 = "HTG3";
 
 		public const string SW = "SHSW";
 		public const string PM = "SHSW-PM";
@@ -524,7 +524,7 @@ namespace ShellyDevice {
 
 		public const string D1Mini = "D1Mini";
 
-		private static List<string> bat = [DOOR, HT, HT_PLUS, D1Mini];
+		private static List<string> bat = [DOOR, HT, HT_PLUS, HT3, D1Mini];
 		private static List<string> relay = [SW, PM, PM_PLUS, PM_MINI, PM_MINI_G3, PLG, EM];
 		private static List<string> light = [DIMMER, DIMMER_2, RGBW, RGBW2];
 		private static List<string> gen1 = [SW, PM, PLG, EM, DIMMER, DIMMER_2, RGBW, RGBW2];

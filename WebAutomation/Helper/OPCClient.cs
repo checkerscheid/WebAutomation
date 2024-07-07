@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 121                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 115 2024-07-04 00:02:57Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 121 2024-07-05 02:16:00Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;
@@ -925,7 +925,7 @@ namespace WebAutomation.Helper {
 					foreach(KeyValuePair<int, OpcGroup> opcgroup in TheGroup[opcserver.Key]) {
 						try {
 							if (opcgroup.Value != null) {
-								int[] aErr;
+								//int[] aErr;
 								removeEvents(opcgroup.Value, opcserver.Key, opcgroup.Key);
 								//try {
 								//	if (opcgroup.Value.RemoveItems(Hsrv[opcserver.Key][opcgroup.Key].ToArray(),

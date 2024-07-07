@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 118                                                     $ #
+//# Revision     : $Rev:: 121                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 118 2024-07-04 14:20:41Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 121 2024-07-05 02:16:00Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -324,7 +324,7 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cStartD1MiniSearch:
-					returns = D1MiniServer.startSearch();
+					//returns = D1MiniServer.startSearch();
 					break;
 				case wpBefehl.cAddD1Mini:
 					returns = "S_ERROR";

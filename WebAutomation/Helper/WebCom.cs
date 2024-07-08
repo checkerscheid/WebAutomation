@@ -1094,17 +1094,11 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			int DPid;
 			for (int i = 0; i < param.Length; i++) {
 				if (Int32.TryParse(param[i], out DPid)) {
-					if (Server.Dictionaries.checkItem(DPid)) {
-						OPCItem TheItem = Server.Dictionaries.getItem(DPid);
-						returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}{{Quality={3}}}
-							{{QualityString={4}}}{{Type={5}}}}}",
-							param[i],
-							(TheItem.DBType == VarEnum.VT_BSTR) ? "\"" + TheItem.Value + "\"" : TheItem.Value,
-							TheItem.Lastupdate,
-							TheItem.Quality,
-							OPCQuality.get(TheItem.Quality),
-							TheItem.DBType);
-					}
+					Datapoint TheItem = Datapoints.Get(DPid);
+					returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}}}",
+						param[i],
+						"\"" + TheItem.Value + "\"",
+						TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss"));
 				} else {
 					eventLog.Write(EventLogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));

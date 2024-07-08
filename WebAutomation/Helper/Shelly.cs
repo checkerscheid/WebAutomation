@@ -117,16 +117,31 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		public static bool SetDoor(string mac, bool state, string temp, string ldr) {
+		public static bool SetWindow(string mac, bool window, string temp, string ldr) {
 			bool returns = false;
 			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_onoff, Shellys[mac].name, state ? "True" : "False");
+				setValue(Shellys[mac].id_window, Shellys[mac].name, window ? "True" : "False");
 				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
 				setValue(Shellys[mac].id_ldr, Shellys[mac].name, ldr.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", state ? "True" : "False");
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", window ? "True" : "False");
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
+				if(wpDebug.debugShelly)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"Shelly nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetWindow(string mac, bool window) {
+			bool returns = false;
+			if(Shellys.ContainsKey(mac)) {
+				setValue(Shellys[mac].id_window, Shellys[mac].name, window ? "True" : "False");
+				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: Window: {0}, ", window ? "True" : "False");
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;

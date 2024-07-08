@@ -93,12 +93,20 @@ namespace WebAutomation.Helper {
 					}
 				}
 				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&state\=(open|close)&lux\=([0-9.]*)&temp\=([0-9.]*)")) {
-					if(m.Success) { // found Shelly Door
+					if(m.Success) { // found Shelly Window
 						mac = m.Groups[1].Value.ToLower();
 						bool state = m.Groups[2].Value == "open" ? true : false;
 						string temp = m.Groups[3].Value;
 						string ldr = m.Groups[4].Value;
-						macok = ShellyServer.SetDoor(mac, state, temp, ldr);
+						macok = ShellyServer.SetWindow(mac, state, temp, ldr);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&door\=(open|close)")) {
+					if(m.Success) { // found Shelly Door
+						mac = m.Groups[1].Value.ToLower();
+						bool door = m.Groups[2].Value == "open" ? true : false;
+						macok = ShellyServer.SetWindow(mac, door);
 						cmdfound = true;
 					}
 				}

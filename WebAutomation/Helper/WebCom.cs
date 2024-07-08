@@ -351,7 +351,8 @@ namespace WebAutomation.Helper {
 					returns = D1MiniServer.setServerSetting(param[0], param[1]);
 					break;
 				case wpBefehl.cGetShellyStatus:
-					returns = ShellyServer.getAllStatus();
+					ShellyServer.getAllStatus();
+					returns = "{\"erg\":\"S_OK\"}";
 					break;
 				case wpBefehl.cReadItem:
 					param = wpBefehl.getParam(s_befehl[1]);

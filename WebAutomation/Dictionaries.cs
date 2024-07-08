@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 
@@ -110,7 +111,7 @@ namespace WebAutomation {
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
 				if(wpDebug.debugTransferID)
-					Debug.WriteLine($"Datenpunkt gesetzt '{_name}': {_valueString} ({_value})");
+					wpDebug.Write($"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
 			}
 		}
 		public string parseValueString() {
@@ -147,12 +148,7 @@ namespace WebAutomation {
 			}
 			return returns + " " + _unit;
 		}
-		/// <summary>
-		/// write to drivers - onChange on success<br />
-		/// setValue without driver
-		/// </summary>
-		/// <param name="value"></param>
-		public async void writeValue(string value) {
+		public async void writeValue(string value, string from) {
 			NumberStyles style = NumberStyles.Float;
 			CultureInfo culture = CultureInfo.InvariantCulture;
 			double dValue = 0.0;
@@ -179,6 +175,14 @@ namespace WebAutomation {
 			} else {
 				setValue(value);
 			}
+		}
+		/// <summary>
+		/// write to drivers - onChange on success<br />
+		/// setValue without driver
+		/// </summary>
+		/// <param name="value"></param>
+		public void writeValue(string value) {
+			writeValue(value, "Dictionary");
 		}
 	}
 	

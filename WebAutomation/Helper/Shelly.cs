@@ -18,7 +18,8 @@ using ShellyDevice;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 
 namespace WebAutomation.Helper {
 	public static class ShellyServer {
@@ -44,7 +45,7 @@ namespace WebAutomation.Helper {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
 					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_shellyroom], [s].[name], [s].[type],
 					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
-					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window]
+					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window], [s].[lastcontact]
 					FROM [shelly] [s]
 					LEFT JOIN [rest] [r] ON [s].[id_shelly] = [r].[id_shelly]
 					WHERE [s].[active] = 1");
@@ -75,9 +76,12 @@ namespace WebAutomation.Helper {
 						if(!String.IsNullOrEmpty(Query1[ishelly][14])) Shellys[shmac].id_ldr = Int32.Parse(Query1[ishelly][14]);
 						if(!String.IsNullOrEmpty(Query1[ishelly][15])) Shellys[shmac].id_window = Int32.Parse(Query1[ishelly][15]);
 
+						if(!String.IsNullOrEmpty(Query1[ishelly][16])) Shellys[shmac].LastContact = DateTime.Parse(Query1[ishelly][16]);
+
 						if(ShellyType.isGen2(type))
 							_ForceMqttUpdateAvailable.Add(idmqtt);
-						Shellys[shmac].getStatus();
+						Shellys[shmac].getStatus(true);
+						Shellys[shmac].getMqttStatus();
 					} catch(Exception ex) {
 						eventLog.WriteError(ex);
 					}
@@ -87,7 +91,7 @@ namespace WebAutomation.Helper {
 		}
 		public static string getAllStatus() {
 			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in Shellys) {
-				kvp.Value.getStatus();
+				kvp.Value.getStatus(true);
 			}
 			return "S_OK";
 		}
@@ -233,6 +237,13 @@ namespace WebAutomation.Helper {
 			public string name {
 				get { return _name; }
 			}
+			private DateTime _lastcontact;
+			public DateTime LastContact {
+				get { return _lastcontact; }
+				set {
+					_lastcontact = value;
+				}
+			}
 
 			private bool _mqtt_enable;
 			public bool mqtt_enable { get => _mqtt_enable; }
@@ -248,7 +259,8 @@ namespace WebAutomation.Helper {
 			public string type {
 				get { return _type; }
 			}
-
+			private Timer _doCheckStatus;
+			private long _doCheckStatusIntervall = 30; // min
 
 			public ShellyDeviceHelper(int id, string ip, string mac, int id_room, string name, string type,
 				bool mqtt_enable, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable) {
@@ -266,12 +278,17 @@ namespace WebAutomation.Helper {
 				_mqtt_id = mqtt_id;
 				_mqtt_prefix = mqtt_prefix;
 				_mqtt_writeable = mqtt_writeable;
+				_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
+				_doCheckStatus.AutoReset = true;
+				_doCheckStatus.Elapsed += _doCheckStatus_Elapsed;
 			}
-			public void getStatus() {
-				Thread getStatus = new Thread(new ThreadStart(handleGetStatus));
-				getStatus.Name = "ShellyServerGetStatus";
-				getStatus.Start();
+
+			private void _doCheckStatus_Elapsed(object sender, ElapsedEventArgs e) {
+				getStatus();
+				if(wpDebug.debugShelly)
+					wpDebug.Write($"ShellyDevice doCheck gestartet '{this.name}'");
 			}
+
 			public void setLongPress() {
 				wpDebug.Write($"register LongPress on {this._name}");
 				using(SQL SQL = new SQL("Shellys Long Press")) {
@@ -293,91 +310,127 @@ namespace WebAutomation.Helper {
 					}
 				}
 			}
-			private void handleGetStatus() {
+			public void getStatus() {
+				getStatus(false);
+			}
+			public void getStatus(bool force) {
 				string url = "http://" + this._ip.ToString();
-				string target = "", result = "";
-				try {
-					if(!ShellyType.isBat(this.type)) {
-						WebClient webClient = new WebClient();
-						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
-						if(ShellyType.isGen2(this.type)) {
-							target = $"{url}/rpc/Switch.GetStatus?id=0";
-						} else {
-							target = $"{url}/status";
-						}
-						webClient.DownloadStringCompleted += (e, args) => {
-							if(args.Error == null) {
-								status sds = JsonConvert.DeserializeObject<status>(args.Result);
-								//if(sds.update.has_update) eventLog.Write("Hat Update: {0}", sds.update.new_version);
-								if(this.id_onoff > 0) {
-									if(ShellyType.isLight(this.type) && !ShellyType.isGen2(this.type))
-										Datapoints.Get(this.id_onoff).setValue(sds.lights[0].ison ? "True" : "False");
-									if(ShellyType.isRelay(this.type) && !ShellyType.isGen2(this.type))
-										Datapoints.Get(this.id_onoff).setValue(sds.relays[0].ison ? "True" : "False");
-									if(ShellyType.isGen2(this.type))
-										Datapoints.Get(this.id_onoff).setValue(sds.output ? "True" : "False");
-								}
-								if(wpDebug.debugShelly)
-									eventLog.Write(result);
-
-								if(ShellyType.isGen2(this.type)) {
-									target = $"{url}/rpc/Mqtt.GetConfig";
-								} else {
-									target = $"{url}/settings";
-								}
-								result = webClient.DownloadString(new Uri(target));
-								mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(result);
-								bool res_mqtt_enable, res_mqtt_writeable;
-								string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
-								if(ShellyType.isGen2(this.type)) {
-									res_mqtt_enable = sdms.enable;
-									res_mqtt_server = sdms.server;
-									res_mqtt_id = sdms.client_id;
-									res_mqtt_prefix = sdms.topic_prefix;
-									res_mqtt_writeable = sdms.enable_control;
-								} else {
-									res_mqtt_enable = sdms.mqtt.enable;
-									res_mqtt_server = sdms.mqtt.server;
-									res_mqtt_id = sdms.mqtt.id;
-									res_mqtt_prefix = "shellies/" + sdms.mqtt.id;
-									res_mqtt_writeable = true;
-								}
-								string updatesql = "";
-								if(_mqtt_enable != res_mqtt_enable) {
-									_mqtt_enable = res_mqtt_enable;
-									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_active] = {(_mqtt_enable ? "1" : "0")}";
-								}
-								if(_mqtt_server != res_mqtt_server) {
-									_mqtt_server = res_mqtt_server;
-									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_server] = '{_mqtt_server}'";
-								}
-								if(_mqtt_id != res_mqtt_id) {
-									_mqtt_id = res_mqtt_id;
-									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_id] = '{_mqtt_id}'";
-								}
-								if(_mqtt_prefix != res_mqtt_prefix) {
-									_mqtt_prefix = res_mqtt_prefix;
-									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_prefix] = '{_mqtt_prefix}'";
-								}
-								if(_mqtt_writeable != res_mqtt_writeable) {
-									_mqtt_writeable = res_mqtt_writeable;
-									updatesql += (updatesql == "" ? "" : ", ") + $"[mqtt_writeable] = {(_mqtt_writeable ? "1" : "0")}";
-								}
-								if(updatesql != "") {
-									using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
-										string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
-										wpDebug.Write(sql);
-										SQL.wpNonResponse(sql);
+				string target = "";
+				if(ShellyType.isGen2(this.type)) {
+					target = $"{url}/rpc/Switch.GetStatus?id=0";
+				} else {
+					target = $"{url}/status";
+				}
+				if(!ShellyType.isBat(this.type)) {
+					try {
+						using(WebClient webClient = new WebClient()) {
+							webClient.Credentials = new NetworkCredential("wpLicht", "turner");
+							webClient.DownloadStringCompleted += (e, args) => {
+								if(args.Error == null) {
+									_lastcontact = DateTime.Now;
+									status sds = JsonConvert.DeserializeObject<status>(args.Result);
+									if(this.id_onoff > 0) {
+										if(ShellyType.isLight(this.type) && !ShellyType.isGen2(this.type))
+											Datapoints.Get(this.id_onoff).writeValue(sds.lights[0].ison ? "True" : "False", "Shelly");
+										if(ShellyType.isRelay(this.type) && !ShellyType.isGen2(this.type))
+											Datapoints.Get(this.id_onoff).writeValue(sds.relays[0].ison ? "True" : "False", "Shelly");
+										if(ShellyType.isGen2(this.type))
+											Datapoints.Get(this.id_onoff).writeValue(sds.output ? "True" : "False", "Shelly");
 									}
+									using(SQL SQL = new SQL("Update Shelly MQTT lastContact")) {
+										string sql = $"UPDATE [shelly] SET [lastcontact] = '{_lastcontact.ToString(SQL.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
+										SQL.wpNonResponse(sql);
+										if(wpDebug.debugShelly) wpDebug.Write(sql);
+									}
+								} else {
+									wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
 								}
-							} else {
-								wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
+							};
+							if(_lastcontact.AddHours(1) < DateTime.Now || force) {
+								Task.Run(() => {
+									webClient.DownloadStringAsync(new Uri(target));
+								});
+								_doCheckStatus.Stop();
+								_doCheckStatus.Start();
 							}
-						};
-						webClient.DownloadStringAsync(new Uri(target));
+						}
+					} catch(Exception ex) {
+						eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");
 					}
-				} catch(Exception ex) {
-					eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");
+				}
+			}
+			public void getMqttStatus() {
+				string url = "http://" + this._ip.ToString();
+				string target = "";
+				if(ShellyType.isGen2(this.type)) {
+					target = $"{url}/rpc/Mqtt.GetConfig";
+				} else {
+					target = $"{url}/settings";
+				}
+				if(!ShellyType.isBat(this.type)) {
+					try {
+						using(WebClient webClient = new WebClient()) {
+							webClient.Credentials = new NetworkCredential("wpLicht", "turner");
+							webClient.DownloadStringCompleted += (e, args) => {
+								if(args.Error == null) {
+									mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(args.Result);
+									bool res_mqtt_enable, res_mqtt_writeable;
+									string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
+									if(ShellyType.isGen2(this.type)) {
+										res_mqtt_enable = sdms.enable;
+										res_mqtt_server = sdms.server;
+										res_mqtt_id = sdms.client_id;
+										res_mqtt_prefix = sdms.topic_prefix;
+										res_mqtt_writeable = sdms.enable_control;
+									} else {
+										res_mqtt_enable = sdms.mqtt.enable;
+										res_mqtt_server = sdms.mqtt.server;
+										res_mqtt_id = sdms.mqtt.id;
+										res_mqtt_prefix = "shellies/" + sdms.mqtt.id;
+										res_mqtt_writeable = true;
+									}
+									string updatesql = "";
+									if(_mqtt_enable != res_mqtt_enable) {
+										_mqtt_enable = res_mqtt_enable;
+										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
+										updatesql += $"[mqtt_active] = {(_mqtt_enable ? "1" : "0")}";
+									}
+									if(_mqtt_server != res_mqtt_server) {
+										_mqtt_server = res_mqtt_server;
+										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
+										updatesql += $"[mqtt_server] = '{_mqtt_server}'";
+									}
+									if(_mqtt_id != res_mqtt_id) {
+										_mqtt_id = res_mqtt_id;
+										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
+										updatesql += $"[mqtt_id] = '{_mqtt_id}'";
+									}
+									if(_mqtt_prefix != res_mqtt_prefix) {
+										_mqtt_prefix = res_mqtt_prefix;
+										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
+										updatesql += $"[mqtt_prefix] = '{_mqtt_prefix}'";
+									}
+									if(_mqtt_writeable != res_mqtt_writeable) {
+										_mqtt_writeable = res_mqtt_writeable;
+										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
+										updatesql += $"[mqtt_writeable] = {(_mqtt_writeable ? "1" : "0")}";
+									}
+									if(!String.IsNullOrEmpty(updatesql)) {
+										using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
+											string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
+											SQL.wpNonResponse(sql);
+											if(wpDebug.debugShelly) wpDebug.Write(sql);
+										}
+									}
+								} else {
+									wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
+								}
+							};
+							webClient.DownloadStringAsync(new Uri(target));
+						}
+					} catch(Exception ex) {
+						eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");
+					}
 				}
 			}
 		}

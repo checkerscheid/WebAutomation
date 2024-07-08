@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 125                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 120 2024-07-04 15:08:20Z                          $ #
+//# File-ID      : $Id:: Sun.cs 125 2024-07-08 18:57:15Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;

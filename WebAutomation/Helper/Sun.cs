@@ -89,10 +89,10 @@ namespace WebAutomation.Helper {
 			});
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
-			Datapoints.Get(SunShineId).writeValue("True");
+			Datapoints.Get(SunShineId).writeValue("1");
 		}
 		private void SunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
-			Datapoints.Get(SunShineId).writeValue("False");
+			Datapoints.Get(SunShineId).writeValue("0");
 		}
 		private async Task GetSunsetSunrise() {
 			try {
@@ -109,14 +109,11 @@ namespace WebAutomation.Helper {
 						wpDebug.Write("Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
 						DateTime Now = DateTime.Now;
 						if(Now < sunrise) {
-							Datapoints.Get(SunShineId).writeValue("False");
-							Datapoints.Get(SunShineId).setValue("False");
+							Datapoints.Get(SunShineId).writeValue("0");
 						} else if(Now >= sunrise && Now < sunset) {
-							Datapoints.Get(SunShineId).writeValue("True");
-							Datapoints.Get(SunShineId).setValue("True");
+							Datapoints.Get(SunShineId).writeValue("1");
 						} else if(Now > sunset) {
-							Datapoints.Get(SunShineId).writeValue("False");
-							Datapoints.Get(SunShineId).setValue("False");
+							Datapoints.Get(SunShineId).writeValue("0");
 						}
 						TimeSpan toSunrise = sunrise - Now;
 						TimeSpan toSunset = sunset - Now;

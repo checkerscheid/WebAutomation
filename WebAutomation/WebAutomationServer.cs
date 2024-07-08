@@ -154,336 +154,6 @@ namespace WebAutomation {
 			get { return this._SystemItems; }
 		}
 
-#region alarm
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="newAlarm"></param>
-		public void AlarmToMail(Alarm newAlarm) {
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(TheMail, 5000)) {
-					try {
-						TheMail.AddAlarm(newAlarm);
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(TheMail);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								AlarmToMail nicht möglich", newAlarm.IdAlarm));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="newAlarm"></param>
-		public void QuitToMail(Alarm newAlarm) {
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(TheMail, 5000)) {
-					try {
-						TheMail.AddQuit(newAlarm);
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(TheMail);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-								QuitToMail nicht möglich", newAlarm.IdAlarm));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="newAlarm"></param>
-		public void QuitsToMail(List<Alarm> newAlarm) {
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(TheMail, 5000)) {
-					try {
-						foreach (Alarm TheAlarm in newAlarm) {
-							TheMail.AddQuit(TheAlarm);
-						}
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(TheMail);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						foreach (Alarm TheAlarm in newAlarm) {
-							eventLog.Write(EventLogEntryType.Error,
-								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
-									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
-						}
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public Alarm getAlarmFromAlarmid(int id) {
-			Alarm returns = null;
-			bool entered = false;
-			int notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
-					try {
-						foreach (KeyValuePair<int, OPCItem> TheItems in Server.Dictionaries.Items) {
-							//if (TheItems.Value.Alarm != null) {
-							//	if (TheItems.Value.Alarm.Idalarm == id) {
-							//		returns = TheItems.Value.Alarm;
-							//	}
-							//}
-						}
-					} catch (Exception ex) {
-						eventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
-						entered = true;
-					}
-				} else {
-					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
-							String.Format(@"Angefordertes Item blockiert: {0}.\r\n
-								getAlarmFromAlarmid nicht möglich", id));
-					} else {
-						Thread.Sleep(10);
-					}
-				}
-			}
-			return returns;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		public void createEmail() {
-			Dictionary<string, PRecipient> recipient = renewRecipient(out RecipientRequired);
-			do {
-				try {
-					if (!_wpWartung) {
-						if (RecipientRequired) {
-							recipient.Clear();
-							recipient = renewRecipient(out RecipientRequired);
-						}
-						foreach (KeyValuePair<string, PRecipient> Alarmstosend in recipient) {
-							if (Email.EmailAlarms.getTotalCount(Alarmstosend.Value) > 0) {
-								string[] MailContent = new string[2];
-								try {
-									if (Alarmstosend.Value.IsSMS) {
-										MailContent[1] = Application.ProductName;
-										foreach (string sms in TheMail.getSMSText(Alarmstosend.Value)) {
-											TheMail.setRecipient(Alarmstosend.Key);
-											string subject = Ini.get("Projekt", "Nummer") + " " + sms;
-											int max = 160 - TheMail.getFromLength() - 2;
-											if (subject.Length > max)
-												subject = subject.Substring(0, max);
-											TheMail.setSubject(subject);
-											MailContent[0] = subject;
-											if (MailContent[0].Length > 0 && MailContent[1].Length > 0) {
-												TheMail.send();
-												using (SQL SQL = new SQL("Mail send")) {
-													SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
-										([email], [send], [subject], [message]) VALUES
-										('{0}', '{1}', '{2}', '{3}')",
-													Alarmstosend.Value.Address,
-													DateTime.Now.ToString(SQL.DateTimeFormat),
-													MailContent[0].Replace('\'', '"').Replace('\\', ' '),
-													MailContent[1].Replace('\'', '"').Replace('\\', ' '));
-												}
-												Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
-											}
-										}
-									} else {
-										TheMail.setRecipient(Alarmstosend.Key);
-										MailContent = TheMail.setAlarmBody(Alarmstosend.Value);
-										if (MailContent[0].Length > 0 && MailContent[1].Length > 0) {
-											TheMail.send();
-											using (SQL SQL = new SQL("Mail send")) {
-												SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
-										([email], [send], [subject], [message]) VALUES
-										('{0}', '{1}', '{2}', '{3}')",
-												Alarmstosend.Value.Address,
-												DateTime.Now.ToString(SQL.DateTimeFormat),
-												MailContent[0].Replace('\'', '"').Replace('\\', ' '),
-												MailContent[1].Replace('\'', '"').Replace('\\', ' '));
-											}
-											Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
-										}
-									}
-								} catch (Exception ex) {
-									using (SQL SQL = new SQL("Mail send")) {
-										SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
-										([email], [send], [subject], [message], [error]) VALUES
-										('{0}', '{1}', '{2}', '{3}', '{4}')",
-										Alarmstosend.Value.Address,
-										DateTime.Now.ToString(SQL.DateTimeFormat),
-										MailContent[0].Replace('\'', '"').Replace('\\', ' '),
-										MailContent[1].Replace('\'', '"').Replace('\\', ' '),
-										ex.Message);
-									}
-									eventLog.Write(EventLogEntryType.Error,
-										String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
-								}
-							}
-						}
-					}
-				} catch (Exception ex) {
-					eventLog.Write(EventLogEntryType.Error,
-						String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
-				} finally {
-					TheMail.reset();
-				}
-				Thread.Sleep(1000);
-			} while (!isFinished);
-			TheMail.Dispose();
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="required"></param>
-		/// <returns></returns>
-		private Dictionary<string, PRecipient> renewRecipient(out bool required) {
-			Dictionary<string, PRecipient> recipient = new Dictionary<string, PRecipient>();
-			using (SQL SQL = new SQL("renew Recipient Table")) {
-				string[][] Query = SQL.wpQuery(@"SELECT
-					([name] + ' ' + [lastname] + ' <' + [address] + '>'),
-					[id_email], [sms], [ticketmail] FROM [email] WHERE [active] = 1");
-				for (int j = 0; j < Query.Length; j++) {
-					Dictionary<int, int> AlarmperUser = new Dictionary<int, int>();
-					using (SQL SQL2 = new SQL("renew Recipient Table - Alarm per User")) {
-						string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
-						FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
-						for (int k = 0; k < Alarme.Length; k++) {
-							int checker;
-							int minutes;
-							if (Int32.TryParse(Alarme[k][0], out checker) &&
-								Int32.TryParse(Alarme[k][1], out minutes)) {
-								if (AlarmperUser.ContainsKey(checker)) {
-									AlarmperUser[checker] = minutes;
-								} else {
-									AlarmperUser.Add(checker, minutes);
-								}
-							}
-						}
-					}
-					if (AlarmperUser.Count > 0) {
-						recipient.Add(Query[j][0],
-							new PRecipient(Int32.Parse(Query[j][1]), Query[j][0], Query[j][2] == "True", AlarmperUser));
-					}
-				}
-			}
-			required = false;
-			eventLog.Write("Recipient Table wurde erneuert.");
-			return recipient;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
-		public string SetRecipientRequired() {
-			RecipientRequired = true;
-			return "S_OK";
-		}
-
-#endregion
-
-#region system
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void SystemTimer_Tick(object sender, EventArgs e) {
-			getVolumeInfo();
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		private void getVolumeInfo() {
-			lbl_volumeinfo.Text = "";
-			DriveInfo[] Drives = DriveInfo.GetDrives();
-
-			List<string> lbl = new List<string>();
-			foreach (DriveInfo d in Drives) {
-				if (d.DriveType == DriveType.Fixed) {
-					try {
-						DriveInformation di = new DriveInformation(d.TotalSize, d.TotalFreeSpace);
-						lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
-							d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
-					} catch(Exception ex) {
-						eventLog.WriteError(ex);
-					}
-				}
-			}
-			foreach(string s in lbl) {
-				lbl_volumeinfo.Text += s + "\r\n";
-			}
-
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		internal class DriveInformation {
-			/// <summary></summary>
-			public long totalspace;
-			/// <summary></summary>
-			public long usedspace;
-			/// <summary></summary>
-			public double prozent;
-			/// <summary>
-			/// 
-			/// </summary>
-			/// <param name="_totalspace"></param>
-			/// <param name="_freespace"></param>
-			public DriveInformation(long _totalspace, long _freespace) {
-				totalspace = _totalspace / (1024 * 1024 * 1024);
-				usedspace = (_totalspace - _freespace) / (1024 * 1024 * 1024);
-				prozent = getProzent(_totalspace, _freespace);
-			}
-			/// <summary>
-			/// 
-			/// </summary>
-			/// <param name="_totalspace"></param>
-			/// <param name="_freespace"></param>
-			/// <returns></returns>
-			private double getProzent(long _totalspace, long _freespace) {
-				long usedspace = _totalspace - _freespace;
-				double returns = ((double)usedspace / (double)_totalspace) * 100;
-				return returns;
-			}
-		}
-
-		#endregion
-
 		/// <summary>
 		/// 
 		/// </summary>
@@ -551,55 +221,6 @@ namespace WebAutomation {
 			this.lbl_db.Text = Ini.get("SQL", "Database");
 			Helper.wpDebug.Write("Connected Database: " + Ini.get("SQL", "Database"));
 		}
-		private void checkTable(string table, string column, string type, bool canBeNull, string defaultValue) {
-			using (SQL SQL = new SQL("Check Database")) {
-				string[][] DB = SQL.wpQuery(@"SELECT [COLUMN_NAME] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND [COLUMN_NAME] = '{1}'", table, column);
-				try {
-					if (DB.Length == 0 || DB[0].Length == 0 || DB[0][0] != column) {
-						SQL.wpNonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
-							table, column, type,
-							canBeNull ? "NULL" : "NOT NULL CONSTRAINT [DF_" + table + "_" + column + "] DEFAULT(" + defaultValue + ")");
-						Helper.wpDebug.Write("Add [{1}] to [{0}]", table, column);
-					}
-				} catch (Exception ex) {
-					eventLog.WriteError(ex);
-				}
-			}
-		}
-		private void checkTable(string table, string column, string type) {
-			checkTable(table, column, type, true, "");
-		}
-		private void checkTable(string table, string column) {
-			checkTable(table, column, "VARCHAR(100)", true, "");
-		}
-		public bool TryConnectDatabase() {
-			SQL SQL;
-			int SQLCounter = 0;
-			int SQLCounterMax;
-			int SQLCounterTime;
-			if (Int32.TryParse(Ini.get("SQL", "reconnect"), out SQLCounterMax) &&
-				Int32.TryParse(Ini.get("SQL", "reconnectTime"), out SQLCounterTime)) {
-				do {
-					using (SQL = new SQL("Test SQL Connection")) { }
-					if (!SQL.Available) {
-						eventLog.Write(EventLogEntryType.Error,
-							"{0} Server kann Datenbank nicht erreichen.\r\n\tReconnect nach {1} Sekunden\r\n\tVerbleibende Versuche: {2}",
-							Application.ProductName, SQLCounterTime, SQLCounterMax - 1 - SQLCounter);
-						SQLCounter++;
-						Thread.Sleep(SQLCounterTime * 1000);
-					}
-				} while (SQL.Available == false && SQLCounter < SQLCounterMax);
-				if (SQLCounter >= SQLCounterMax) {
-					MessageBox.Show("Keine Verbindung zur Datenbank!\r\nDas Programm wird beendet",
-						"Datenbankfehler",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Warning);
-					return false;
-				}
-				return true;
-			}
-			return false;
-		}
 		public async Task initAsync() {
 			await Task.Delay(100);
 
@@ -617,9 +238,9 @@ namespace WebAutomation {
 			checkTable("webpages", "id_src", "varchar(200)");
 			checkTable("webpages", "inwork", "bit", false, "0");
 
-			using (SQL SQL = new SQL("startup")) {
+			using(SQL SQL = new SQL("startup")) {
 				string[][] Tables = SQL.wpQuery("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_NAME] = 'emailhistoric'");
-				if (Tables.Length == 0) {
+				if(Tables.Length == 0) {
 					SQL.wpNonResponse(@"CREATE TABLE [emailhistoric]
 					([email][varchar](150) NOT NULL,[send][datetime] NOT NULL,[subject][text] NOT NULL,[message][text] NOT NULL,[error][text] NULL)");
 					Helper.wpDebug.Write("Tabelle emailhistoric wurde erstellt");
@@ -671,6 +292,55 @@ namespace WebAutomation {
 			SystemStatus.ProzessorStatusChanged += SystemStatus_ProzessorStatusChanged;
 		}
 
+		private void checkTable(string table, string column, string type, bool canBeNull, string defaultValue) {
+			using (SQL SQL = new SQL("Check Database")) {
+				string[][] DB = SQL.wpQuery(@"SELECT [COLUMN_NAME] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND [COLUMN_NAME] = '{1}'", table, column);
+				try {
+					if (DB.Length == 0 || DB[0].Length == 0 || DB[0][0] != column) {
+						SQL.wpNonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
+							table, column, type,
+							canBeNull ? "NULL" : "NOT NULL CONSTRAINT [DF_" + table + "_" + column + "] DEFAULT(" + defaultValue + ")");
+						Helper.wpDebug.Write("Add [{1}] to [{0}]", table, column);
+					}
+				} catch (Exception ex) {
+					eventLog.WriteError(ex);
+				}
+			}
+		}
+		private void checkTable(string table, string column, string type) {
+			checkTable(table, column, type, true, "");
+		}
+		private void checkTable(string table, string column) {
+			checkTable(table, column, "VARCHAR(100)", true, "");
+		}
+		public bool TryConnectDatabase() {
+			SQL SQL;
+			int SQLCounter = 0;
+			int SQLCounterMax;
+			int SQLCounterTime;
+			if (Int32.TryParse(Ini.get("SQL", "reconnect"), out SQLCounterMax) &&
+				Int32.TryParse(Ini.get("SQL", "reconnectTime"), out SQLCounterTime)) {
+				do {
+					using (SQL = new SQL("Test SQL Connection")) { }
+					if (!SQL.Available) {
+						eventLog.Write(EventLogEntryType.Error,
+							"{0} Server kann Datenbank nicht erreichen.\r\n\tReconnect nach {1} Sekunden\r\n\tVerbleibende Versuche: {2}",
+							Application.ProductName, SQLCounterTime, SQLCounterMax - 1 - SQLCounter);
+						SQLCounter++;
+						Thread.Sleep(SQLCounterTime * 1000);
+					}
+				} while (SQL.Available == false && SQLCounter < SQLCounterMax);
+				if (SQLCounter >= SQLCounterMax) {
+					MessageBox.Show("Keine Verbindung zur Datenbank!\r\nDas Programm wird beendet",
+						"Datenbankfehler",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Warning);
+					return false;
+				}
+				return true;
+			}
+			return false;
+		}
 
 		private void ApacheService_ServiceStatusChanged(ServiceStatusChangedEventArgs e) {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
@@ -768,6 +438,337 @@ namespace WebAutomation {
 		private void lbl_msg_Enter(object sender, EventArgs e) {
 			nonsens.Focus();
 		}
+
+
+		#region alarm
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="newAlarm"></param>
+		public void AlarmToMail(Alarm newAlarm) {
+			bool entered = false;
+			int notEntered = 0;
+			while(!entered && notEntered < 10) {
+				if(Monitor.TryEnter(TheMail, 5000)) {
+					try {
+						TheMail.AddAlarm(newAlarm);
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
+					} finally {
+						Monitor.Exit(TheMail);
+						entered = true;
+					}
+				} else {
+					if(++notEntered >= 10) {
+						eventLog.Write(EventLogEntryType.Error,
+							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
+								AlarmToMail nicht möglich", newAlarm.IdAlarm));
+					} else {
+						Thread.Sleep(10);
+					}
+				}
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="newAlarm"></param>
+		public void QuitToMail(Alarm newAlarm) {
+			bool entered = false;
+			int notEntered = 0;
+			while(!entered && notEntered < 10) {
+				if(Monitor.TryEnter(TheMail, 5000)) {
+					try {
+						TheMail.AddQuit(newAlarm);
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
+					} finally {
+						Monitor.Exit(TheMail);
+						entered = true;
+					}
+				} else {
+					if(++notEntered >= 10) {
+						eventLog.Write(EventLogEntryType.Error,
+							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
+								QuitToMail nicht möglich", newAlarm.IdAlarm));
+					} else {
+						Thread.Sleep(10);
+					}
+				}
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="newAlarm"></param>
+		public void QuitsToMail(List<Alarm> newAlarm) {
+			bool entered = false;
+			int notEntered = 0;
+			while(!entered && notEntered < 10) {
+				if(Monitor.TryEnter(TheMail, 5000)) {
+					try {
+						foreach(Alarm TheAlarm in newAlarm) {
+							TheMail.AddQuit(TheAlarm);
+						}
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
+					} finally {
+						Monitor.Exit(TheMail);
+						entered = true;
+					}
+				} else {
+					if(++notEntered >= 10) {
+						foreach(Alarm TheAlarm in newAlarm) {
+							eventLog.Write(EventLogEntryType.Error,
+								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
+									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
+						}
+					} else {
+						Thread.Sleep(10);
+					}
+				}
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public Alarm getAlarmFromAlarmid(int id) {
+			Alarm returns = null;
+			bool entered = false;
+			int notEntered = 0;
+			while(!entered && notEntered < 10) {
+				if(Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
+					try {
+						foreach(KeyValuePair<int, OPCItem> TheItems in Server.Dictionaries.Items) {
+							//if (TheItems.Value.Alarm != null) {
+							//	if (TheItems.Value.Alarm.Idalarm == id) {
+							//		returns = TheItems.Value.Alarm;
+							//	}
+							//}
+						}
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
+					} finally {
+						Monitor.Exit(Server.Dictionaries.Items);
+						entered = true;
+					}
+				} else {
+					if(++notEntered >= 10) {
+						eventLog.Write(EventLogEntryType.Error,
+							String.Format(@"Angefordertes Item blockiert: {0}.\r\n
+								getAlarmFromAlarmid nicht möglich", id));
+					} else {
+						Thread.Sleep(10);
+					}
+				}
+			}
+			return returns;
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		public void createEmail() {
+			Dictionary<string, PRecipient> recipient = renewRecipient(out RecipientRequired);
+			do {
+				try {
+					if(!_wpWartung) {
+						if(RecipientRequired) {
+							recipient.Clear();
+							recipient = renewRecipient(out RecipientRequired);
+						}
+						foreach(KeyValuePair<string, PRecipient> Alarmstosend in recipient) {
+							if(Email.EmailAlarms.getTotalCount(Alarmstosend.Value) > 0) {
+								string[] MailContent = new string[2];
+								try {
+									if(Alarmstosend.Value.IsSMS) {
+										MailContent[1] = Application.ProductName;
+										foreach(string sms in TheMail.getSMSText(Alarmstosend.Value)) {
+											TheMail.setRecipient(Alarmstosend.Key);
+											string subject = Ini.get("Projekt", "Nummer") + " " + sms;
+											int max = 160 - TheMail.getFromLength() - 2;
+											if(subject.Length > max)
+												subject = subject.Substring(0, max);
+											TheMail.setSubject(subject);
+											MailContent[0] = subject;
+											if(MailContent[0].Length > 0 && MailContent[1].Length > 0) {
+												TheMail.send();
+												using(SQL SQL = new SQL("Mail send")) {
+													SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+										([email], [send], [subject], [message]) VALUES
+										('{0}', '{1}', '{2}', '{3}')",
+													Alarmstosend.Value.Address,
+													DateTime.Now.ToString(SQL.DateTimeFormat),
+													MailContent[0].Replace('\'', '"').Replace('\\', ' '),
+													MailContent[1].Replace('\'', '"').Replace('\\', ' '));
+												}
+												Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+											}
+										}
+									} else {
+										TheMail.setRecipient(Alarmstosend.Key);
+										MailContent = TheMail.setAlarmBody(Alarmstosend.Value);
+										if(MailContent[0].Length > 0 && MailContent[1].Length > 0) {
+											TheMail.send();
+											using(SQL SQL = new SQL("Mail send")) {
+												SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+										([email], [send], [subject], [message]) VALUES
+										('{0}', '{1}', '{2}', '{3}')",
+												Alarmstosend.Value.Address,
+												DateTime.Now.ToString(SQL.DateTimeFormat),
+												MailContent[0].Replace('\'', '"').Replace('\\', ' '),
+												MailContent[1].Replace('\'', '"').Replace('\\', ' '));
+											}
+											Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+										}
+									}
+								} catch(Exception ex) {
+									using(SQL SQL = new SQL("Mail send")) {
+										SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+										([email], [send], [subject], [message], [error]) VALUES
+										('{0}', '{1}', '{2}', '{3}', '{4}')",
+										Alarmstosend.Value.Address,
+										DateTime.Now.ToString(SQL.DateTimeFormat),
+										MailContent[0].Replace('\'', '"').Replace('\\', ' '),
+										MailContent[1].Replace('\'', '"').Replace('\\', ' '),
+										ex.Message);
+									}
+									eventLog.Write(EventLogEntryType.Error,
+										String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
+								}
+							}
+						}
+					}
+				} catch(Exception ex) {
+					eventLog.Write(EventLogEntryType.Error,
+						String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
+				} finally {
+					TheMail.reset();
+				}
+				Thread.Sleep(1000);
+			} while(!isFinished);
+			TheMail.Dispose();
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="required"></param>
+		/// <returns></returns>
+		private Dictionary<string, PRecipient> renewRecipient(out bool required) {
+			Dictionary<string, PRecipient> recipient = new Dictionary<string, PRecipient>();
+			using(SQL SQL = new SQL("renew Recipient Table")) {
+				string[][] Query = SQL.wpQuery(@"SELECT
+					([name] + ' ' + [lastname] + ' <' + [address] + '>'),
+					[id_email], [sms], [ticketmail] FROM [email] WHERE [active] = 1");
+				for(int j = 0; j < Query.Length; j++) {
+					Dictionary<int, int> AlarmperUser = new Dictionary<int, int>();
+					using(SQL SQL2 = new SQL("renew Recipient Table - Alarm per User")) {
+						string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
+						FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
+						for(int k = 0; k < Alarme.Length; k++) {
+							int checker;
+							int minutes;
+							if(Int32.TryParse(Alarme[k][0], out checker) &&
+								Int32.TryParse(Alarme[k][1], out minutes)) {
+								if(AlarmperUser.ContainsKey(checker)) {
+									AlarmperUser[checker] = minutes;
+								} else {
+									AlarmperUser.Add(checker, minutes);
+								}
+							}
+						}
+					}
+					if(AlarmperUser.Count > 0) {
+						recipient.Add(Query[j][0],
+							new PRecipient(Int32.Parse(Query[j][1]), Query[j][0], Query[j][2] == "True", AlarmperUser));
+					}
+				}
+			}
+			required = false;
+			eventLog.Write("Recipient Table wurde erneuert.");
+			return recipient;
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		public string SetRecipientRequired() {
+			RecipientRequired = true;
+			return "S_OK";
+		}
+
+		#endregion
+
+		#region system
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void SystemTimer_Tick(object sender, EventArgs e) {
+			getVolumeInfo();
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		private void getVolumeInfo() {
+			lbl_volumeinfo.Text = "";
+			DriveInfo[] Drives = DriveInfo.GetDrives();
+
+			List<string> lbl = new List<string>();
+			foreach(DriveInfo d in Drives) {
+				if(d.DriveType == DriveType.Fixed) {
+					try {
+						DriveInformation di = new DriveInformation(d.TotalSize, d.TotalFreeSpace);
+						lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
+							d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
+					} catch(Exception ex) {
+						eventLog.WriteError(ex);
+					}
+				}
+			}
+			foreach(string s in lbl) {
+				lbl_volumeinfo.Text += s + "\r\n";
+			}
+
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		internal class DriveInformation {
+			/// <summary></summary>
+			public long totalspace;
+			/// <summary></summary>
+			public long usedspace;
+			/// <summary></summary>
+			public double prozent;
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="_totalspace"></param>
+			/// <param name="_freespace"></param>
+			public DriveInformation(long _totalspace, long _freespace) {
+				totalspace = _totalspace / (1024 * 1024 * 1024);
+				usedspace = (_totalspace - _freespace) / (1024 * 1024 * 1024);
+				prozent = getProzent(_totalspace, _freespace);
+			}
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="_totalspace"></param>
+			/// <param name="_freespace"></param>
+			/// <returns></returns>
+			private double getProzent(long _totalspace, long _freespace) {
+				long usedspace = _totalspace - _freespace;
+				double returns = ((double)usedspace / (double)_totalspace) * 100;
+				return returns;
+			}
+		}
+
+		#endregion
 	}
 }
 /** @} */

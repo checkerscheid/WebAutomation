@@ -26,6 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WebAutomation.PlugIns;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -1096,11 +1097,12 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			int DPid;
 			for (int i = 0; i < param.Length; i++) {
 				if (Int32.TryParse(param[i], out DPid)) {
-					Datapoint TheItem = Datapoints.Get(DPid);
-					returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}}}",
-						param[i],
-						"\"" + TheItem.Value + "\"",
-						TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss"));
+					try {
+						Datapoint TheItem = Datapoints.Get(DPid);
+						returns += $"{{{param[i]}={{Value=\"{TheItem.Value}\"}}{{TimeStamp={TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}}}}}";
+					} catch(Exception ex) {
+						wpDebug.WriteError(ex, DPid.ToString());
+					}
 				} else {
 					eventLog.Write(EventLogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));

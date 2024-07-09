@@ -70,7 +70,7 @@ namespace WebAutomation.Helper {
 		}
 		private void RestServer_HandleClient(object client) {
 			TcpClient tcpClient = (TcpClient)client;
-			if(wpDebug.debugShelly)
+			if(wpDebug.debugREST)
 				wpDebug.Write(String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
 			try {
 				string s_message = "";
@@ -84,7 +84,9 @@ namespace WebAutomation.Helper {
 				bool cmdfound = false;
 				bool macok = false;
 				string mac;
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
+				if(wpDebug.debugREST)
+					wpDebug.Write(String.Format("Rest message: {0}", s_message));
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
 					if(m.Success) { // found Shelly State
 						mac = m.Groups[1].Value.ToLower();
 						bool state = m.Groups[2].Value == "true" ? true : false;
@@ -92,7 +94,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&state\=(open|close)&lux\=([0-9.]*)&temp\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&state\=(open|close)&lux\=([0-9.]*)&temp\=([0-9.]*)")) {
 					if(m.Success) { // found Shelly Window
 						mac = m.Groups[1].Value.ToLower();
 						bool state = m.Groups[2].Value == "open" ? true : false;
@@ -102,7 +104,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&door\=(open|close)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&door\=(open|close)")) {
 					if(m.Success) { // found Shelly Door
 						mac = m.Groups[1].Value.ToLower();
 						bool door = m.Groups[2].Value == "open" ? true : false;
@@ -110,7 +112,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)&temp\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)&temp\=([0-9.]*)")) {
 					if(m.Success) { // found Shelly hum & temp
 						mac = m.Groups[1].Value.ToLower();
 						string hum = m.Groups[2].Value;
@@ -119,15 +121,15 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
 					if(m.Success) { // found Shelly temp
 						mac = m.Groups[1].Value.ToLower();
-						string temp = m.Groups[3].Value;
+						string temp = m.Groups[2].Value;
 						macok = ShellyServer.SetTemp(mac, temp);
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
 					if(m.Success) { // found Shelly hum
 						mac = m.Groups[1].Value.ToLower();
 						string hum = m.Groups[2].Value;
@@ -135,7 +137,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"r\=([0-9ABCDEFabcdef]*)&a\=lp")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&a\=lp")) {
 					if(m.Success) { // found Shelly action: longpress
 						mac = m.Groups[1].Value.ToLower();
 						macok = ShellyServer.SetLongPress(mac);
@@ -143,7 +145,7 @@ namespace WebAutomation.Helper {
 					}
 				}
 				// D1 Mini
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&bm\=(true|false)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&bm\=(true|false)")) {
 					if(m.Success) { // found D1Mini State
 						mac = m.Groups[1].Value.ToLower();
 						bool state = m.Groups[2].Value == "true" ? true : false;
@@ -151,7 +153,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&temp\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini temp
 						mac = m.Groups[1].Value.ToLower();
 						string temp = m.Groups[3].Value;
@@ -159,7 +161,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&hum\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini hum
 						mac = m.Groups[1].Value.ToLower();
 						string hum = m.Groups[2].Value;
@@ -167,7 +169,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&ldr\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&ldr\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini ldr
 						mac = m.Groups[1].Value.ToLower();
 						string ldr = m.Groups[2].Value;
@@ -175,7 +177,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&light\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&light\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini light
 						mac = m.Groups[1].Value.ToLower();
 						string light = m.Groups[2].Value;
@@ -183,7 +185,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&relais\=(true|false)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&relais\=(true|false)")) {
 					if(m.Success) { // found D1Mini Relais
 						mac = m.Groups[1].Value.ToLower();
 						bool relais = m.Groups[2].Value == "true" ? true : false;
@@ -191,7 +193,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rain\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rain\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini rain
 						mac = m.Groups[1].Value.ToLower();
 						string rain = m.Groups[2].Value;
@@ -199,7 +201,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&moisture\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&moisture\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini moisture
 						mac = m.Groups[1].Value.ToLower();
 						string moisture = m.Groups[2].Value;
@@ -207,7 +209,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&vol\=([0-9.]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&vol\=([0-9.]*)")) {
 					if(m.Success) { // found D1Mini moisture
 						mac = m.Groups[1].Value.ToLower();
 						string volume = m.Groups[2].Value;
@@ -215,7 +217,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&window\=(true|false)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&window\=(true|false)")) {
 					if(m.Success) { // found D1Mini Window
 						mac = m.Groups[1].Value.ToLower();
 						bool window = m.Groups[2].Value == "true" ? true : false;
@@ -223,7 +225,7 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
-				foreach(Match m in Regex.Matches(s_message, @"m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();
 						wpDebug.Write($"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
@@ -232,6 +234,8 @@ namespace WebAutomation.Helper {
 				}
 				if(!cmdfound)
 					eventLog.Write("RestServer Message not found: {0}", s_message);
+				if(!macok)
+					eventLog.Write("RestServer MAC not found: {0}", s_message);
 				byte[] answer = encoder.GetBytes($"HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n{{\"Message\":\"{(cmdfound ? "S_OK" : "S_ERROR")}\",\"MAC\":\"{(macok ? "S_OK" : "S_ERROR")}\"}}");
 				clientStream.Write(answer, 0, answer.Length);
 				clientStream.Flush();

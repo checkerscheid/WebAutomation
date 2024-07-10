@@ -370,7 +370,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				}
 			} else {
 				wpDebug.Write($"setValue: topic not set");
-				returns = "{\"erg\":\"S_Warning\", \"msg\":\"topic is Empty\"}";
+				returns = "{\"erg\":\"S_WARNING\", \"msg\":\"topic is Empty\"}";
 			}
 			return returns;
 		}

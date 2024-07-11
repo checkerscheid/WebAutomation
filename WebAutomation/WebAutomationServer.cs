@@ -257,11 +257,12 @@ namespace WebAutomation {
 			wpMQTTClient = new MQTTClient();
 			wpOPCClient = new OPCClient();
 			Datapoints.Start();
-			ShellyServer.Start();
-			D1MiniServer.Start();
+			ShellyServer.Init();
+			D1MiniServer.Init();
 			wpRest = new RestServer();
 			await wpMQTTClient.Start();
-
+			ShellyServer.Start();
+			D1MiniServer.Start();
 			wpWatchdog = new Watchdog();
 			CalDav = new Calendars();
 			wpSun = new Sun();

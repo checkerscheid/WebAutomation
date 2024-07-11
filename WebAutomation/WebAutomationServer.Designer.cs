@@ -345,6 +345,7 @@ namespace WebAutomation {
 			if(wpRest != null)
 				wpRest.finished();
 			D1MiniServer.Stop();
+			ShellyServer.Stop();
 			if(wpMQTTClient != null)
 				wpMQTTClient.Stop();
 			Trends.Stop();

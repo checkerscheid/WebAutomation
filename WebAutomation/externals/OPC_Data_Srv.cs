@@ -17,7 +17,6 @@ using OPC.Common;
 using OPC.Data.Interface;
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using WebAutomation;
@@ -213,7 +212,7 @@ namespace OPC.Data {
 				} catch(Exception ex) {
 					eventLog.WriteError(ex);
 				} finally {
-					wpDebug.Write("OPC DATA SRV '{0}' - Marshal.ReleaseComObject", this._name);
+					wpDebug.Write("OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
 					int rc = Marshal.ReleaseComObject(shutdowncpoint);
 					shutdowncpoint = null;
 				}
@@ -225,10 +224,11 @@ namespace OPC.Data {
 			ifCommon = null;
 			ifServer = null;
 			if (!(OPCserverObj == null)) {
+				wpDebug.Write("OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
 				int rc = Marshal.ReleaseComObject(OPCserverObj);
 				OPCserverObj = null;
 			}
-			wpDebug.Write("OPC DATA SRV '{0}' - Disconnected", this._name);
+			wpDebug.Write("OPC Data Srv '{0}' - Disconnected", this._name);
 		}
 		/// <summary>
 		/// 
@@ -424,7 +424,7 @@ namespace OPC.Data {
 			}
 			while (hresult == HRESULTS.S_OK);
 
-			int rc = Marshal.ReleaseComObject(enumerator);
+			int rc = Marshal.FinalReleaseComObject(enumerator);
 			enumerator = null;
 			lst.TrimToSize();
 		}

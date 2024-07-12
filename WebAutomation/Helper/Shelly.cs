@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 125 2024-07-08 18:57:15Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 127 2024-07-12 02:02:39Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -384,8 +384,10 @@ namespace WebAutomation.Helper {
 				if(ShellyType.isGen2(_type) && _mqtt_active) {
 					t = new Timer(OnlineTogglerSendIntervall * 1000);
 					t.Elapsed += onlineCheck_Elapsed;
-					if(OnlineTogglerSendIntervall > 0)
+					if(OnlineTogglerSendIntervall > 0) {
 						t.Start();
+						sendOnlineQuestion();
+					}
 					toreset = new Timer(OnlineTogglerWait * 1000);
 					toreset.AutoReset = false;
 					toreset.Elapsed += toreset_Elapsed;

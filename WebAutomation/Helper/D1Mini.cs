@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 121                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 121 2024-07-05 02:16:00Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 127 2024-07-12 02:02:39Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -690,7 +690,10 @@ namespace WebAutomation.Helper {
 		public void Start() {
 			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
 			t.Elapsed += onlineCheck_Elapsed;
-			if(D1MiniServer.OnlineTogglerSendIntervall > 0) t.Start();
+			if(D1MiniServer.OnlineTogglerSendIntervall > 0) {
+				t.Start();
+				sendOnlineQuestion();
+			}
 			toreset = new Timer(D1MiniServer.OnlineTogglerWait * 1000);
 			toreset.AutoReset = false;
 			toreset.Elapsed += toreset_Elapsed;

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 126                                                     $ #
+//# Revision     : $Rev:: 129                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 126 2024-07-09 22:53:08Z                      $ #
+//# File-ID      : $Id:: Program.cs 129 2024-07-12 02:31:33Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -31,7 +31,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "126";
+		public const string subversion = "127";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>
@@ -63,14 +63,12 @@ namespace WebAutomation {
 			Mutex m = new Mutex(true, Application.ProductName + Ini.get("TCP", "Port"), out createdNew);
 			if(createdNew) {
 				try {
-#if DEBUG
 					tlog = new System.Timers.Timer();
 					tlog.AutoReset = true;
 					tlog.Elapsed += renewLog;
 					renewLog(null, null);
 					wpDebug.Write("START" +
 						"\r\n####################################################################\r\n\r\n");
-#endif
 					MainProg = new WebAutomationServer(args);
 					if (lgA == Ini.get("License", "key")) {
 						MainProg.LicenseAlarming = true;
@@ -82,10 +80,8 @@ namespace WebAutomation {
 						//PDebug.Write("Lizenz für großes Alarming gefunden");
 					}
 					Application.Run(MainProg);
-#if DEBUG
 					tlog.Stop();
 					tlog.Dispose();
-#endif
 				} finally {
 					m.ReleaseMutex();
 				}
@@ -96,13 +92,10 @@ namespace WebAutomation {
 					MessageBoxIcon.Warning);
 			}
 			wpDebug.Write("Programm finished");
-#if DEBUG
 			if(Debug.Listeners != null) Debug.Listeners.Remove(trtl);
-#endif
 		}
 
 		private static void renewLog(object sender, System.Timers.ElapsedEventArgs e) {
-#if DEBUG
 			Debug.Listeners.Remove(trtl);
 			if (!Directory.Exists("Log")) Directory.CreateDirectory("Log");
 			DateTime now = DateTime.Now;
@@ -115,8 +108,6 @@ namespace WebAutomation {
 
 			tlog.Interval = ts.TotalMilliseconds;
 			tlog.Enabled = true;
-
-#endif
 		}
 	}
 }

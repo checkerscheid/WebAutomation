@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 125 2024-07-08 18:57:15Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 127 2024-07-12 02:02:39Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -18,6 +18,7 @@ using ShellyDevice;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -26,21 +27,48 @@ namespace WebAutomation.Helper {
 		/// <summary></summary>
 		private static Logger eventLog;
 
-		private static Dictionary<string, ShellyDeviceHelper> Shellys;
-		private static List<string> _ForceMqttUpdateAvailable;
-		public static List<string> ForceMqttUpdateAvailable { get { return _ForceMqttUpdateAvailable; } }
+		private static Dictionary<string, ShellyDeviceHelper> _shellys;
+		private static Dictionary<string, ShellyDeviceHelper> _ForceMqttUpdateAvailable;
+		public static Dictionary<string, ShellyDeviceHelper> ForceMqttUpdateAvailable { get { return _ForceMqttUpdateAvailable; } }
 
+		private static List<string> Subscribtions = new List<string>();
+		private static Dictionary<string, string> _nameToMac = new Dictionary<string, string>();
+		// set MQTT Online to 0 - Shelly set it back. In Seconds
+		private static int _onlineTogglerSendIntervall = 30;
+		public static int OnlineTogglerSendIntervall {
+			set {
+				_onlineTogglerSendIntervall = value;
+				foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in ForceMqttUpdateAvailable) {
+					kvp.Value.SetOnlineTogglerSendIntervall();
+				}
+			}
+			get {
+				return _onlineTogglerSendIntervall;
+			}
+		}
+		private static int _onlineTogglerWait = 2;
+		public static int OnlineTogglerWait {
+			set {
+				_onlineTogglerWait = value;
+				foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in ForceMqttUpdateAvailable) {
+					kvp.Value.SetOnlineTogglerWait();
+				}
+			}
+			get {
+				return _onlineTogglerWait;
+			}
+		}
 		public static event EventHandler<valueChangedEventArgs> valueChanged;
 		public class valueChangedEventArgs: EventArgs {
 			public int idDatapoint { get; set; }
 			public string name { get; set; }
 			public string value { get; set; }
 		}
-		public static void Start() {
+		public static void Init() {
 			wpDebug.Write("Shelly Server Init");
 			eventLog = new Logger(wpEventLog.PlugInShelly);
-			Shellys = new Dictionary<string, ShellyDeviceHelper>();
-			_ForceMqttUpdateAvailable = new List<string>();
+			_shellys = new Dictionary<string, ShellyDeviceHelper>();
+			_ForceMqttUpdateAvailable = new Dictionary<string, ShellyDeviceHelper>();
 			using(SQL SQL = new SQL("Select Shellys")) {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
 					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_shellyroom], [s].[name], [s].[type],
@@ -66,31 +94,46 @@ namespace WebAutomation.Helper {
 						idmqtt = Query1[ishelly][8];
 						mqttprefix = Query1[ishelly][9];
 						mqttwriteable = Query1[ishelly][10] == "True";
-						Shellys.Add(shmac,
-							new ShellyDeviceHelper(id_shelly, ip, shmac, idroom, name, type,
-								mqttactive, mqttserver, idmqtt, mqttprefix, mqttwriteable));
+						ShellyDeviceHelper sdh = new ShellyDeviceHelper(id_shelly, ip, shmac, idroom, name, type,
+								mqttactive, mqttserver, idmqtt, mqttprefix, mqttwriteable);
+						if(!String.IsNullOrEmpty(Query1[ishelly][11])) sdh.id_onoff = Int32.Parse(Query1[ishelly][11]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][12])) sdh.id_temp = Int32.Parse(Query1[ishelly][12]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][13])) sdh.id_hum = Int32.Parse(Query1[ishelly][13]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][14])) sdh.id_ldr = Int32.Parse(Query1[ishelly][14]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][15])) sdh.id_window = Int32.Parse(Query1[ishelly][15]);
 
-						if(!String.IsNullOrEmpty(Query1[ishelly][11])) Shellys[shmac].id_onoff = Int32.Parse(Query1[ishelly][11]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][12])) Shellys[shmac].id_temp = Int32.Parse(Query1[ishelly][12]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][13])) Shellys[shmac].id_hum = Int32.Parse(Query1[ishelly][13]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][14])) Shellys[shmac].id_ldr = Int32.Parse(Query1[ishelly][14]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][15])) Shellys[shmac].id_window = Int32.Parse(Query1[ishelly][15]);
+						if(!String.IsNullOrEmpty(Query1[ishelly][16])) sdh.LastContact = DateTime.Parse(Query1[ishelly][16]);
 
-						if(!String.IsNullOrEmpty(Query1[ishelly][16])) Shellys[shmac].LastContact = DateTime.Parse(Query1[ishelly][16]);
-
-						if(ShellyType.isGen2(type))
-							_ForceMqttUpdateAvailable.Add(idmqtt);
-						Shellys[shmac].getStatus(true);
-						Shellys[shmac].getMqttStatus();
+						sdh.getStatus(true);
+						sdh.getMqttStatus();
+						_shellys.Add(shmac, sdh);
+						if(ShellyType.isGen2(type) && sdh.mqtt_active) {
+							_ForceMqttUpdateAvailable.Add(shmac, sdh);
+							_nameToMac.Add(sdh.mqtt_id, shmac);
+							addSubscribtions(sdh.getSubscribtions());
+						}
 					} catch(Exception ex) {
 						eventLog.WriteError(ex);
 					}
 				}
 			}
+			Program.MainProg.wpMQTTClient.shellyChanged += wpMQTTClient_shellyChanged;
 			wpDebug.Write("Shelly Server gestartet");
 		}
+		public static void Start() {
+			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
+				kvp.Value.Start();
+			}
+			OnlineTogglerSendIntervall = Ini.getInt("Shelly", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = Ini.getInt("Shelly", "OnlineTogglerWait");
+		}
+		public static void Stop() {
+			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
+				kvp.Value.Stop();
+			}
+		}
 		public static string getAllStatus() {
-			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in Shellys) {
+			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
 				kvp.Value.getStatus(true);
 			}
 			return "S_OK";
@@ -105,25 +148,25 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetState(string mac, bool state) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_onoff, Shellys[mac].name, state ? "True" : "False");
-				string DebugNewValue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", Shellys[mac].name, state);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_onoff, _shellys[mac].name, state ? "True" : "False");
+				string DebugNewValue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", _shellys[mac].name, state);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}\r\n{Shellys}");
+				eventLog.Write($"Shelly nicht gefunden: {mac}\r\n{_shellys}");
 			}
 			return returns;
 		}
 		public static bool SetWindow(string mac, bool window, string temp, string ldr) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_window, Shellys[mac].name, window ? "True" : "False");
-				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
-				setValue(Shellys[mac].id_ldr, Shellys[mac].name, ldr.Replace(".", ","));
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_window, _shellys[mac].name, window ? "True" : "False");
+				setValue(_shellys[mac].id_temp, _shellys[mac].name, temp.Replace(".", ","));
+				setValue(_shellys[mac].id_ldr, _shellys[mac].name, ldr.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", window ? "True" : "False");
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
@@ -138,9 +181,9 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetWindow(string mac, bool window) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_window, Shellys[mac].name, window ? "True" : "False");
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_window, _shellys[mac].name, window ? "True" : "False");
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Window: {0}, ", window ? "True" : "False");
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
@@ -153,10 +196,10 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetHumTemp(string mac, string hum, string temp) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_hum, Shellys[mac].name, hum.Replace(".", ","));
-				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_hum, _shellys[mac].name, hum.Replace(".", ","));
+				setValue(_shellys[mac].id_temp, _shellys[mac].name, temp.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugShelly)
@@ -170,9 +213,9 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetTemp(string mac, string temp) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_temp, Shellys[mac].name, temp.Replace(".", ","));
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_temp, _shellys[mac].name, temp.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
@@ -185,9 +228,9 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetHum(string mac, string hum) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				setValue(Shellys[mac].id_hum, Shellys[mac].name, hum.Replace(".", ","));
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				setValue(_shellys[mac].id_hum, _shellys[mac].name, hum.Replace(".", ","));
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
@@ -200,9 +243,9 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetLongPress(string mac) {
 			bool returns = false;
-			if(Shellys.ContainsKey(mac)) {
-				Shellys[mac].setLongPress();
-				string DebugNewValue = String.Format("Raum: {0}", Shellys[mac].name);
+			if(_shellys.ContainsKey(mac)) {
+				_shellys[mac].setLongPress();
+				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				if(wpDebug.debugShelly)
 					eventLog.Write(DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
@@ -212,7 +255,29 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		private class ShellyDeviceHelper {
+
+		private static void wpMQTTClient_shellyChanged(object sender, MQTTClient.valueChangedEventArgs e) {
+			int pos = e.topic.IndexOf("/");
+			string name = e.topic.Substring(0, pos);
+			string setting = e.topic.Substring(pos + 1);
+			if(_nameToMac.ContainsKey(name)) {
+				string mac = _nameToMac[name];
+				if(_shellys.ContainsKey(mac)) {
+					if(setting == "info/Online") _shellys[mac].Online = e.value == "0" ? false : true;
+				} else {
+					wpDebug.Write($"Shelly not init? '{e.topic}', '{e.value}'");
+				}
+			} else {
+				wpDebug.Write($"Shelly MQTT not active? '{e.topic}', '{e.value}'");
+			}
+		}
+		public static void addSubscribtions(List<string> topic) {
+			Subscribtions.AddRange(topic);
+		}
+		public static List<string> getSubscribtions() {
+			return Subscribtions;
+		}
+		public class ShellyDeviceHelper {
 			private int _id;
 			public int id {
 				get { return _id; }
@@ -260,8 +325,8 @@ namespace WebAutomation.Helper {
 				}
 			}
 
-			private bool _mqtt_enable;
-			public bool mqtt_enable { get => _mqtt_enable; }
+			private bool _mqtt_active;
+			public bool mqtt_active { get => _mqtt_active; }
 			private string _mqtt_server;
 			public string mqtt_server { get => _mqtt_server; }
 			private string _mqtt_id;
@@ -276,9 +341,27 @@ namespace WebAutomation.Helper {
 			}
 			private Timer _doCheckStatus;
 			private long _doCheckStatusIntervall = 30; // min
+			public bool Online {
+				set {
+					if(value) {
+						if(wpDebug.debugShelly)
+							wpDebug.Write($"Shelly `recived Online`: {_name}/info/Online, 1");
+						setOnlineError(false);
+						toreset.Stop();
+					} else {
+						if(wpDebug.debugShelly)
+							wpDebug.Write($"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
+						toreset.Start();
+					}
+				}
+			}
+			private Timer t;
+			private Timer toreset;
+			private readonly List<string> subscribeList = new List<string>() {
+				"info/Online" };
 
 			public ShellyDeviceHelper(int id, string ip, string mac, int id_room, string name, string type,
-				bool mqtt_enable, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable) {
+				bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable) {
 				_id = id;
 				IPAddress ipaddress;
 				if(IPAddress.TryParse(ip, out ipaddress)) {
@@ -288,7 +371,7 @@ namespace WebAutomation.Helper {
 				_room = id_room;
 				_name = name;
 				_type = type;
-				_mqtt_enable = mqtt_enable;
+				_mqtt_active = mqtt_active;
 				_mqtt_server = mqtt_server;
 				_mqtt_id = mqtt_id;
 				_mqtt_prefix = mqtt_prefix;
@@ -296,6 +379,75 @@ namespace WebAutomation.Helper {
 				_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
 				_doCheckStatus.AutoReset = true;
 				_doCheckStatus.Elapsed += _doCheckStatus_Elapsed;
+			}
+			public void Start() {
+				if(ShellyType.isGen2(_type) && _mqtt_active) {
+					t = new Timer(OnlineTogglerSendIntervall * 1000);
+					t.Elapsed += onlineCheck_Elapsed;
+					if(OnlineTogglerSendIntervall > 0) {
+						t.Start();
+						sendOnlineQuestion();
+					}
+					toreset = new Timer(OnlineTogglerWait * 1000);
+					toreset.AutoReset = false;
+					toreset.Elapsed += toreset_Elapsed;
+				}
+			}
+			public void Stop() {
+				if(ShellyType.isGen2(_type) && _mqtt_active) {
+					t.Stop();
+					toreset.Stop();
+					if(wpDebug.debugShelly)
+						wpDebug.Write($"Shelly Device stopped `{_name} sendOnlineQuestion`");
+				}
+			}
+
+			public void SetOnlineTogglerSendIntervall() {
+				t.Interval = OnlineTogglerSendIntervall * 1000;
+				t.Stop();
+				if(OnlineTogglerSendIntervall > 0) {
+					t.Start();
+				}
+			}
+			public void SetOnlineTogglerWait() {
+				toreset.Interval = OnlineTogglerWait * 1000;
+				toreset.Stop();
+			}
+			private void onlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
+				sendOnlineQuestion();
+			}
+			private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
+				if(wpDebug.debugShelly)
+					wpDebug.Write($"Shelly `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+				//last chance
+				Ping _ping = new Ping();
+				if(_ping.Send(_ip.ToString(), 750).Status != IPStatus.Success) {
+					setOnlineError();
+				} else {
+					setOnlineError(false);
+					if(wpDebug.debugShelly)
+						wpDebug.Write($"Shelly OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
+				}
+			}
+			public List<string> getSubscribtions() {
+				List<string> returns = new List<string>();
+				foreach(string topic in subscribeList) {
+					if(_mqtt_active) returns.Add(_mqtt_id + "/" + topic);
+				}
+				return returns;
+			}
+			private void sendOnlineQuestion() {
+				if(wpDebug.debugShelly)
+					wpDebug.Write($"Shelly `sendOnlineQuestion`: {_mqtt_id}/info/Online, 0");
+				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
+			}
+			private void setOnlineError(bool e) {
+				if(wpDebug.debugShelly)
+					wpDebug.Write($"Shelly `setOnlineError`: {_mqtt_id}/ERROR/Online, {(e ? "1" : "0")}");
+				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/ERROR/Online", e ? "1" : "0");
+			}
+			private void setOnlineError() {
+				setOnlineError(true);
 			}
 
 			private void _doCheckStatus_Elapsed(object sender, ElapsedEventArgs e) {
@@ -405,10 +557,10 @@ namespace WebAutomation.Helper {
 										res_mqtt_writeable = true;
 									}
 									string updatesql = "";
-									if(_mqtt_enable != res_mqtt_enable) {
-										_mqtt_enable = res_mqtt_enable;
+									if(_mqtt_active != res_mqtt_enable) {
+										_mqtt_active = res_mqtt_enable;
 										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
-										updatesql += $"[mqtt_active] = {(_mqtt_enable ? "1" : "0")}";
+										updatesql += $"[mqtt_active] = {(_mqtt_active ? "1" : "0")}";
 									}
 									if(_mqtt_server != res_mqtt_server) {
 										_mqtt_server = res_mqtt_server;
@@ -590,9 +742,7 @@ namespace ShellyDevice {
 		public const string RGBW = "SHRGBW";
 		public const string RGBW2 = "SHRGBW2";
 
-		public const string D1Mini = "D1Mini";
-
-		private static List<string> bat = [DOOR, HT, HT_PLUS, HT3, D1Mini];
+		private static List<string> bat = [DOOR, HT, HT_PLUS, HT3];
 		private static List<string> relay = [SW, PM, PM_PLUS, PM_MINI, PM_MINI_G3, PLG, EM];
 		private static List<string> light = [DIMMER, DIMMER_2, RGBW, RGBW2];
 		private static List<string> gen1 = [SW, PM, PLG, EM, DIMMER, DIMMER_2, RGBW, RGBW2];

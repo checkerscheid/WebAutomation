@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 125 2024-07-08 18:57:15Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 127 2024-07-12 02:02:39Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -257,11 +257,12 @@ namespace WebAutomation {
 			wpMQTTClient = new MQTTClient();
 			wpOPCClient = new OPCClient();
 			Datapoints.Start();
-			ShellyServer.Start();
-			D1MiniServer.Start();
+			ShellyServer.Init();
+			D1MiniServer.Init();
 			wpRest = new RestServer();
 			await wpMQTTClient.Start();
-
+			ShellyServer.Start();
+			D1MiniServer.Start();
 			wpWatchdog = new Watchdog();
 			CalDav = new Calendars();
 			wpSun = new Sun();

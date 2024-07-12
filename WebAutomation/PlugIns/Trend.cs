@@ -98,7 +98,9 @@ namespace WebAutomation.PlugIns {
 			Init(idtrend, iddp, trendname, intervall, maxentries, maxdays, active);
 		}
 		public void Stop() {
-			onChangeMinValue.Stop();
+			if(onChangeMinValue != null)
+				onChangeMinValue.Stop();
+			onChangeMinValue = null;
 			if(wpDebug.debugTrend)
 				wpDebug.Write($"Trend Stop {_trendname}");
 		}
@@ -220,7 +222,8 @@ namespace WebAutomation.PlugIns {
 		}
 
 		public static void Stop() {
-			_threadCleanDB.Stop();
+			if(_threadCleanDB != null)
+				_threadCleanDB.Stop();
 			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}

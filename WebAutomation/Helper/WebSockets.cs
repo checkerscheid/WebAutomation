@@ -53,7 +53,7 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public void finished() {
-			if(ws.IsListening)
+			if(ws != null && ws.IsListening)
 				ws.Stop();
 		}
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {

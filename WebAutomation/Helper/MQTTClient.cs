@@ -179,7 +179,8 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public async void Stop() {
 			wpDebug.Write("wpMQTTClient stop");
-			if(_mqttClient.IsConnected) {
+			if(_mqttClient != null && _mqttClient.IsConnected) {
+				_mqttClient.ApplicationMessageReceivedAsync -= MqttClient_ApplicationMessageReceivedAsync;
 				foreach(string unsubscribe in subscribed) {
 					try {
 						await _mqttClient.UnsubscribeAsync(unsubscribe);
@@ -197,6 +198,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				} catch(Exception ex) {
 					wpDebug.WriteError(ex, "wpMQTTClient nicht gestoppt");
 				}
+				_mqttClient = null;
 			} else {
 				wpDebug.Write("MQTT Server schon gestoppt??");
 			}

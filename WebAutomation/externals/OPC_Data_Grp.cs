@@ -20,9 +20,8 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
-using WebAutomation.Helper;
 using WebAutomation;
-using System.Diagnostics;
+using WebAutomation.Helper;
 /**
 * @addtogroup externals
 * @{
@@ -414,7 +413,7 @@ namespace OPC.Data {
 		public void Remove(bool bForce) {
 			string myname = this.Name;
 			//if(wpDebug.debugOPC)
-			//	wpDebug.Write("OPC DATA GRP '{0}' - Beginn Remove", myname);
+			//	wpDebug.Write("OPC Data Grp '{0}' - Beginn Remove", myname);
 			EventLog = null;
 			if (!(_countItem == null)) _countItem.Clear();
 			_countItem = null;
@@ -423,8 +422,8 @@ namespace OPC.Data {
 			if(!(ifAsync == null)) SetEnable(false);
 			if(!(ifMgt == null)) Active = false;
 			//if(wpDebug.debugOPC)
-			//	wpDebug.Write("OPC DATA GRP '{0}' - Unadvice Callbackcookie", myname);
-			if (!(callbackcpoint == null)) {
+			//	wpDebug.Write("OPC Data Grp '{0}' - Unadvice Callbackcookie", myname);
+			if(!(callbackcpoint == null)) {
 				try {
 					if (callbackcookie != 0) {
 						callbackcpoint.Unadvise(callbackcookie);
@@ -433,7 +432,8 @@ namespace OPC.Data {
 				} catch(Exception ex) {
 					EventLog.WriteError(ex, myname);
 				} finally {
-					int rc = Marshal.ReleaseComObject(callbackcpoint);
+					wpDebug.Write("OPC Data Grp '{0}' - Marshal.ReleaseComObject shutdowncpoint", myname);
+					int rc = Marshal.FinalReleaseComObject(callbackcpoint);
 					callbackcpoint = null;
 				}
 			}
@@ -444,9 +444,10 @@ namespace OPC.Data {
 			ifAsync = null;
 
 			//if(wpDebug.debugOPC)
-			//	wpDebug.Write("OPC DATA GRP '{0}' - ReleaseComObject", myname);
-			if (!(ifMgt == null)) {
-				//int rc = Marshal.ReleaseComObject(ifMgt);
+			//	wpDebug.Write("OPC Data Grp '{0}' - ReleaseComObject", myname);
+			if(!(ifMgt == null)) {
+				wpDebug.Write("OPC Data Grp '{0}' - Marshal.ReleaseComObject ifMgt", myname);
+				int rc = Marshal.FinalReleaseComObject(ifMgt);
 				ifMgt = null;
 			}
 			//if(wpDebug.debugOPC)

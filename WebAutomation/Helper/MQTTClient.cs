@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 120 2024-07-04 15:08:20Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 127 2024-07-12 02:02:39Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using MQTTnet;
@@ -29,6 +29,7 @@ namespace WebAutomation.Helper {
 	public class MQTTClient {
 		public event EventHandler<valueChangedEventArgs> valueChanged;
 		public event EventHandler<valueChangedEventArgs> d1MiniChanged;
+		public event EventHandler<valueChangedEventArgs> shellyChanged;
 		public class valueChangedEventArgs: EventArgs {
 			public int idDatapoint { get; set; }
 			public string topic { get; set; }
@@ -147,15 +148,8 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					}
 				}
 			}
-			foreach(string d1m in D1MiniServer.getSubscribtions()) {
-				if(!subscribed.Contains(d1m)) {
-					await _mqttClient.SubscribeAsync(d1m);
-					subscribed.Add(d1m);
-					if(wpDebug.debugMQTT) {
-						wpDebug.Write($"Add D1Mini MQTT Topic: {d1m}");
-					}
-				}
-			}
+			registerNewD1MiniDatapoints();
+			registerNewShellyDatapoints();
 			await _mqttClient.SubscribeAsync(ForceUpdate);
 			publishSettings();
 			forceMqttUpdate();
@@ -168,6 +162,17 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					subscribed.Add(d1m);
 					if(wpDebug.debugMQTT) {
 						wpDebug.Write($"Add D1Mini MQTT Topic: {d1m}");
+					}
+				}
+			}
+		}
+		public async void registerNewShellyDatapoints() {
+			foreach(string shelly in ShellyServer.getSubscribtions()) {
+				if(!subscribed.Contains(shelly)) {
+					await _mqttClient.SubscribeAsync(shelly);
+					subscribed.Add(shelly);
+					if(wpDebug.debugMQTT) {
+						wpDebug.Write($"Add Shelly MQTT Topic: {shelly}");
 					}
 				}
 			}
@@ -301,6 +306,12 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					d1MiniChanged.Invoke(this, vcea);
 				}
 			}
+			if(ShellyServer.getSubscribtions().Contains(e.ApplicationMessage.Topic)) {
+				vcea.value = v;
+				if(shellyChanged != null) {
+					shellyChanged.Invoke(this, vcea);
+				}
+			}
 			vcea = null;
 			return Task.CompletedTask;
 		}
@@ -372,7 +383,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				}
 			} else {
 				wpDebug.Write($"setValue: topic not set");
-				returns = "{\"erg\":\"S_Warning\", \"msg\":\"topic is Empty\"}";
+				returns = "{\"erg\":\"S_WARNING\", \"msg\":\"topic is Empty\"}";
 			}
 			return returns;
 		}
@@ -400,13 +411,13 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		public bool shellyMqttUpdate() {
 			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
-			foreach(string mqtt_id in ShellyServer.ForceMqttUpdateAvailable) {
-				msg.Topic = $"{mqtt_id}/ForceMqttUpdate";
+			foreach(KeyValuePair<string, ShellyServer.ShellyDeviceHelper> kvp in ShellyServer.ForceMqttUpdateAvailable) {
+				msg.Topic = $"{kvp.Value.mqtt_id}/ForceMqttUpdate";
 				try {
 					msg.PayloadSegment = getFromString("1");
 					_mqttClient.PublishAsync(msg);
 					if(wpDebug.debugMQTT)
-						wpDebug.Write($"ForceMqttUpdate: {mqtt_id}");
+						wpDebug.Write($"ForceMqttUpdate: {kvp.Value.mqtt_id}");
 				} catch(Exception ex) {
 					if(wpDebug.debugMQTT)
 						wpDebug.WriteError(ex, msg.Topic);

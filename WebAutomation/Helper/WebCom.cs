@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 123                                                     $ #
+//# Revision     : $Rev:: 126                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 123 2024-07-07 23:16:35Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 126 2024-07-09 22:53:08Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -1097,11 +1096,12 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			int DPid;
 			for (int i = 0; i < param.Length; i++) {
 				if (Int32.TryParse(param[i], out DPid)) {
-					Datapoint TheItem = Datapoints.Get(DPid);
-					returns += String.Format(@"{{{0}={{Value={1}}}{{TimeStamp={2}}}}}",
-						param[i],
-						"\"" + TheItem.Value + "\"",
-						TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss"));
+					try {
+						Datapoint TheItem = Datapoints.Get(DPid);
+						returns += $"{{{param[i]}={{Value=\"{TheItem.Value}\"}}{{TimeStamp={TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}}}}}";
+					} catch(Exception ex) {
+						wpDebug.WriteError(ex, DPid.ToString());
+					}
 				} else {
 					eventLog.Write(EventLogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 126                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: EventLog.cs 120 2024-07-04 15:08:20Z                     $ #
+//# File-ID      : $Id:: EventLog.cs 126 2024-07-09 22:53:08Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -141,6 +141,7 @@ namespace WebAutomation.Helper {
 		public static bool debugCalendar = false;
 		public static bool debugOpcRouter = false;
 		public static bool debugWebSockets = false;
+		public static bool debugREST = false;
 		public static bool debugShelly = false;
 		public static bool debugD1Mini = false;
 		public static bool debugMQTT = false;
@@ -162,6 +163,7 @@ namespace WebAutomation.Helper {
 			returns += $"\"debugCalendar\":{(debugCalendar ? "true" : "false")},";
 			returns += $"\"debugOpcRouter\":{(debugOpcRouter ? "true" : "false")},";
 			returns += $"\"debugWebSockets\":{(debugWebSockets ? "true" : "false")},";
+			returns += $"\"debugREST\":{(debugREST ? "true" : "false")}";
 			returns += $"\"debugShelly\":{(debugShelly ? "true" : "false")},";
 			returns += $"\"debugD1Mini\":{(debugD1Mini ? "true" : "false")},";
 			returns += $"\"debugMQTT\":{(debugMQTT ? "true" : "false")}";
@@ -231,6 +233,11 @@ namespace WebAutomation.Helper {
 					Write($"success: Setting {debugArea} changed ({debugWebSockets})");
 					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugWebSockets})\"";
 					break;
+				case "debugREST":
+					debugREST = !debugREST;
+					Write($"success: Setting {debugArea} changed ({debugREST})");
+					returns += $"\"erg\":\"S_OK\",\"msg\":\"Setting {debugArea} changed ({debugREST})\"";
+					break;
 				case "debugShelly":
 					debugShelly = !debugShelly;
 					Write($"success: Setting {debugArea} changed ({debugShelly})");
@@ -292,6 +299,10 @@ namespace WebAutomation.Helper {
 			if(Arrays.inArray("debugWebSocket".ToLower(), args)) {
 				debugWebSockets = true;
 				Write("{0} Server im 'Debug WebSockets Modus' gestartet", Application.ProductName);
+			}
+			if(Arrays.inArray("debugREST".ToLower(), args)) {
+				debugREST = true;
+				Write("{0} Server im 'Debug REST Modus' gestartet", Application.ProductName);
 			}
 			if(Arrays.inArray("debugShelly".ToLower(), args)) {
 				debugShelly = true;

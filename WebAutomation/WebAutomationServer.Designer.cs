@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 118                                                     $ #
+//# Revision     : $Rev:: 127                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 118 2024-07-04 14:20:41Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 127 2024-07-12 02:02:39Z#$ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -345,6 +345,7 @@ namespace WebAutomation {
 			if(wpRest != null)
 				wpRest.finished();
 			D1MiniServer.Stop();
+			ShellyServer.Stop();
 			if(wpMQTTClient != null)
 				wpMQTTClient.Stop();
 			Trends.Stop();

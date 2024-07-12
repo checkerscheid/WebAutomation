@@ -77,7 +77,8 @@ namespace WebAutomation.Helper {
 				WebComListener.Stop();
 			WebComListener = null;
 			isFinished = true;
-			WebComServer.Join(1500);
+			if(WebComServer != null)
+				WebComServer.Join(1500);
 			eventLog.Write(String.Format("{0} gestoppt", WebComServer.Name));
 		}
 		/// <summary>

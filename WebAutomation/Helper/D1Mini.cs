@@ -688,8 +688,12 @@ namespace WebAutomation.Helper {
 		}
 
 		public void Stop() {
-			t.Stop();
-			toreset.Stop();
+			if(t != null)
+				t.Stop();
+			t = null;
+			if(toreset != null)
+				toreset.Stop();
+			toreset = null;
 			if(wpDebug.debugD1Mini)
 				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
 		}

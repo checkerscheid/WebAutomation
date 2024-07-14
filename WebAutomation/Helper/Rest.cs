@@ -53,7 +53,7 @@ namespace WebAutomation.Helper {
 		private void RestServer_Listen() {
 			try {
 				RestServerListener.Start();
-				eventLog.Write("Shelly Server started");
+				eventLog.Write("Rest Server started");
 				do {
 					if(!RestServerListener.Pending()) {
 						Thread.Sleep(threadTimeOut);

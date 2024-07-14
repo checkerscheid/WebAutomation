@@ -225,6 +225,14 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&analogout\=([0-9]*)")) {
+					if(m.Success) { // found D1Mini AnalogOut
+						mac = m.Groups[1].Value.ToLower();
+						string analogout = m.Groups[2].Value;
+						macok = D1MiniServer.SetAnalogOut(mac, analogout);
+						cmdfound = true;
+					}
+				}
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();

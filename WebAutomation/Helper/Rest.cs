@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 126                                                     $ #
+//# Revision     : $Rev:: 131                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 126 2024-07-09 22:53:08Z                         $ #
+//# File-ID      : $Id:: Rest.cs 131 2024-07-23 22:05:47Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -222,6 +222,14 @@ namespace WebAutomation.Helper {
 						mac = m.Groups[1].Value.ToLower();
 						bool window = m.Groups[2].Value == "true" ? true : false;
 						macok = D1MiniServer.SetWindow(mac, window);
+						cmdfound = true;
+					}
+				}
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&analogout\=([0-9]*)")) {
+					if(m.Success) { // found D1Mini AnalogOut
+						mac = m.Groups[1].Value.ToLower();
+						string analogout = m.Groups[2].Value;
+						macok = D1MiniServer.SetAnalogOut(mac, analogout);
 						cmdfound = true;
 					}
 				}

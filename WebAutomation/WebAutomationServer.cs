@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 127                                                     $ #
+//# Revision     : $Rev:: 131                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 127 2024-07-12 02:02:39Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 131 2024-07-23 22:05:47Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -232,11 +232,13 @@ namespace WebAutomation {
 			checkTable("email", "sms", "bit", false, "0");
 			checkTable("email", "phone2", "varchar(150)");
 			checkTable("user", "startpage", "varchar(100)");
+			checkTable("rest", "id_analogout", "int");
 
 			checkTable("webpages", "id_parent_webpage", "int");
 			checkTable("webpages", "position", "int");
 			checkTable("webpages", "id_src", "varchar(200)");
 			checkTable("webpages", "inwork", "bit", false, "0");
+
 
 			using(SQL SQL = new SQL("startup")) {
 				string[][] Tables = SQL.wpQuery("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_NAME] = 'emailhistoric'");

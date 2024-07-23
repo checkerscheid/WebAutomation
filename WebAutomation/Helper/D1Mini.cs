@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 130                                                     $ #
+//# Revision     : $Rev:: 131                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 130 2024-07-12 13:17:54Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 131 2024-07-23 22:05:47Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -77,7 +77,7 @@ namespace WebAutomation.Helper {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
 						[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac],
 						[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
-						[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window]
+						[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window], [r].[id_analogout]
 					FROM [d1mini] [d]
 					LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]
 					WHERE [active] = 1");
@@ -106,6 +106,7 @@ namespace WebAutomation.Helper {
 					if(!String.IsNullOrEmpty(Query1[i][12])) d1md.id_moisture = Int32.Parse(Query1[i][12]);
 					if(!String.IsNullOrEmpty(Query1[i][13])) d1md.id_vol = Int32.Parse(Query1[i][13]);
 					if(!String.IsNullOrEmpty(Query1[i][14])) d1md.id_window = Int32.Parse(Query1[i][14]);
+					if(!String.IsNullOrEmpty(Query1[i][15])) d1md.id_analogout = Int32.Parse(Query1[i][15]);
 
 					addSubscribtions(d1md.getSubscribtions());
 					//d1md.sendCmd("ForceMqttUpdate");
@@ -558,6 +559,22 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
+		public static bool SetAnalogOut(string mac, string analogout) {
+			bool returns = false;
+			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
+				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+				setValue(d1m.id_analogout, d1m.Name, analogout);
+				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+				DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
+				if(wpDebug.debugD1Mini)
+					eventLog.Write(DebugNewValue);
+				Program.MainProg.lastchange = DebugNewValue;
+				returns = true;
+			} else {
+				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
 	}
 	public class D1MiniDevice {
 		private string _name;
@@ -625,6 +642,11 @@ namespace WebAutomation.Helper {
 		public int id_window {
 			get { return _id_window; }
 			set { _id_window = value; }
+		}
+		private int _id_analogout;
+		public int id_analogout {
+			get { return _id_analogout; }
+			set { _id_analogout = value; }
 		}
 		public bool Online {
 			set {

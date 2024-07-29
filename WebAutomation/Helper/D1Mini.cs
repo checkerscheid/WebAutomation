@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 131                                                     $ #
+//# Revision     : $Rev:: 132                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 131 2024-07-23 22:05:47Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 132 2024-07-29 03:35:42Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -74,42 +74,57 @@ namespace WebAutomation.Helper {
 			D1Minis = new Dictionary<string, D1MiniDevice>();
 			D1MinisMac = new Dictionary<string, string>();
 			using(SQL SQL = new SQL("Select D1Minis")) {
-				string[][] Query1 = SQL.wpQuery(@"SELECT
-						[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac],
-						[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
-						[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window], [r].[id_analogout]
-					FROM [d1mini] [d]
-					LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]
-					WHERE [active] = 1");
-				string name, description, mac;
-				int id_d1mini;
-				IPAddress ip;
-				for(int i = 0; i < Query1.Length; i++) {
-					Int32.TryParse(Query1[i][0], out id_d1mini);
-					name = Query1[i][1];
-					description = Query1[i][2];
-					IPAddress.TryParse(Query1[i][3], out ip);
-					mac = Query1[i][4];
-					D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
-					d1md.readDeviceDescription = description;
-					D1Minis.Add(name, d1md);
-					D1MinisMac.Add(mac, name);
+				try {
+					string[][] Query1 = SQL.wpQuery(@"SELECT
+							[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac],
+							[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
+							[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window], [r].[id_analogout]
+						FROM [d1mini] [d]
+						LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]
+						WHERE [active] = 1");
+					string name, description, mac;
+					int id_d1mini;
+					IPAddress ip;
+					for(int i = 0; i < Query1.Length; i++) {
+						Int32.TryParse(Query1[i][0], out id_d1mini);
+						name = Query1[i][1];
+						description = Query1[i][2];
+						IPAddress.TryParse(Query1[i][3], out ip);
+						mac = Query1[i][4];
+						D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
+						d1md.readDeviceDescription = description;
+						D1Minis.Add(name, d1md);
+						D1MinisMac.Add(mac, name);
 
-					if(!String.IsNullOrEmpty(Query1[i][5])) d1md.id_onoff = Int32.Parse(Query1[i][5]);
-					if(!String.IsNullOrEmpty(Query1[i][6])) d1md.id_temp = Int32.Parse(Query1[i][6]);
-					if(!String.IsNullOrEmpty(Query1[i][7])) d1md.id_hum = Int32.Parse(Query1[i][7]);
-					if(!String.IsNullOrEmpty(Query1[i][8])) d1md.id_ldr = Int32.Parse(Query1[i][8]);
-					if(!String.IsNullOrEmpty(Query1[i][9])) d1md.id_light = Int32.Parse(Query1[i][9]);
+						if(!String.IsNullOrEmpty(Query1[i][5]))
+							d1md.id_onoff = Int32.Parse(Query1[i][5]);
+						if(!String.IsNullOrEmpty(Query1[i][6]))
+							d1md.id_temp = Int32.Parse(Query1[i][6]);
+						if(!String.IsNullOrEmpty(Query1[i][7]))
+							d1md.id_hum = Int32.Parse(Query1[i][7]);
+						if(!String.IsNullOrEmpty(Query1[i][8]))
+							d1md.id_ldr = Int32.Parse(Query1[i][8]);
+						if(!String.IsNullOrEmpty(Query1[i][9]))
+							d1md.id_light = Int32.Parse(Query1[i][9]);
 
-					if(!String.IsNullOrEmpty(Query1[i][10])) d1md.id_relais = Int32.Parse(Query1[i][10]);
-					if(!String.IsNullOrEmpty(Query1[i][11])) d1md.id_rain = Int32.Parse(Query1[i][11]);
-					if(!String.IsNullOrEmpty(Query1[i][12])) d1md.id_moisture = Int32.Parse(Query1[i][12]);
-					if(!String.IsNullOrEmpty(Query1[i][13])) d1md.id_vol = Int32.Parse(Query1[i][13]);
-					if(!String.IsNullOrEmpty(Query1[i][14])) d1md.id_window = Int32.Parse(Query1[i][14]);
-					if(!String.IsNullOrEmpty(Query1[i][15])) d1md.id_analogout = Int32.Parse(Query1[i][15]);
+						if(!String.IsNullOrEmpty(Query1[i][10]))
+							d1md.id_relais = Int32.Parse(Query1[i][10]);
+						if(!String.IsNullOrEmpty(Query1[i][11]))
+							d1md.id_rain = Int32.Parse(Query1[i][11]);
+						if(!String.IsNullOrEmpty(Query1[i][12]))
+							d1md.id_moisture = Int32.Parse(Query1[i][12]);
+						if(!String.IsNullOrEmpty(Query1[i][13]))
+							d1md.id_vol = Int32.Parse(Query1[i][13]);
+						if(!String.IsNullOrEmpty(Query1[i][14]))
+							d1md.id_window = Int32.Parse(Query1[i][14]);
+						if(!String.IsNullOrEmpty(Query1[i][15]))
+							d1md.id_analogout = Int32.Parse(Query1[i][15]);
 
-					addSubscribtions(d1md.getSubscribtions());
-					//d1md.sendCmd("ForceMqttUpdate");
+						addSubscribtions(d1md.getSubscribtions());
+						//d1md.sendCmd("ForceMqttUpdate");
+					}
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex);
 				}
 			}
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;

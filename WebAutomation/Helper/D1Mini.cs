@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 132                                                     $ #
+//# Revision     : $Rev:: 133                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 132 2024-07-29 03:35:42Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 133 2024-08-01 01:55:04Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -256,7 +256,11 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public static void addSubscribtions(List<string> topic) {
-			Subscribtions.AddRange(topic);
+			try {
+				Subscribtions.AddRange(topic);
+			} catch(Exception ex) {
+				wpDebug.WriteError(ex);
+			}
 		}
 		public static List<string> getSubscribtions() {
 			return Subscribtions;

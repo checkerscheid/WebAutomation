@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 127                                                     $ #
+//# Revision     : $Rev:: 133                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 127 2024-07-12 02:02:39Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 133 2024-08-01 01:55:04Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -71,7 +71,7 @@ namespace WebAutomation.Helper {
 			_ForceMqttUpdateAvailable = new Dictionary<string, ShellyDeviceHelper>();
 			using(SQL SQL = new SQL("Select Shellys")) {
 				string[][] Query1 = SQL.wpQuery(@"SELECT
-					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_shellyroom], [s].[name], [s].[type],
+					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_restroom], [s].[name], [s].[type],
 					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
 					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window], [s].[lastcontact]
 					FROM [shelly] [s]
@@ -462,7 +462,7 @@ namespace WebAutomation.Helper {
 					string[][] Query = SQL.wpQuery(@$"SELECT
 						[ip], [type], [un], [pw]
 						FROM [shelly]
-						WHERE [id_shellyroom] = {this._room}");
+						WHERE [id_restroom] = {this._room}");
 					WebClient webClient = new WebClient();
 					for(int ishelly = 0; ishelly < Query.Length; ishelly++) {
 						try {
@@ -471,6 +471,20 @@ namespace WebAutomation.Helper {
 								webClient.DownloadString(new Uri($"http://{Query[ishelly][0]}/relay/0?turn=off"));
 							if(ShellyType.isLight(Query[ishelly][1]))
 								webClient.DownloadString(new Uri($"http://{Query[ishelly][0]}/light/0?turn=off"));
+						} catch(Exception ex) {
+							eventLog.WriteError(ex);
+						}
+					}
+				}
+				using(SQL SQL = new SQL("Shellys Long Press D1Mini")) {
+					string[][] Query = SQL.wpQuery(@$"SELECT
+						[ip]
+						FROM [d1mini]
+						WHERE [id_restroom] = {this._room}");
+					WebClient webClient = new WebClient();
+					for(int id1mini = 0; id1mini < Query.Length; id1mini++) {
+						try {
+							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixelOff"));
 						} catch(Exception ex) {
 							eventLog.WriteError(ex);
 						}

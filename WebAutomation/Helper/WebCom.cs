@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 130                                                     $ #
+//# Revision     : $Rev:: 134                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 130 2024-07-12 13:17:54Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 134 2024-08-02 00:29:31Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -150,6 +150,7 @@ namespace WebAutomation.Helper {
 			public const string cGetBrowseMqtt = "getBrowseMqtt";
 			public const string cGetAllD1MiniSettings = "getAllD1MiniSettings";
 			public const string cGetD1MiniStatus = "getD1MiniStatus";
+			public const string cGetD1MiniNeoPixelStatus = "getD1MiniNeoPixelStatus";
 			public const string cSetD1MiniCmd = "SetD1MiniCmd";
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
@@ -313,6 +314,9 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cGetD1MiniStatus:
 					returns = D1MiniServer.getJsonStatus(s_befehl[1]);
+					break;
+				case wpBefehl.cGetD1MiniNeoPixelStatus:
+					returns = D1MiniServer.getJsonNeoPixel(s_befehl[1]);
 					break;
 				case wpBefehl.cSetD1MiniCmd:
 					returns = "S_ERROR";

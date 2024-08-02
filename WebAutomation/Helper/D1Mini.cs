@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 133                                                     $ #
+//# Revision     : $Rev:: 134                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 133 2024-08-01 01:55:04Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 134 2024-08-02 00:29:31Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -297,6 +298,25 @@ namespace WebAutomation.Helper {
 				}
 			} else {
 				wpDebug.Write($"D1Mini getJson Status IpError: '{ip}'");
+			}
+			return returns;
+		}
+		public static string getJsonNeoPixel(string ip) {
+			IPAddress _ip;
+			string returns = "S_ERROR";
+			if(IPAddress.TryParse(ip, out _ip)) {
+				if(wpDebug.debugD1Mini)
+					wpDebug.Write($"D1Mini getNeoPixel Status {_ip}");
+
+				string url = $"http://{_ip}/getNeoPixel";
+				try {
+					WebClient webClient = new WebClient();
+					returns = webClient.DownloadString(new Uri(url));
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex, $"{_ip}: '{returns}'");
+				}
+			} else {
+				wpDebug.Write($"D1Mini getJson NeoPixel Status IpError: '{ip}'");
 			}
 			return returns;
 		}

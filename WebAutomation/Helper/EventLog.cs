@@ -163,7 +163,7 @@ namespace WebAutomation.Helper {
 			returns += $"\"debugCalendar\":{(debugCalendar ? "true" : "false")},";
 			returns += $"\"debugOpcRouter\":{(debugOpcRouter ? "true" : "false")},";
 			returns += $"\"debugWebSockets\":{(debugWebSockets ? "true" : "false")},";
-			returns += $"\"debugREST\":{(debugREST ? "true" : "false")}";
+			returns += $"\"debugREST\":{(debugREST ? "true" : "false")},";
 			returns += $"\"debugShelly\":{(debugShelly ? "true" : "false")},";
 			returns += $"\"debugD1Mini\":{(debugD1Mini ? "true" : "false")},";
 			returns += $"\"debugMQTT\":{(debugMQTT ? "true" : "false")}";
@@ -330,7 +330,7 @@ namespace WebAutomation.Helper {
 		public static void WriteError(Exception ex, params string[] obj) {
 			string additional = "";
 			for(int i = 0; i < obj.Length; i++) {
-				additional += obj[i];
+				additional += "'" + obj[i] + "'";
 				if(i < obj.Length - 1)
 					additional += ", ";
 			}

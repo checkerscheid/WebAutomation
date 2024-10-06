@@ -14,6 +14,7 @@
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
+using ShellyDevice;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Remoting.Messaging;
@@ -57,12 +58,16 @@ namespace WebAutomation.Helper {
 				ws.Stop();
 		}
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {
-			string s = Encoding.UTF8.GetString(e.Data.Array);
+			string s = Encoding.UTF8.GetString(e.Data.Array).Replace("\0", string.Empty);
 			if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
 				ws.SendAsync(e.Client.Guid, "PONG");
 			} else {
-				dynamic stuff = JsonConvert.DeserializeObject(s);
-				executeCommand(WatsonClients[e.Client.Guid], stuff);
+				try {
+					dynamic stuff = JsonConvert.DeserializeObject(s);
+					executeCommand(WatsonClients[e.Client.Guid], stuff);
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex, s);
+				}
 			}
 			if(wpDebug.debugWebSockets)
 				wpDebug.Write($"WebSockets Server Message received from {e.Client} : {s}");
@@ -96,11 +101,15 @@ namespace WebAutomation.Helper {
 						"{\"response\":\"getD1MiniJson\"," +
 						"\"data\":{" +
 							$"\"ip\":\"{cmd.data}\"," +
-							"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data) +
+							"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
 						"}}");
+					if(wpDebug.debugWebSockets)
+						wpDebug.Write($"WebSockets Server question: getD1MiniJson");
 					break;
 				case "startD1MiniSearch":
 					D1MiniServer.startSearch(client.id);
+					if(wpDebug.debugWebSockets)
+						wpDebug.Write($"WebSockets Server question: startD1MiniSearch");
 					break;
 				default:
 					wpDebug.Write($"WebSockets Server Type not found");

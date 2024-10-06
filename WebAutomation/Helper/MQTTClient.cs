@@ -345,14 +345,18 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public async Task setValue(int IdTopic, string value, MqttQualityOfServiceLevel QoS) {
 			if(getTopicFromId(IdTopic) != null) {
-				MqttApplicationMessage msg = new MqttApplicationMessage {
-					Topic = getTopicFromId(IdTopic),
-					PayloadSegment = getFromString(value),
-					QualityOfServiceLevel = QoS
-				};
-				await _mqttClient.PublishAsync(msg);
-				if(wpDebug.debugMQTT)
-					wpDebug.Write($"setValue: {msg.Topic} ({IdTopic}), value: {value}");
+				try {
+					MqttApplicationMessage msg = new MqttApplicationMessage {
+						Topic = getTopicFromId(IdTopic),
+						PayloadSegment = getFromString(value),
+						QualityOfServiceLevel = QoS
+					};
+					await _mqttClient.PublishAsync(msg);
+					if(wpDebug.debugMQTT)
+						wpDebug.Write($"setValue: {msg.Topic} ({IdTopic}), value: {value}");
+				} catch(Exception ex) {
+					wpDebug.WriteError(ex);
+				}
 			} else {
 				wpDebug.Write($"setValue: ID not found: {IdTopic}");
 			}

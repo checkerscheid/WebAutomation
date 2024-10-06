@@ -578,6 +578,12 @@ namespace WebAutomation.PlugIns {
 		public static bool UseAlarmGroup3;
 		public static bool UseAlarmGroup4;
 		public static bool UseAlarmGroup5;
+
+		private static Dictionary<int, string> _alarmgroups1member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups2member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups3member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups4member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups5member = new Dictionary<int, string>();
 		/// <summary>
 		/// 
 		/// </summary>
@@ -732,25 +738,70 @@ FROM (
 					UseAlarmGroup5 = DBAlarmGroups[9][1] == "True";
 				}
 			}
+			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm1Member = SQL.wpQuery(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
+				for(int ialarms = 0; ialarms < DBAlarm1Member.Length; ialarms++) {
+					if(!_alarmgroups1member.ContainsKey(Int32.Parse(DBAlarm1Member[ialarms][0]))) {
+						_alarmgroups1member.Add(Int32.Parse(DBAlarm1Member[ialarms][0]), DBAlarm1Member[ialarms][1]);
+					}
+				}
+			}
+			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm2Member = SQL.wpQuery(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
+				for(int ialarms = 0; ialarms < DBAlarm2Member.Length; ialarms++) {
+					if(!_alarmgroups2member.ContainsKey(Int32.Parse(DBAlarm2Member[ialarms][0]))) {
+						_alarmgroups2member.Add(Int32.Parse(DBAlarm2Member[ialarms][0]), DBAlarm2Member[ialarms][1]);
+					}
+				}
+			}
+			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm3Member = SQL.wpQuery(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
+				for(int ialarms = 0; ialarms < DBAlarm3Member.Length; ialarms++) {
+					if(!_alarmgroups3member.ContainsKey(Int32.Parse(DBAlarm3Member[ialarms][0]))) {
+						_alarmgroups3member.Add(Int32.Parse(DBAlarm3Member[ialarms][0]), DBAlarm3Member[ialarms][1]);
+					}
+				}
+			}
+			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm4Member = SQL.wpQuery(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
+				for(int ialarms = 0; ialarms < DBAlarm4Member.Length; ialarms++) {
+					if(!_alarmgroups4member.ContainsKey(Int32.Parse(DBAlarm4Member[ialarms][0]))) {
+						_alarmgroups4member.Add(Int32.Parse(DBAlarm4Member[ialarms][0]), DBAlarm4Member[ialarms][1]);
+					}
+				}
+			}
+			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm5Member = SQL.wpQuery(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
+				for(int ialarms = 0; ialarms < DBAlarm5Member.Length; ialarms++) {
+					if(!_alarmgroups5member.ContainsKey(Int32.Parse(DBAlarm5Member[ialarms][0]))) {
+						_alarmgroups5member.Add(Int32.Parse(DBAlarm5Member[ialarms][0]), DBAlarm5Member[ialarms][1]);
+					}
+				}
+			}
 			return "S_OK";
 		}
 		public static string GetReadableGroup(int GroupNo, int IdGroup) {
-			string returns = "";
+			string returns = IdGroup.ToString();
 			switch(GroupNo) {
 				case ALARMGROUP1:
-					returns = NameAlarmGroup1 == "" ? "-" : NameAlarmGroup1;
+					if(_alarmgroups1member.ContainsKey(IdGroup))
+						returns = _alarmgroups1member[IdGroup];
 					break;
 				case ALARMGROUP2:
-					returns = NameAlarmGroup2 == "" ? "-" : NameAlarmGroup2;
+					if(_alarmgroups2member.ContainsKey(IdGroup))
+						returns = _alarmgroups2member[IdGroup];
 					break;
 				case ALARMGROUP3:
-					returns = NameAlarmGroup3 == "" ? "-" : NameAlarmGroup3;
+					if(_alarmgroups3member.ContainsKey(IdGroup))
+						returns = _alarmgroups3member[IdGroup];
 					break;
 				case ALARMGROUP4:
-					returns = NameAlarmGroup4 == "" ? "-" : NameAlarmGroup4;
+					if(_alarmgroups4member.ContainsKey(IdGroup))
+						returns = _alarmgroups4member[IdGroup];
 					break;
 				case ALARMGROUP5:
-					returns = NameAlarmGroup5 == "" ? "-" : NameAlarmGroup5;
+					if(_alarmgroups5member.ContainsKey(IdGroup))
+						returns = _alarmgroups5member[IdGroup];
 					break;
 				default:
 					returns = "-";

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 134                                                     $ #
+//# Revision     : $Rev:: 135                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 134 2024-08-02 00:29:31Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 135 2024-10-07 21:18:50Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -323,6 +323,18 @@ namespace WebAutomation.Helper {
 		public static D1MiniDevice get(string name) {
 			if(!D1Minis.ContainsKey(name)) return null;
 			return D1Minis[name];
+		}
+		public static string sendUrlCmd(string ip, string cmd) {
+			IPAddress _ipAddress = IPAddress.Parse(ip);
+			string returns = "{\"erg\":\"S_ERROR\"}";
+			string url = $"http://{_ipAddress}/{cmd}";
+			try {
+				WebClient webClient = new WebClient();
+				returns = webClient.DownloadString(new Uri(url));
+			} catch(Exception ex) {
+				wpDebug.WriteError(ex, $"{_ipAddress}: '{returns}'");
+			}
+			return returns;
 		}
 		public static string startSearch() {
 			wpDebug.Write("Start FreakaZone search");

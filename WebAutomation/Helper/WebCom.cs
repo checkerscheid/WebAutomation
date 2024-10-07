@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 134                                                     $ #
+//# Revision     : $Rev:: 135                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 134 2024-08-02 00:29:31Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 135 2024-10-07 21:18:50Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -152,6 +152,7 @@ namespace WebAutomation.Helper {
 			public const string cGetD1MiniStatus = "getD1MiniStatus";
 			public const string cGetD1MiniNeoPixelStatus = "getD1MiniNeoPixelStatus";
 			public const string cSetD1MiniCmd = "SetD1MiniCmd";
+			public const string cSetD1MiniUrlCmd = "SetD1MiniUrlCmd";
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
 			public const string cDeleteD1Mini = "DeleteD1Mini";
@@ -255,6 +256,7 @@ namespace WebAutomation.Helper {
 			string[] param;
 			int outint;
 			int outint2;
+			D1MiniDevice d1md;
 			switch (s_befehl[0]) {
 				case wpBefehl.cHello:
 					returns = "{Message=Hello PGA Client}";
@@ -321,11 +323,15 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cSetD1MiniCmd:
 					returns = "S_ERROR";
 					param = wpBefehl.getParam(s_befehl[1]);
-					D1MiniDevice d1md = D1MiniServer.get(param[0]);
+					d1md = D1MiniServer.get(param[0]);
 					if(d1md != null) {
 						D1MiniDevice.cmdList cL = new D1MiniDevice.cmdList(param[1]);
 						if(d1md.sendCmd(cL)) returns = "S_OK";
 					}
+					break;
+				case wpBefehl.cSetD1MiniUrlCmd:
+					param = wpBefehl.getParam(s_befehl[1]);
+					returns = D1MiniServer.sendUrlCmd(param[0], param[1]);
 					break;
 				case wpBefehl.cStartD1MiniSearch:
 					//returns = D1MiniServer.startSearch();

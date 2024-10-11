@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 131                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 131 2024-07-23 22:05:47Z                         $ #
+//# File-ID      : $Id:: Rest.cs 136 2024-10-11 08:03:37Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,14 +31,14 @@ namespace WebAutomation.Helper {
 		private bool _isFinished;
 		private const int threadTimeOut = 500;
 		public RestServer() {
-			wpDebug.Write("Rest Server init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
 			_isFinished = false;
 			eventLog = new Logger(wpEventLog.Rest);
 			RestServerListener = new TcpListener(IPAddress.Any, Ini.getInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";
 			RestServerThread.Start();
-			wpDebug.Write("Rest Server gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestartet");
 		}
 		public void finished() {
 			_isFinished = true;
@@ -48,12 +49,12 @@ namespace WebAutomation.Helper {
 			if(RestServerThread != null)
 				RestServerThread.Join(threadTimeOut * 2);
 			RestServerThread = null;
-			eventLog.Write("Rest Server gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestoppt");
 		}
 		private void RestServer_Listen() {
 			try {
 				RestServerListener.Start();
-				eventLog.Write("Rest Server started");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), "Rest Server started");
 				do {
 					if(!RestServerListener.Pending()) {
 						Thread.Sleep(threadTimeOut);
@@ -65,13 +66,13 @@ namespace WebAutomation.Helper {
 					ClientThread.Start(RestClient);
 				} while(!_isFinished);
 			} catch(Exception ex) {
-				eventLog.WriteError(ex);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		private void RestServer_HandleClient(object client) {
 			TcpClient tcpClient = (TcpClient)client;
 			if(wpDebug.debugREST)
-				wpDebug.Write(String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
 			try {
 				string s_message = "";
 				NetworkStream clientStream = tcpClient.GetStream();
@@ -85,7 +86,7 @@ namespace WebAutomation.Helper {
 				bool macok = false;
 				string mac;
 				if(wpDebug.debugREST)
-					wpDebug.Write(String.Format("Rest message: {0}", s_message));
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), String.Format("Rest message: {0}", s_message));
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
 					if(m.Success) { // found Shelly State
 						mac = m.Groups[1].Value.ToLower();
@@ -236,20 +237,20 @@ namespace WebAutomation.Helper {
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();
-						wpDebug.Write($"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
 						cmdfound = true;
 					}
 				}
 				if(!cmdfound)
-					eventLog.Write("RestServer Message not found: {0}", s_message);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "RestServer Message not found: {0}", s_message);
 				if(!macok)
-					eventLog.Write("RestServer MAC not found: {0}", s_message);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "RestServer MAC not found: {0}", s_message);
 				byte[] answer = encoder.GetBytes($"HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n{{\"Message\":\"{(cmdfound ? "S_OK" : "S_ERROR")}\",\"MAC\":\"{(macok ? "S_OK" : "S_ERROR")}\"}}");
 				clientStream.Write(answer, 0, answer.Length);
 				clientStream.Flush();
 				clientStream.Close();
 			} catch(Exception ex) {
-				eventLog.WriteError(ex);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			} finally {
 				tcpClient.Close();
 			}

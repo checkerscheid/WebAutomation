@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Router.cs 76 2024-01-24 07:36:57Z                        $ #
+//# File-ID      : $Id:: Router.cs 136 2024-10-11 08:03:37Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using WebAutomation.Helper;
 
 namespace WebAutomation.PlugIns {
@@ -39,16 +40,16 @@ namespace WebAutomation.PlugIns {
 							if(!RouterItems.ContainsKey(idto) && !RouterItems[idfrom].Contains(idto)) {
 								RouterItems[idfrom].Add(idto);
 							} else {
-								eventLog.Write(EventLogEntryType.Error,
+								eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 									"Route würde einen Loop erzeugen! {0}", idto);
 							}
 						}
 					} catch (Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 			}
-			eventLog.Write("Router PlugIn geladen");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geladen");
 		}
 		public static void UpdateRouter(int fromid) {
 			eventLog = new Logger(wpEventLog.PlugInRouter);
@@ -69,12 +70,12 @@ namespace WebAutomation.PlugIns {
 								RouterItems[fromid].Add(idto);
 							}
 						} catch (Exception ex) {
-							eventLog.WriteError(ex);
+							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					}
 				}
 			}
-			eventLog.Write("Router PlugIn geupdatet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geupdatet");
 		}
 	}
 }

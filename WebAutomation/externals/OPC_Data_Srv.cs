@@ -8,15 +8,16 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 130                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Srv.cs 130 2024-07-12 13:17:54Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Srv.cs 136 2024-10-11 08:03:37Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;
 using OPC.Data.Interface;
 using System;
 using System.Collections;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using WebAutomation;
@@ -210,9 +211,9 @@ namespace OPC.Data {
 						shutdowncookie = 0;
 					}
 				} catch(Exception ex) {
-					eventLog.WriteError(ex);
+					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				} finally {
-					wpDebug.Write("OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
 					int rc = Marshal.ReleaseComObject(shutdowncpoint);
 					shutdowncpoint = null;
 				}
@@ -224,11 +225,11 @@ namespace OPC.Data {
 			ifCommon = null;
 			ifServer = null;
 			if (!(OPCserverObj == null)) {
-				wpDebug.Write("OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
 				int rc = Marshal.ReleaseComObject(OPCserverObj);
 				OPCserverObj = null;
 			}
-			wpDebug.Write("OPC Data Srv '{0}' - Disconnected", this._name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Disconnected", this._name);
 		}
 		/// <summary>
 		/// 
@@ -242,7 +243,7 @@ namespace OPC.Data {
 					ifServer.GetStatus(out serverStatus);
 				}
 			} catch(Exception ex) {
-				wpDebug.Write(ex.StackTrace);
+				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				serverStatus = null;
 			}
 		}

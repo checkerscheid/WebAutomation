@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 120 2024-07-04 15:08:20Z                        $ #
+//# File-ID      : $Id:: Email.cs 136 2024-10-11 08:03:37Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using WebAutomation.PlugIns;
@@ -51,7 +52,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			wpDebug.Write("EMail Client init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "EMail Client init");
 			eventLog = new Logger(wpEventLog.Mail);
 			mailMessage = new MailMessage();
 			reset();
@@ -61,13 +62,13 @@ namespace WebAutomation.Helper {
 			mailMessage.BodyEncoding = Encoding.UTF8;
 			MailClient = new SmtpClient(Ini.get("Email", "Server"), Ini.getInt("Email", "Port"));
 			if (useSSL.ToLower() == "true") MailClient.EnableSsl = true;
-			eventLog.Write("EMail Client gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestartet");
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		public void Dispose() {
-			eventLog.Write("EMail Client gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestoppt");
 			GC.SuppressFinalize(this);
 		}
 		/// <summary>
@@ -177,7 +178,7 @@ namespace WebAutomation.Helper {
 				(Alarms.UseAlarmGroup5 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) : "") +
 				" ");
 			EmailAlarms.countup(TheAlarm.IdAlarm, 0);
-			wpDebug.Write("Alarm to Mail: {0}", TheAlarm.Alarmtext);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarm to Mail: {0}", TheAlarm.Alarmtext);
 		}
 		/// <summary>
 		/// 
@@ -252,7 +253,7 @@ namespace WebAutomation.Helper {
 				to += sender.Address + "\r\n";
 			}
 			mailMessage.To.Clear();
-			eventLog.Write(String.Format("Alarm EMail geschrieben an:{0}", to));
+			eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("Alarm EMail geschrieben an:{0}", to));
 		}
 		/// <summary>
 		/// 
@@ -267,7 +268,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -283,7 +284,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -299,7 +300,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -395,7 +396,7 @@ namespace WebAutomation.Helper {
 						}
 					} else {
 						if (++notEntered >= 10) {
-							wpDebug.Write(
+							wpDebug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.Add nicht möglich",
 									idalarm));
 						} else {
@@ -424,7 +425,7 @@ namespace WebAutomation.Helper {
 						}
 					} else {
 						if (++notEntered >= 10) {
-							wpDebug.Write(
+							wpDebug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.AddSMS nicht möglich",
 									idalarm));
 						} else {
@@ -446,7 +447,7 @@ namespace WebAutomation.Helper {
 							html += Alarmtext[kvp.Key][kvp.Value];
 						}
 					} else {
-						wpDebug.Write("User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
 					}
 				}
 				return html;
@@ -460,7 +461,7 @@ namespace WebAutomation.Helper {
 								html.Add(Alarmsms[kvp.Key][kvp.Value]);
 						}
 					} else {
-						wpDebug.Write("User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
 					}
 				}
 				return html;

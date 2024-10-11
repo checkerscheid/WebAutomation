@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace WebAutomation.Helper {
@@ -68,7 +69,7 @@ namespace WebAutomation.Helper {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
 				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
-					INILog.Write(EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
+					INILog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}
 			return -1;
@@ -89,7 +90,7 @@ namespace WebAutomation.Helper {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
 				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
-					INILog.Write(EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
+					INILog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}
 			return "";

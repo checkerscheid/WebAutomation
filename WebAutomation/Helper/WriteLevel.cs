@@ -8,12 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WriteLevel.cs 76 2024-01-24 07:36:57Z                    $ #
+//# File-ID      : $Id:: WriteLevel.cs 136 2024-10-11 08:03:37Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using System;
+using System.Reflection;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -43,7 +44,7 @@ namespace WebAutomation.Helper {
 				);
 				LevelToItem(DBWriteLevel);
 			}
-			eventLog.Write("Taster PlugIn geladen");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Taster PlugIn geladen");
 		}
 		/// <summary>
 		/// 

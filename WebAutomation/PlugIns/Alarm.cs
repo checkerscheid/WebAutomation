@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 135                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 135 2024-10-07 21:18:50Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 136 2024-10-11 08:03:37Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.Timers;
 using WebAutomation.Helper;
 
@@ -304,7 +305,7 @@ namespace WebAutomation.PlugIns {
 		private void Delay_Tick(object sender, ElapsedEventArgs e) {
 			if (_nodelaycome) {
 				SetCome(DateTime.Now);
-				_eventLog.Write("{0} ({1}) - Alarmdelay finished - real come",
+				_eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} ({1}) - Alarmdelay finished - real come",
 					this._alarmtext, this._dpname);
 			}
 			_delay.Stop();
@@ -318,7 +319,7 @@ namespace WebAutomation.PlugIns {
 				_delay.Stop();
 				_delay.Start();
 				_timerstarted = true;
-				_eventLog.Write("{0} ({1}) - Alarm come with delay - start",
+				_eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} ({1}) - Alarm come with delay - start",
 					this._alarmtext, this._dpname);
 			}
 		}
@@ -486,7 +487,7 @@ namespace WebAutomation.PlugIns {
 						break;
 				}
 			} catch(Exception ex) {
-				_eventLog.WriteError(ex);
+				_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		/// <summary>
@@ -518,7 +519,7 @@ namespace WebAutomation.PlugIns {
 					Now.ToString(SQL.DateTimeFormat),
 					sqlautoquit, sqlautoquitfrom, this.Alarmtext);
 			}
-			wpDebug.Write("Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 			Program.MainProg.AlarmToMail(this);
 		}
 		/// <summary>
@@ -535,7 +536,7 @@ namespace WebAutomation.PlugIns {
 					Now.ToString(SQL.DateTimeFormat),
 					_idalarm);
 			}
-			wpDebug.Write("Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 		}
 		public void UpdateDelay(int sec) {
 			TimerStop();
@@ -588,7 +589,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		public static void Init() {
-			wpDebug.Write("Alarms Init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
 			_eventLog = new Logger(wpEventLog.PlugInAlarm);
 			FillAlarmGroups();
 			using (SQL SQL = new SQL("Init Alarms")) {
@@ -689,7 +690,7 @@ FROM (
 					}
 				}
 			}
-			_eventLog.Write("Alarms gestartet");
+			_eventLog.Write(MethodInfo.GetCurrentMethod(), "Alarms gestartet");
 		}
 		public static Dictionary<int, Alarm> getActiveAlarms() {
 			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();

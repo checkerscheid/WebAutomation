@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCHelper.cs 76 2024-01-24 07:36:57Z                     $ #
+//# File-ID      : $Id:: OPCHelper.cs 136 2024-10-11 08:03:37Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Data;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using WebAutomation.PlugIns;
 /**
@@ -77,12 +78,12 @@ namespace WebAutomation.Helper {
 		}
 
 		~PGAOPCServer() {
-			wpDebug.Write("OPC DATA SRV '{0}' - Finalize", Name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Finalize", Name);
 			Disconnect();
 			Dispose();
 		}
 		public void Dispose() {
-			wpDebug.Write("OPC DATA SRV '{0}' - Dispose", Name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Dispose", Name);
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}
@@ -98,12 +99,12 @@ namespace WebAutomation.Helper {
 		public void Connect(string prgidOPCserver) {
 			this._remoteserver = "localhost";
 			base.Connect(prgidOPCserver, "localhost");
-			wpDebug.Write("OPC DATA SRV '{0}' - Connected", Name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Connected", Name);
 		}
 		public new void Connect(string prgidOPCserver, string computername) {
 			base.Connect(prgidOPCserver, computername);
 			this._remoteserver = computername;
-			wpDebug.Write("OPC DATA SRV '{0}:{1}' - Connected", computername, Name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}:{1}' - Connected", computername, Name);
 		}
 	}
 	/// <summary>

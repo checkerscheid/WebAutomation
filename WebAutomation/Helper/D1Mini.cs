@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 135                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 135 2024-10-07 21:18:50Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 136 2024-10-11 08:03:37Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
@@ -70,7 +71,7 @@ namespace WebAutomation.Helper {
 			public string value { get; set; }
 		}
 		public static void Init() {
-			wpDebug.Write("D1 Mini Server Start");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "D1 Mini Server Start");
 			eventLog = new Logger(wpEventLog.PlugInD1Mini);
 			D1Minis = new Dictionary<string, D1MiniDevice>();
 			D1MinisMac = new Dictionary<string, string>();
@@ -125,11 +126,11 @@ namespace WebAutomation.Helper {
 						//d1md.sendCmd("ForceMqttUpdate");
 					}
 				} catch(Exception ex) {
-					wpDebug.WriteError(ex);
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
 			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
-			wpDebug.Write("D1Mini Server gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server gestartet");
 		}
 		public static void Start() {
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
@@ -176,27 +177,27 @@ namespace WebAutomation.Helper {
 			switch(setting) {
 				case "OnlineTogglerSendIntervall":
 					if(_v < OnlineTogglerSendIntervallMin) {
-						wpDebug.Write($"ERROR OnlineTogglerSendIntervall, min value is {OnlineTogglerSendIntervallMin} ({_v})");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ERROR OnlineTogglerSendIntervall, min value is {OnlineTogglerSendIntervallMin} ({_v})");
 						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"min value is {OnlineTogglerSendIntervallMin} ({_v})\"}}";
 					}
 					if(_v > OnlineTogglerSendIntervallMax) {
-						wpDebug.Write($"ERROR OnlineTogglerSendIntervall, max value is {OnlineTogglerSendIntervallMax} ({_v})");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ERROR OnlineTogglerSendIntervall, max value is {OnlineTogglerSendIntervallMax} ({_v})");
 						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"max value is {OnlineTogglerSendIntervallMax} ({_v})\"}}";
 					}
 					OnlineTogglerSendIntervall = _v;
-					wpDebug.Write($"OnlineTogglerSendIntervall, new Value: {_v}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"OnlineTogglerSendIntervall, new Value: {_v}");
 					return $"{{\"erg\":\"S_OK\"}}";
 				case "OnlineTogglerWait":
 					if(_v < OnlineTogglerWaitMin) {
-						wpDebug.Write($"ERROR OnlineTogglerWait, min value is {OnlineTogglerWaitMin} ({_v})");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ERROR OnlineTogglerWait, min value is {OnlineTogglerWaitMin} ({_v})");
 						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"min value is {OnlineTogglerWaitMin} ({_v})\"}}";
 					}
 					if(_v > OnlineTogglerWaitMax) {
-						wpDebug.Write($"ERROR OnlineTogglerWait, max value is {OnlineTogglerWaitMax} ({_v})");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ERROR OnlineTogglerWait, max value is {OnlineTogglerWaitMax} ({_v})");
 						return $"{{\"erg\":\"S_ERROR\",\"msg\":\"max value is {OnlineTogglerWaitMax} ({_v})\"}}";
 					}
 					OnlineTogglerWait = _v;
-					wpDebug.Write($"OnlineTogglerWait, new Value: {_v}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"OnlineTogglerWait, new Value: {_v}");
 					return $"{{\"erg\":\"S_OK\"}}";
 				default:
 					return $"{{\"erg\":\"S_ERROR\",\"msg\":\"unknown command\"}}";
@@ -260,14 +261,14 @@ namespace WebAutomation.Helper {
 			try {
 				Subscribtions.AddRange(topic);
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex);
+				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public static List<string> getSubscribtions() {
 			return Subscribtions;
 		}
 		public static string getJson() {
-			if(wpDebug.debugD1Mini) wpDebug.Write("D1Mini getJson Settings");
+			if(wpDebug.debugD1Mini) wpDebug.Write(MethodInfo.GetCurrentMethod(), "D1Mini getJson Settings");
 			string returns = "{";
 			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
 				returns += $"\"{kvp.Key}\":{{";
@@ -287,17 +288,17 @@ namespace WebAutomation.Helper {
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
 				if(wpDebug.debugD1Mini)
-					wpDebug.Write($"D1Mini getJson Status {_ip}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");
 
 				string url = $"http://{_ip}/status";
 				try {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
 				} catch(Exception ex) {
-					wpDebug.WriteError(ex, $"{_ip}: '{returns}'");
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 				}
 			} else {
-				wpDebug.Write($"D1Mini getJson Status IpError: '{ip}'");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status IpError: '{ip}'");
 			}
 			return returns;
 		}
@@ -306,17 +307,17 @@ namespace WebAutomation.Helper {
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
 				if(wpDebug.debugD1Mini)
-					wpDebug.Write($"D1Mini getNeoPixel Status {_ip}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getNeoPixel Status {_ip}");
 
 				string url = $"http://{_ip}/getNeoPixel";
 				try {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
 				} catch(Exception ex) {
-					wpDebug.WriteError(ex, $"{_ip}: '{returns}'");
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 				}
 			} else {
-				wpDebug.Write($"D1Mini getJson NeoPixel Status IpError: '{ip}'");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson NeoPixel Status IpError: '{ip}'");
 			}
 			return returns;
 		}
@@ -332,12 +333,12 @@ namespace WebAutomation.Helper {
 				WebClient webClient = new WebClient();
 				returns = webClient.DownloadString(new Uri(url));
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex, $"{_ipAddress}: '{returns}'");
+				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ipAddress}: '{returns}'");
 			}
 			return returns;
 		}
 		public static string startSearch() {
-			wpDebug.Write("Start FreakaZone search");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Start FreakaZone search");
 			searchActive = true;
 			udpClient = new UdpClient();
 			udpClient.Client.SendTimeout = 1000;
@@ -356,22 +357,22 @@ namespace WebAutomation.Helper {
 							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null &&
 								!D1Minis.ContainsKey(D1MiniRecieved.Iam.FreakaZoneClient)) {
 								foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
-								
-								wpDebug.Write($"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
+
+								wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
 							}
 						}
-						wpDebug.Write(Encoding.UTF8.GetString(recvBuffer));
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), Encoding.UTF8.GetString(recvBuffer));
 					} catch(SocketException ex) {
 						if(ex.SocketErrorCode == SocketError.TimedOut) {
 							searchActive = false;
-							wpDebug.Write("Search finished, cause: Timeout");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "Search finished, cause: Timeout");
 						} else {
 							searchActive = false;
-							wpDebug.WriteError(ex);
+							wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					} catch(Exception ex) {
 						searchActive = false;
-						wpDebug.WriteError(ex);
+						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 				stopSearch();
@@ -382,7 +383,7 @@ namespace WebAutomation.Helper {
 			return returns;
 		}
 		public static string startSearch(Guid id) {
-			wpDebug.Write("Start WS - FreakaZone search");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Start WS - FreakaZone search");
 			searchActive = true;
 			udpClient = new UdpClient();
 			udpClient.Client.SendTimeout = 2000;
@@ -404,22 +405,22 @@ namespace WebAutomation.Helper {
 									$"\"recieved\":{recieved}" + "}");
 								//foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
 
-								wpDebug.Write($"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
+								wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
 							}
 						}
-						wpDebug.Write(Encoding.UTF8.GetString(recvBuffer));
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), Encoding.UTF8.GetString(recvBuffer));
 					} catch(SocketException ex) {
 						if(ex.SocketErrorCode == SocketError.TimedOut) {
 							searchActive = false;
 							Program.MainProg.wpWebSockets.sendText(id, "SearchD1MiniFinished", "\"S_OK\"");
-							wpDebug.Write("Search finished, cause: Timeout");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "Search finished, cause: Timeout");
 						} else {
 							searchActive = false;
-							wpDebug.WriteError(ex);
+							wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					} catch(Exception ex) {
 						searchActive = false;
-						wpDebug.WriteError(ex);
+						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 				stopSearch();
@@ -435,14 +436,14 @@ namespace WebAutomation.Helper {
 		}
 		private static void stopSearch() {
 			try {
-				wpDebug.Write("Stop FreakaZone search");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "Stop FreakaZone search");
 				searchActive = false;
 				if(udpClient != null) {
 					udpClient.Close();
 					udpClient.Dispose();
 				}
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex);
+				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		private static void setValue(int idDp, string name, string value) {
@@ -460,11 +461,11 @@ namespace WebAutomation.Helper {
 				setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -476,11 +477,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -492,11 +493,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -508,11 +509,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -524,11 +525,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -539,11 +540,11 @@ namespace WebAutomation.Helper {
 				setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -555,11 +556,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -571,11 +572,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -587,11 +588,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -602,11 +603,11 @@ namespace WebAutomation.Helper {
 				setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -618,11 +619,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
 				if(wpDebug.debugD1Mini)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"D1Mini nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -703,12 +704,12 @@ namespace WebAutomation.Helper {
 			set {
 				if(value) {
 					if(wpDebug.debugD1Mini)
-						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 1");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 1");
 					setOnlineError(false);
 					toreset.Stop();
 				} else {
 					if(wpDebug.debugD1Mini)
-						wpDebug.Write($"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 					toreset.Start();
 				}
 			}
@@ -780,7 +781,7 @@ namespace WebAutomation.Helper {
 				toreset.Stop();
 			toreset = null;
 			if(wpDebug.debugD1Mini)
-				wpDebug.Write($"D1 Mini stopped `{_name} sendOnlineQuestion`");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini stopped `{_name} sendOnlineQuestion`");
 		}
 		public void SetOnlineTogglerSendIntervall() {
 			t.Interval = D1MiniServer.OnlineTogglerSendIntervall * 1000;
@@ -798,7 +799,7 @@ namespace WebAutomation.Helper {
 		}
 		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
 			if(wpDebug.debugD1Mini)
-				wpDebug.Write($"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
 			if(_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
@@ -806,7 +807,7 @@ namespace WebAutomation.Helper {
 			} else {
 				setOnlineError(false);
 				if(wpDebug.debugD1Mini)
-					wpDebug.Write($"D1 Mini OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
 			}
 		}
 
@@ -822,21 +823,21 @@ namespace WebAutomation.Helper {
 			if(cmd.isValid) {
 				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.cmd, "1");
 				if(wpDebug.debugD1Mini)
-					wpDebug.Write($"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
 				returns = true;
 			} else {
-				wpDebug.Write($"D1 Mini `sendCmd` ERROR: {_name}, {cmd.cmd}");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` ERROR: {_name}, {cmd.cmd}");
 			}
 			return returns;
 		}
 		private void sendOnlineQuestion() {
 			if(wpDebug.debugD1Mini)
-				wpDebug.Write($"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
 		private void setOnlineError(bool e) {
 			if(wpDebug.debugD1Mini)
-				wpDebug.Write($"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
 		private void setOnlineError() {

@@ -8,15 +8,16 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 130                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 130 2024-07-12 13:17:54Z                        $ #
+//# File-ID      : $Id:: Trend.cs 136 2024-10-11 08:03:37Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using WebAutomation.Helper;
 
@@ -58,7 +59,7 @@ namespace WebAutomation.PlugIns {
 				_intervall = value;
 				onChangeMinValue.Interval = SetMinIntervall();
 				onChangeMinValue.Start();
-				wpDebug.Write($"Trend intervall changed {_trendname}: {_intervall} sec");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend intervall changed {_trendname}: {_intervall} sec");
 			}
 		}
 		/// <summary></summary>
@@ -102,7 +103,7 @@ namespace WebAutomation.PlugIns {
 				onChangeMinValue.Stop();
 			onChangeMinValue = null;
 			if(wpDebug.debugTrend)
-				wpDebug.Write($"Trend Stop {_trendname}");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend Stop {_trendname}");
 		}
 		public async void SetTrendValue(bool withReset) {
 			if(_active) {
@@ -121,7 +122,7 @@ namespace WebAutomation.PlugIns {
 							//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
 							//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
 							if(SQL.wpNonResponse(sql) == 0) {
-								wpDebug.Write($"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
+								wpDebug.Write(MethodInfo.GetCurrentMethod(), $"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
 							}
 						}
 					});
@@ -134,12 +135,12 @@ namespace WebAutomation.PlugIns {
 		public void Activate() {
 			_active = true;
 			onChangeMinValue.Start();
-			wpDebug.Write($"Trend activated {_trendname}");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend activated {_trendname}");
 		}
 		public void Deactivate() {
 			_active = false;
 			onChangeMinValue.Stop();
-			wpDebug.Write($"Trend deactivated {_trendname}");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend deactivated {_trendname}");
 		}
 		/// <summary>
 		/// 
@@ -160,7 +161,7 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
 			if(_active) onChangeMinValue.Start();
-			if(wpDebug.debugTrend) wpDebug.Write($"Trend Init {_trendname}");
+			if(wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend Init {_trendname}");
 		}
 		private int SetMinIntervall() {
 			if(_intervall == 0) {
@@ -198,7 +199,7 @@ namespace WebAutomation.PlugIns {
 		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {
-			wpDebug.Write("Trends Init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends Init");
 			using(SQL SQL = new SQL("get Trend Dictionary")) {
 				string[][] erg = SQL.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
@@ -218,7 +219,7 @@ namespace WebAutomation.PlugIns {
 			}
 			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
-			wpDebug.Write("Trends gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends gestartet");
 		}
 
 		public static void Stop() {
@@ -227,7 +228,7 @@ namespace WebAutomation.PlugIns {
 			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
 				kvp.Value.Stop();
 			}
-			wpDebug.Write("Trends Stop");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
 		}
 		public static Trend Get(int idTrend) {
 			return _trendList[idTrend];
@@ -302,10 +303,10 @@ namespace WebAutomation.PlugIns {
 							sw.WriteLine("1  SQLCHAR  0  255 \";\"  1  time  Latin1_General_CI_AS");
 							sw.WriteLine("2  SQLCHAR  0  255 \";\\r\\n\"  2  value  Latin1_General_CI_AS");
 						}
-						_eventLog.Write(EventLogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
+						_eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
 					}
 				} else {
-					_eventLog.Write(EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
 				}
 			}
 			private void DBcleaner() {
@@ -323,7 +324,7 @@ namespace WebAutomation.PlugIns {
 				Stopwatch watchTrend = new Stopwatch();
 				Dictionary<DateTime, string> DataforExport;
 				watch.Start();
-				wpDebug.Write("Start Trend cleaner");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
 				foreach (KeyValuePair<int, Trend> kvpTrend in _trendList) {
 					if (_doStop) break;
 					deleteToOld = 0;
@@ -393,53 +394,53 @@ namespace WebAutomation.PlugIns {
 										String.Format("{0} - {1}", t.IdTrend, Datapoints.Get(t.IdDP).Name),
 										kvp.Key, kvp.Value);
 								} catch(Exception ex) {
-									_eventLog.WriteError(ex);
+									_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 								};
 							}
 							// Log
 							if (saveToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
 									saveToOld, t.TrendName, watchTrend.Elapsed);
-								if (wpDebug.debugTrend) wpDebug.Write(saveedToOld);
+								if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
 							}
 							if (saveToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
 									saveToMuch, t.TrendName, watchTrend.Elapsed);
-								if (wpDebug.debugTrend) wpDebug.Write(saveedToMuch);
+								if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
 							}
 						} else {
-							if (DataforExport.Count > 0) wpDebug.Write("Archivierung deaktiviert");
+							if (DataforExport.Count > 0) wpDebug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
 						}
 						if (deleteToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
 								deleteToOld, t.TrendName, watchTrend.Elapsed);
-							if (wpDebug.debugTrend) wpDebug.Write(deletedToOld);
+							if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
 							trendsToOld++;
 						}
 						if (deleteToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
 								deleteToMuch, t.TrendName, watchTrend.Elapsed);
-							if (wpDebug.debugTrend) wpDebug.Write(deletedToMuch);
+							if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
 							trendsToMuch++;
 						}
 					} catch (Exception ex) {
-						_eventLog.WriteError(ex);
+						_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 				watch.Stop();
 				if (ev_save != "") {
-					_eventLog.Write("Dauer: {0}, Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, Trenddaten archiviert", watch.Elapsed);
 				} else {
-					_eventLog.Write("Dauer: {0}, keine Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, keine Trenddaten archiviert", watch.Elapsed);
 				}
 				if (ev_del != "") {
-					_eventLog.Write("Dauer: {0}, Trenddaten gelöscht ({1})", watch.Elapsed, trendsToOld + trendsToMuch);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, Trenddaten gelöscht ({1})", watch.Elapsed, trendsToOld + trendsToMuch);
 				} else {
-					_eventLog.Write("Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
 				}
 			}
 			private bool writeToFile(string filename, DateTime DateForFolder, string text) {
@@ -479,7 +480,7 @@ namespace WebAutomation.PlugIns {
 						returns = false;
 					}
 				} catch (Exception ex) {
-					_eventLog.WriteError(ex);
+					_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 				return returns;
 			}

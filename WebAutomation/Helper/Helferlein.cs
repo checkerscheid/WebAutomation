@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Helferlein.cs 76 2024-01-24 07:36:57Z                    $ #
+//# File-ID      : $Id:: Helferlein.cs 136 2024-10-11 08:03:37Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json.Linq;
@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using System.Reflection;
 /**
 * @defgroup FreakaZoneintern FreakaZoneintern
 * @{
@@ -88,10 +89,10 @@ namespace WebAutomation.Helper {
 					var obj = JToken.Parse(strInput);
 					return true;
 				} catch(JsonReaderException jex) {
-					wpDebug.WriteError(jex);
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), jex);
 					return false;
 				} catch(Exception ex) {
-					wpDebug.WriteError(ex);
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					return false;
 				}
 			} else {
@@ -171,7 +172,7 @@ namespace WebAutomation.Helper {
 				found = true;
 			}
 			if (!found) {
-				wpDebug.Write("Error parsing DateTime {0}", _dt);
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "Error parsing DateTime {0}", _dt);
 			}
 			return returns;
 		}

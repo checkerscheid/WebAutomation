@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 127                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 127 2024-07-12 02:02:39Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 136 2024-10-11 08:03:37Z#$ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Forms;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
@@ -41,7 +42,7 @@ namespace WebAutomation {
 				components.Dispose();
 			}
 			base.Dispose(disposing);
-			Helper.wpDebug.Write("{0} - Disposed", Application.ProductName);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "{0} - Disposed", Application.ProductName);
 		}
 
 		#region Vom Windows Form-Designer generierter Code
@@ -130,6 +131,7 @@ namespace WebAutomation {
 			this.lbl_msg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.lbl_msg.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lbl_msg.Location = new System.Drawing.Point(149, 16);
 			this.lbl_msg.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
 			this.lbl_msg.Multiline = true;
@@ -271,7 +273,7 @@ namespace WebAutomation {
 		/// <param name="e"></param>
 		private void WebAutomationServer_Load(object sender, EventArgs e) {
 			_ = initAsync();
-			eventLog.Write(Application.ProductName + " Server gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server gestartet");
 			this.Text = Application.ProductName;
 			this.StringChanged += new StringChangedEventHandler(WebAutomationServer_StringChanged);
 		}
@@ -280,7 +282,7 @@ namespace WebAutomation {
 			if(_wpStartMinimized) {
 				this.WindowState = FormWindowState.Minimized;
 				this.Hide();
-				eventLog.Write(EventLogEntryType.Warning, Application.ProductName + " Server im 'Minimierten Modus' gestartet");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, Application.ProductName + " Server im 'Minimierten Modus' gestartet");
 			}
 		}
 
@@ -321,7 +323,7 @@ namespace WebAutomation {
 			}
 		}
 		public void finish() {
-			Helper.wpDebug.Write(Application.ProductName + " Server - Beginn stop");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server - Beginn stop");
 			isFinished = true;
 			if(ApacheService != null)
 				ApacheService.ServiceStatusChanged -= ApacheService_ServiceStatusChanged;
@@ -349,7 +351,7 @@ namespace WebAutomation {
 			if(wpMQTTClient != null)
 				wpMQTTClient.Stop();
 			Trends.Stop();
-			eventLog.Write(EventLogEntryType.Warning, Application.ProductName + " Server gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, Application.ProductName + " Server gestoppt");
 		}
 
 		private void WebAutomationServer_FormClosing(object sender, FormClosingEventArgs e) {

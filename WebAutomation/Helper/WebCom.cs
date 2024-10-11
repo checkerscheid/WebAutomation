@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 135                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 135 2024-10-07 21:18:50Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 136 2024-10-11 08:03:37Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -57,7 +58,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			wpDebug.Write("WebCom init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "WebCom init");
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
@@ -65,7 +66,7 @@ namespace WebAutomation.Helper {
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
-			wpDebug.Write("WebCom gestartet, auf Port {0} gemappt", Ini.getInt("TCP", "Port"));
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", Ini.getInt("TCP", "Port"));
 			WebComServer.Start();
 		}
 		/// <summary>
@@ -78,7 +79,7 @@ namespace WebAutomation.Helper {
 			isFinished = true;
 			if(WebComServer != null)
 				WebComServer.Join(1500);
-			eventLog.Write(String.Format("{0} gestoppt", WebComServer.Name));
+			eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("{0} gestoppt", WebComServer.Name));
 		}
 		/// <summary>
 		/// 
@@ -203,7 +204,7 @@ namespace WebAutomation.Helper {
 		private void TCP_Listener() {
 			try {
 				WebComListener.Start();
-				eventLog.Write(String.Format("{0} gestartet", WebComServer.Name));
+				eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("{0} gestartet", WebComServer.Name));
 				do {
 					if (!WebComListener.Pending()) {
 						Thread.Sleep(250);
@@ -215,7 +216,7 @@ namespace WebAutomation.Helper {
 					ClientThread.Start(Pclient);
 				} while (!isFinished);
 			} catch(Exception ex) {
-				eventLog.WriteError(ex);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		/// <summary>
@@ -240,7 +241,7 @@ namespace WebAutomation.Helper {
 					clientStream.Close();
 				}
 			} catch (Exception ex) {
-				eventLog.WriteError(ex, tcpClient.ToString());
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, tcpClient.ToString());
 			} finally {
 				tcpClient.Close();
 			}
@@ -714,7 +715,7 @@ namespace WebAutomation.Helper {
 						else returns = wpEventLog.readLog();
 					} catch (Exception ex) {
 						returns = "{ERROR=" + ex.Message + "}{TRACE=" + ex.StackTrace + "}";
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 					//PDebug.Write(returns);
 					break;
@@ -723,19 +724,19 @@ namespace WebAutomation.Helper {
 						Ini.read();
 						finished();
 						init();
-						eventLog.Write(EventLogEntryType.Warning, "Reload Settings");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Reload Settings");
 						returns = "{ERROR=S_OK}";
 					} catch (Exception ex) {
 						returns = "{ERROR=" + ex.Message + "}{TRACE=" + ex.StackTrace + "}";
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 					break;
 				case wpBefehl.cChangeWartung:
 					Program.MainProg.wpWartung = !Program.MainProg.wpWartung;
 					if(Program.MainProg.wpWartung)
-						eventLog.Write(EventLogEntryType.Warning, "Wartung wurde aktiviert");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Wartung wurde aktiviert");
 					else
-						eventLog.Write("Wartung deaktiviert");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), "Wartung deaktiviert");
 					returns = "{\"erg\":\"S_OK\"}";
 					break;
 				case wpBefehl.cGetDebug:
@@ -865,7 +866,7 @@ namespace WebAutomation.Helper {
 						values.Add(kvp.Value);
 						log += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.OpcItemName, DateTime.Now, p.Value, kvp.Value);
 					} else {
-						eventLog.Write(EventLogEntryType.Warning, "keine Berechtigung zum schreiben");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "keine Berechtigung zum schreiben");
 					}
 				}
 				if (ids.Count > 0) {
@@ -926,15 +927,15 @@ namespace WebAutomation.Helper {
 						TheAlarm.Alarmgroups5 = Int32.Parse(DBAlarms[0][15]);
 						TheAlarm.InAlarm = false;
 						TheAlarm.AlarmUpdate = DateTime.Now;
-						eventLog.Write(String.Format("Alarm update: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
+						eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("Alarm update: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
 					} else {
-						eventLog.Write(EventLogEntryType.Warning,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 							String.Format("Alarm wurde nicht gefunden: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
 					}
 				}
 				return "S_OK";
 			} catch(Exception ex) {
-				eventLog.Write(EventLogEntryType.Error,
+				eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 					String.Format("{0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 				return ex.Message;
 			}
@@ -1110,10 +1111,10 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 						Datapoint TheItem = Datapoints.Get(DPid);
 						returns += $"{{{param[i]}={{Value=\"{TheItem.Value}\"}}{{TimeStamp={TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}}}}}";
 					} catch(Exception ex) {
-						wpDebug.WriteError(ex, DPid.ToString());
+						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, DPid.ToString());
 					}
 				} else {
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(),EventLogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));
 				}
 			}

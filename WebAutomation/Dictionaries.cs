@@ -8,15 +8,16 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 125 2024-07-08 18:57:15Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 136 2024-10-11 08:03:37Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,7 +91,8 @@ namespace WebAutomation {
 					Int32.TryParse(erg[0][i++], out _idNamespace);
 				}
 			}
-			if(wpDebug.debugSystem) wpDebug.Write($"Datapoint Created {_name} ({_id})");
+			if(wpDebug.debugSystem)
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Datapoint Created {_name} ({_id})");
 		}
 		public void setValue(string value) {
 			setValue(value, "'Dictionary'");
@@ -111,7 +113,7 @@ namespace WebAutomation {
 				if(_idAlarm != null)
 					Alarms.Get((int)_idAlarm).setAlarmValue();
 				if(wpDebug.debugTransferID)
-					wpDebug.Write($"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
 			}
 		}
 		public string parseValueString() {
@@ -157,11 +159,11 @@ namespace WebAutomation {
 					dValue = dValue / _factor;
 				}
 				if(dValue > _max) {
-					wpDebug.Write($"Schreibwert ({value}) > Maxwert ({_max})\r\n\t'{_name}'");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Schreibwert ({value}) > Maxwert ({_max})\r\n\t'{_name}'");
 					dValue = _max;
 				}
 				if(dValue < _min) {
-					wpDebug.Write($"Schreibwert ({value}) < Minwert ({_min})\r\n\t'{_name}'");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Schreibwert ({value}) < Minwert ({_min})\r\n\t'{_name}'");
 					dValue = _min;
 				}
 				value = dValue.ToString();
@@ -191,7 +193,7 @@ namespace WebAutomation {
 		private static Dictionary<string, int> DPnames = new Dictionary<string, int>();
 		private static Dictionary<int, int> OPCList = new Dictionary<int, int>();
 		public static void Init() {
-			wpDebug.Write("Datapoints Init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Init");
 			using(SQL sql = new SQL("fill Datapoints")) {
 				string[][] erg = sql.wpQuery("SELECT [id_dp], [id_opcdatapoint] FROM [dp]");
 				for(int idp = 0; idp < erg.Length; idp++) {
@@ -202,17 +204,17 @@ namespace WebAutomation {
 							OPCList.Add(Int32.Parse(erg[idp][1]), iddp);
 						}
 					} catch(Exception ex) {
-						wpDebug.WriteError(ex, $"is verkehrt: {iddp}?");
+						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"is verkehrt: {iddp}?");
 					}
 				}
 			}
-			wpDebug.Write("Datapoints gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Datapoints gestartet");
 		}
 		public static void Start() {
 			Program.MainProg.wpMQTTClient.valueChanged += MQTTClient_valueChanged;
 			Program.MainProg.wpOPCClient.valueChanged += wpOPCClient_valueChanged;
 			ShellyServer.valueChanged += ShellyServer_valueChanged;
-			wpDebug.Write("Datapoints Start work");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Start work");
 		}
 
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {
@@ -281,12 +283,12 @@ namespace WebAutomation {
 						if(Items.ContainsKey(id)) Items[id] = value;
 						else Items.Add(id, value);
 					} catch(Exception ex) {
-						EventLog.WriteError(ex);
+						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(Items);
 					}
 				} else {
-					wpDebug.Write("Angefordertes Item not Entered (addItem:{1})", id);
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (addItem:{1})", id);
 				}
 			}
 			public static OPCItem getItem(int id) {
@@ -297,12 +299,12 @@ namespace WebAutomation {
 							returns = Items[id];
 						}
 					} catch(Exception ex) {
-						EventLog.WriteError(ex);
+						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(Items);
 					}
 				} else {
-					wpDebug.Write("Angefordertes Item not Entered (getItem:{0})", id);
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 				}
 				return returns;
 			}
@@ -314,12 +316,12 @@ namespace WebAutomation {
 							returns = true;
 						}
 					} catch(Exception ex) {
-						EventLog.WriteError(ex);
+						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(Items);
 					}
 				} else {
-					wpDebug.Write("Angefordertes Item not Entered (getItem:{0})", id);
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 				}
 				return returns;
 			}
@@ -331,12 +333,12 @@ namespace WebAutomation {
 							Items.Remove(Datapoints);
 						}
 					} catch(Exception ex) {
-						EventLog.WriteError(ex);
+						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(Items);
 					}
 				} else {
-					wpDebug.Write("Angefordertes Item not Entered (deleteItem:{1})", Datapoints);
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (deleteItem:{1})", Datapoints);
 				}
 			}
 			public static void deleteItems(int[] Datapoints) {

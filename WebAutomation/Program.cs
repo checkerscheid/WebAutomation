@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 135                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 135 2024-10-07 21:18:50Z                      $ #
+//# File-ID      : $Id:: Program.cs 136 2024-10-11 08:03:37Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 using WebAutomation.Helper;
@@ -31,7 +32,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "134";
+		public const string subversion = "135";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>
@@ -67,15 +68,15 @@ namespace WebAutomation {
 					tlog.AutoReset = true;
 					tlog.Elapsed += renewLog;
 					renewLog(null, null);
-					wpDebug.Write("START" +
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "START" +
 						"\r\n####################################################################\r\n\r\n");
 					MainProg = new WebAutomationServer(args);
 					if (lgA == Ini.get("License", "key")) {
 						MainProg.LicenseAlarming = true;
-						wpDebug.Write("Lizenz für großes Alarming gefunden");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "Lizenz für großes Alarming gefunden");
 					}
 					if ("KeyLessVersion" == Ini.get("License", "key")) {
-						wpDebug.Write("!!! UNLIZENZIERTE High Availability Version !!!");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "!!! UNLIZENZIERTE High Availability Version !!!");
 						//MainProg.LicenseAlarming = true;
 						//PDebug.Write("Lizenz für großes Alarming gefunden");
 					}
@@ -91,7 +92,7 @@ namespace WebAutomation {
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Warning);
 			}
-			wpDebug.Write("Programm finished");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Programm finished");
 			if(Debug.Listeners != null) Debug.Listeners.Remove(trtl);
 		}
 

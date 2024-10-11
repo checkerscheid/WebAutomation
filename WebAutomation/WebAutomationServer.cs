@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 131                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 131 2024-07-23 22:05:47Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 136 2024-10-11 08:03:37Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -186,40 +187,40 @@ namespace WebAutomation {
 				wpDebug.setDebugs(args);
 				if (Arrays.inArray("wpWartung".ToLower(), args)) {
 					_wpWartung = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 						"{0} Server im 'Wartungsmodus' gestartet", Application.ProductName);
 				}
 				if (Arrays.inArray("wpMinStart".ToLower(), args)) {
 					_wpStartMinimized = true;
-					eventLog.Write(EventLogEntryType.Information,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Information,
 						"{0} Server im 'minimiertem Modus' gestartet", Application.ProductName);
 				}
 				if (Arrays.inArray("wpAllowCloseBrowser".ToLower(), args)) {
 					_wpAllowCloseBrowser = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 						"{0} Server darf den lokalen Browser schließen", Application.ProductName);
 				}
 				if(Arrays.inArray("wpBigProject".ToLower(), args)) {
 					_wpBigProject = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 						"{0} Server im 'Big Project Modus' gestartet", Application.ProductName);
 				}
 				if (Arrays.inArray("wpForceRead".ToLower(), args)) {
 					_wpForceRead = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 						"{0} Server im 'Force Read Modus' gestartet", Application.ProductName);
 				}
 				if (Arrays.inArray("wpPSOPC".ToLower(), args)) {
 					_wpPSOPC = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
 						"{0} Server im 'PSOPC (Analphabet) Modus' gestartet", Application.ProductName);
 				}
 			}
-			Helper.wpDebug.Write("CultureInfo: {0}", CultureInfo.CurrentUICulture.Name);
-			Helper.wpDebug.Write("System NumberDecimalSeparator: {0}", NumberFormatInfo.InvariantInfo.NumberDecimalSeparator);
-			Helper.wpDebug.Write("UI NumberDecimalSeparator: {0}", CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "CultureInfo: {0}", CultureInfo.CurrentUICulture.Name);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "System NumberDecimalSeparator: {0}", NumberFormatInfo.InvariantInfo.NumberDecimalSeparator);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "UI NumberDecimalSeparator: {0}", CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator);
 			this.lbl_db.Text = Ini.get("SQL", "Database");
-			Helper.wpDebug.Write("Connected Database: " + Ini.get("SQL", "Database"));
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Connected Database: " + Ini.get("SQL", "Database"));
 		}
 		public async Task initAsync() {
 			await Task.Delay(100);
@@ -245,7 +246,7 @@ namespace WebAutomation {
 				if(Tables.Length == 0) {
 					SQL.wpNonResponse(@"CREATE TABLE [emailhistoric]
 					([email][varchar](150) NOT NULL,[send][datetime] NOT NULL,[subject][text] NOT NULL,[message][text] NOT NULL,[error][text] NULL)");
-					Helper.wpDebug.Write("Tabelle emailhistoric wurde erstellt");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), "Tabelle emailhistoric wurde erstellt");
 				}
 				SQL.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = NULL, [startupquality] = NULL");
 			}
@@ -271,7 +272,7 @@ namespace WebAutomation {
 			lastState = this.WindowState;
 			isFinished = false;
 			_isInit = true;
-			eventLog.Write("{0} Server initialisiert", Application.ProductName);
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} Server initialisiert", Application.ProductName);
 
 			ThreadEmailSender = new Thread(new ThreadStart(createEmail));
 			ThreadEmailSender.Name = "PGA Email Sender";
@@ -303,10 +304,10 @@ namespace WebAutomation {
 						SQL.wpNonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
 							table, column, type,
 							canBeNull ? "NULL" : "NOT NULL CONSTRAINT [DF_" + table + "_" + column + "] DEFAULT(" + defaultValue + ")");
-						Helper.wpDebug.Write("Add [{1}] to [{0}]", table, column);
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "Add [{1}] to [{0}]", table, column);
 					}
 				} catch (Exception ex) {
-					eventLog.WriteError(ex);
+					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
 		}
@@ -326,7 +327,7 @@ namespace WebAutomation {
 				do {
 					using (SQL = new SQL("Test SQL Connection")) { }
 					if (!SQL.Available) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							"{0} Server kann Datenbank nicht erreichen.\r\n\tReconnect nach {1} Sekunden\r\n\tVerbleibende Versuche: {2}",
 							Application.ProductName, SQLCounterTime, SQLCounterMax - 1 - SQLCounter);
 						SQLCounter++;
@@ -349,35 +350,35 @@ namespace WebAutomation {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
 			switch (s) {
 				case ServiceControllerStatus.Running:
-					eventLog.Write("Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.Stopped:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'Stopped'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Error;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.StopPending:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StopPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.StartPending:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StartPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				default:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'unbekannt'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 			}
 		}
@@ -392,35 +393,35 @@ namespace WebAutomation {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
 			switch (s) {
 				case ServiceControllerStatus.Running:
-					eventLog.Write("Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.Stopped:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'Stopped'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Error;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.StopPending:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StopPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.StartPending:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StartPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				default:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'unbekannt'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 			}
 		}
@@ -434,7 +435,7 @@ namespace WebAutomation {
 					control.Text = text;
 				}
 			} catch (Exception ex) {
-				Helper.wpDebug.Write(ex.ToString());
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), ex.ToString());
 			}
 		}
 
@@ -457,14 +458,14 @@ namespace WebAutomation {
 					try {
 						TheMail.AddAlarm(newAlarm);
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 								AlarmToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
@@ -485,14 +486,14 @@ namespace WebAutomation {
 					try {
 						TheMail.AddQuit(newAlarm);
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 								QuitToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
@@ -515,7 +516,7 @@ namespace WebAutomation {
 							TheMail.AddQuit(TheAlarm);
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
@@ -523,7 +524,7 @@ namespace WebAutomation {
 				} else {
 					if(++notEntered >= 10) {
 						foreach(Alarm TheAlarm in newAlarm) {
-							eventLog.Write(EventLogEntryType.Error,
+							eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
 						}
@@ -553,14 +554,14 @@ namespace WebAutomation {
 							//}
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(Server.Dictionaries.Items);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 							String.Format(@"Angefordertes Item blockiert: {0}.\r\n
 								getAlarmFromAlarmid nicht möglich", id));
 					} else {
@@ -607,7 +608,7 @@ namespace WebAutomation {
 													MailContent[0].Replace('\'', '"').Replace('\\', ' '),
 													MailContent[1].Replace('\'', '"').Replace('\\', ' '));
 												}
-												Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+												wpDebug.Write(MethodInfo.GetCurrentMethod(), "Send Mail to {0}", Alarmstosend.Key);
 											}
 										}
 									} else {
@@ -624,7 +625,7 @@ namespace WebAutomation {
 												MailContent[0].Replace('\'', '"').Replace('\\', ' '),
 												MailContent[1].Replace('\'', '"').Replace('\\', ' '));
 											}
-											Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+											wpDebug.Write(MethodInfo.GetCurrentMethod(), "Send Mail to {0}", Alarmstosend.Key);
 										}
 									}
 								} catch(Exception ex) {
@@ -638,14 +639,14 @@ namespace WebAutomation {
 										MailContent[1].Replace('\'', '"').Replace('\\', ' '),
 										ex.Message);
 									}
-									eventLog.Write(EventLogEntryType.Error,
+									eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 										String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 								}
 							}
 						}
 					}
 				} catch(Exception ex) {
-					eventLog.Write(EventLogEntryType.Error,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
 						String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 				} finally {
 					TheMail.reset();
@@ -690,7 +691,7 @@ namespace WebAutomation {
 				}
 			}
 			required = false;
-			eventLog.Write("Recipient Table wurde erneuert.");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Recipient Table wurde erneuert.");
 			return recipient;
 		}
 		/// <summary>
@@ -729,7 +730,7 @@ namespace WebAutomation {
 						lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
 							d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 			}

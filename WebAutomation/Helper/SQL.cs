@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 118                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: SQL.cs 118 2024-07-04 14:20:41Z                          $ #
+//# File-ID      : $Id:: SQL.cs 136 2024-10-11 08:03:37Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
 using System.Data.SqlClient;
+using System.Reflection;
 using System.Threading.Tasks;
 /**
 * @addtogroup WebAutomation
@@ -63,12 +64,12 @@ namespace WebAutomation.Helper {
 				connection.Open();
 				_available = true;
 			} catch (Exception ex) {
-				eventLog.WriteError(ex);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				LastError = ex.Message;
 				_available = false;
 			}
 			if(wpDebug.debugSQL) {
-				wpDebug.Write("SQL Client gestartet - {0}", _forwhat);
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "SQL Client gestartet - {0}", _forwhat);
 			}
 		}
 		/// <summary>
@@ -76,7 +77,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		public void Dispose() {
 			if(wpDebug.debugSQL) {
-				wpDebug.Write("SQL Client gestoppt - {0}", _forwhat);
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), "SQL Client gestoppt - {0}", _forwhat);
 			}
 			connection.Close();
 			connection.Dispose();
@@ -113,7 +114,7 @@ namespace WebAutomation.Helper {
 				}
 				Reader.Close();
 			} catch (Exception ex) {
-				eventLog.WriteError(ex, m_command, _forwhat);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, m_command, _forwhat);
 				LastError = ex.Message;
 			}
 			return row;
@@ -140,7 +141,7 @@ namespace WebAutomation.Helper {
 					returns = command.ExecuteNonQuery();
 				}
 			} catch (Exception ex) {
-				eventLog.WriteError(ex, m_command, _forwhat);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, m_command, _forwhat);
 				LastError = ex.Message;
 			}
 			return returns;
@@ -166,7 +167,7 @@ namespace WebAutomation.Helper {
 			try {
 				returns = command.ExecuteNonQuery();
 			} catch (Exception ex) {
-				eventLog.WriteError(ex, m_command, _forwhat);
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, m_command, _forwhat);
 				LastError = ex.Message;
 			}
 			return returns;
@@ -229,16 +230,16 @@ namespace WebAutomation.Helper {
 		public void HistoryCleaner() {
 			string sql;
 			DateTime OneYearAgo = DateTime.Now.AddMonths(-3);
-			wpDebug.Write("start HistoryCleaner");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "start HistoryCleaner");
 			sql = $"DELETE FROM [alarmhistoric] WHERE [come] < '{OneYearAgo.ToString(DateFormat)}'";
-			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [alarmhistoric]");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Delete {wpNonResponse(sql)} entries from [alarmhistoric]");
 			sql = $"DELETE FROM [emailhistoric] WHERE [send] < '{OneYearAgo.ToString(DateFormat)}'";
-			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [emailhistoric]");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Delete {wpNonResponse(sql)} entries from [emailhistoric]");
 			sql = $"DELETE FROM [useractivity] WHERE [writetime] < '{OneYearAgo.ToString(DateFormat)}'";
-			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [useractivity]");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Delete {wpNonResponse(sql)} entries from [useractivity]");
 			sql = $"DELETE FROM [visitors] WHERE [datetime] < '{OneYearAgo.ToString(DateFormat)}'";
-			wpDebug.Write($"Delete {wpNonResponse(sql)} entries from [visitors]");
-			wpDebug.Write("start HistoryCleaner finished");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Delete {wpNonResponse(sql)} entries from [visitors]");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "start HistoryCleaner finished");
 		}
 	}
 }

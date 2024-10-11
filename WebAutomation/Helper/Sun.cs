@@ -8,14 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 125 2024-07-08 18:57:15Z                          $ #
+//# File-ID      : $Id:: Sun.cs 136 2024-10-11 08:03:37Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
 using System;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace WebAutomation.Helper {
@@ -31,7 +32,7 @@ namespace WebAutomation.Helper {
 		private System.Timers.Timer SunriseTimer;
 		private System.Timers.Timer SunsetTimer;
 		public Sun() {
-			wpDebug.Write("Sun init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
 			int testSunIsShining, testSunRising, testSunsetting;
 			if(Int32.TryParse(Ini.get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
@@ -43,7 +44,7 @@ namespace WebAutomation.Helper {
 				SunSetId = testSunsetting;
 			}
 			_ = StartSunriseSunsetTimer();
-			wpDebug.Write("Sun gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
 		}
 		private async Task StartSunriseSunsetTimer() {
 			await GetSunsetSunrise();
@@ -70,7 +71,7 @@ namespace WebAutomation.Helper {
 			}
 			setNewSunriseSunsetTimer.Interval = firstStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
-			wpDebug.Write("setNewSunriseSunsetTimer gestartet - wird ausgelöst in {0}", firstStart);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "setNewSunriseSunsetTimer gestartet - wird ausgelöst in {0}", firstStart);
 		}
 
 		private async void SunriseSunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
@@ -79,7 +80,7 @@ namespace WebAutomation.Helper {
 			TimeSpan nextStart = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 1, 0, 0) - Now;
 			setNewSunriseSunsetTimer.Interval = nextStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
-			wpDebug.Write("SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
 			await GetSunsetSunrise();
 			// clean Database once a night
 			await Task.Run(() => {
@@ -106,7 +107,7 @@ namespace WebAutomation.Helper {
 						Datapoints.Get(SunRiseId).writeValue(sunrise.ToString(SQL.DateTimeFormat));
 						Datapoints.Get(SunSetId).writeValue(sunset.ToString(SQL.DateTimeFormat));
 						//PDebug.Write(result);
-						wpDebug.Write("Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
 						DateTime Now = DateTime.Now;
 						if(Now < sunrise) {
 							Datapoints.Get(SunShineId).writeValue("0");
@@ -120,26 +121,26 @@ namespace WebAutomation.Helper {
 						if(toSunrise.Ticks > 0) {
 							SunriseTimer.Interval = toSunrise.TotalMilliseconds;
 							SunriseTimer.Enabled = true;
-							wpDebug.Write("toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
 						} else {
-							wpDebug.Write("toSunrise war heute schon");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunrise war heute schon");
 						}
 						if(toSunset.Ticks > 0) {
 							SunsetTimer.Interval = toSunset.TotalMilliseconds;
 							SunsetTimer.Enabled = true;
-							wpDebug.Write("toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
 						} else {
-							wpDebug.Write("toSunset war heute schon");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunset war heute schon");
 						}
 					} else {
-						wpDebug.WriteError(args.Error);
+						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error);
 					}
 				};
 				await Task.Run(() => {
 					webClient.DownloadStringAsync(new Uri(url));
 				});
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex);
+				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public DateTime UnixTimeStampToDateTime(int unixTimeStamp) {

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 133                                                     $ #
+//# Revision     : $Rev:: 136                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 133 2024-08-01 01:55:04Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 136 2024-10-11 08:03:37Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -65,7 +66,7 @@ namespace WebAutomation.Helper {
 			public string value { get; set; }
 		}
 		public static void Init() {
-			wpDebug.Write("Shelly Server Init");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Init");
 			eventLog = new Logger(wpEventLog.PlugInShelly);
 			_shellys = new Dictionary<string, ShellyDeviceHelper>();
 			_ForceMqttUpdateAvailable = new Dictionary<string, ShellyDeviceHelper>();
@@ -113,12 +114,12 @@ namespace WebAutomation.Helper {
 							addSubscribtions(sdh.getSubscribtions());
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 			}
 			Program.MainProg.wpMQTTClient.shellyChanged += wpMQTTClient_shellyChanged;
-			wpDebug.Write("Shelly Server gestartet");
+			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server gestartet");
 		}
 		public static void Start() {
 			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
@@ -152,11 +153,11 @@ namespace WebAutomation.Helper {
 				setValue(_shellys[mac].id_onoff, _shellys[mac].name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", _shellys[mac].name, state);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}\r\n{_shellys}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}\r\n{_shellys}");
 			}
 			return returns;
 		}
@@ -171,11 +172,11 @@ namespace WebAutomation.Helper {
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -186,11 +187,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Window: {0}, ", window ? "True" : "False");
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -203,11 +204,11 @@ namespace WebAutomation.Helper {
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -218,11 +219,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -233,11 +234,11 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -247,11 +248,11 @@ namespace WebAutomation.Helper {
 				_shellys[mac].setLongPress();
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				if(wpDebug.debugShelly)
-					eventLog.Write(DebugNewValue);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
 			} else {
-				eventLog.Write($"Shelly nicht gefunden: {mac}");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
 		}
@@ -265,10 +266,10 @@ namespace WebAutomation.Helper {
 				if(_shellys.ContainsKey(mac)) {
 					if(setting == "info/Online") _shellys[mac].Online = e.value == "0" ? false : true;
 				} else {
-					wpDebug.Write($"Shelly not init? '{e.topic}', '{e.value}'");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly not init? '{e.topic}', '{e.value}'");
 				}
 			} else {
-				wpDebug.Write($"Shelly MQTT not active? '{e.topic}', '{e.value}'");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly MQTT not active? '{e.topic}', '{e.value}'");
 			}
 		}
 		public static void addSubscribtions(List<string> topic) {
@@ -345,12 +346,12 @@ namespace WebAutomation.Helper {
 				set {
 					if(value) {
 						if(wpDebug.debugShelly)
-							wpDebug.Write($"Shelly `recived Online`: {_name}/info/Online, 1");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 1");
 						setOnlineError(false);
 						toreset.Stop();
 					} else {
 						if(wpDebug.debugShelly)
-							wpDebug.Write($"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
+							wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 						toreset.Start();
 					}
 				}
@@ -398,7 +399,7 @@ namespace WebAutomation.Helper {
 					t.Stop();
 					toreset.Stop();
 					if(wpDebug.debugShelly)
-						wpDebug.Write($"Shelly Device stopped `{_name} sendOnlineQuestion`");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly Device stopped `{_name} sendOnlineQuestion`");
 				}
 			}
 
@@ -418,7 +419,7 @@ namespace WebAutomation.Helper {
 			}
 			private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
 				if(wpDebug.debugShelly)
-					wpDebug.Write($"Shelly `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 				//last chance
 				Ping _ping = new Ping();
 				if(_ping.Send(_ip.ToString(), 750).Status != IPStatus.Success) {
@@ -426,7 +427,7 @@ namespace WebAutomation.Helper {
 				} else {
 					setOnlineError(false);
 					if(wpDebug.debugShelly)
-						wpDebug.Write($"Shelly OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
 				}
 			}
 			public List<string> getSubscribtions() {
@@ -438,12 +439,12 @@ namespace WebAutomation.Helper {
 			}
 			private void sendOnlineQuestion() {
 				if(wpDebug.debugShelly)
-					wpDebug.Write($"Shelly `sendOnlineQuestion`: {_mqtt_id}/info/Online, 0");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `sendOnlineQuestion`: {_mqtt_id}/info/Online, 0");
 				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 			}
 			private void setOnlineError(bool e) {
 				if(wpDebug.debugShelly)
-					wpDebug.Write($"Shelly `setOnlineError`: {_mqtt_id}/ERROR/Online, {(e ? "1" : "0")}");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `setOnlineError`: {_mqtt_id}/ERROR/Online, {(e ? "1" : "0")}");
 				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/ERROR/Online", e ? "1" : "0");
 			}
 			private void setOnlineError() {
@@ -453,11 +454,11 @@ namespace WebAutomation.Helper {
 			private void _doCheckStatus_Elapsed(object sender, ElapsedEventArgs e) {
 				getStatus();
 				if(wpDebug.debugShelly)
-					wpDebug.Write($"ShellyDevice doCheck gestartet '{this.name}'");
+					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ShellyDevice doCheck gestartet '{this.name}'");
 			}
 
 			public void setLongPress() {
-				wpDebug.Write($"register LongPress on {this._name}");
+				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"register LongPress on {this._name}");
 				using(SQL SQL = new SQL("Shellys Long Press")) {
 					string[][] Query = SQL.wpQuery(@$"SELECT
 						[ip], [type], [un], [pw]
@@ -472,7 +473,7 @@ namespace WebAutomation.Helper {
 							if(ShellyType.isLight(Query[ishelly][1]))
 								webClient.DownloadString(new Uri($"http://{Query[ishelly][0]}/light/0?turn=off"));
 						} catch(Exception ex) {
-							eventLog.WriteError(ex);
+							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					}
 				}
@@ -486,7 +487,7 @@ namespace WebAutomation.Helper {
 						try {
 							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixelOff"));
 						} catch(Exception ex) {
-							eventLog.WriteError(ex);
+							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					}
 				}
@@ -521,10 +522,11 @@ namespace WebAutomation.Helper {
 									using(SQL SQL = new SQL("Update Shelly MQTT lastContact")) {
 										string sql = $"UPDATE [shelly] SET [lastcontact] = '{_lastcontact.ToString(SQL.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
 										SQL.wpNonResponse(sql);
-										if(wpDebug.debugShelly) wpDebug.Write(sql);
+										if(wpDebug.debugShelly)
+											wpDebug.Write(MethodInfo.GetCurrentMethod(), sql);
 									}
 								} else {
-									wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
+									wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
 								}
 							};
 							if(_lastcontact.AddHours(1) < DateTime.Now || force) {
@@ -536,7 +538,7 @@ namespace WebAutomation.Helper {
 							}
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.name} ({this.ip}), '{target}'");
 					}
 				}
 			}
@@ -600,17 +602,18 @@ namespace WebAutomation.Helper {
 										using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
 											string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
 											SQL.wpNonResponse(sql);
-											if(wpDebug.debugShelly) wpDebug.Write(sql);
+											if(wpDebug.debugShelly)
+												wpDebug.Write(MethodInfo.GetCurrentMethod(), sql);
 										}
 									}
 								} else {
-									wpDebug.WriteError(args.Error, $"{this.name} ({this.ip}), '{target}'");
+									wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
 								}
 							};
 							webClient.DownloadStringAsync(new Uri(target));
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex, $"{this.name} ({this.ip}), '{target}'");
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.name} ({this.ip}), '{target}'");
 					}
 				}
 			}

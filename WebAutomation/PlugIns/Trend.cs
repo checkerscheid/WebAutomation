@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 137                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 136 2024-10-11 08:03:37Z                        $ #
+//# File-ID      : $Id:: Trend.cs 137 2024-10-18 23:20:11Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -115,7 +115,7 @@ namespace WebAutomation.PlugIns {
 	USING (
 		VALUES ({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')
 	) AS [SOURCE] ([id_trend], [value], [time])
-	ON [TARGET].[id_trend] = [SOURCE].[id_trend] AND [TARGET].[time] = [SOURCE].[time]
+	ON ([TARGET].[id_trend] = [SOURCE].[id_trend] AND [TARGET].[time] = [SOURCE].[time])
 	WHEN NOT MATCHED THEN
 		INSERT ([id_trend], [value], [time])
 		VALUES ([SOURCE].[id_trend], [SOURCE].[value], [SOURCE].[time]);";

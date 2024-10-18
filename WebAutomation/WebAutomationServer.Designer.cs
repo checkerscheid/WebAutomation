@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 137                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 136 2024-10-11 08:03:37Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 137 2024-10-18 23:20:11Z#$ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -75,10 +75,10 @@ namespace WebAutomation {
 			this.statusStrip.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-			this.statusStrip.Location = new System.Drawing.Point(0, 185);
+			this.statusStrip.Location = new System.Drawing.Point(0, 455);
 			this.statusStrip.Name = "statusStrip";
 			this.statusStrip.Padding = new System.Windows.Forms.Padding(1, 0, 17, 0);
-			this.statusStrip.Size = new System.Drawing.Size(698, 22);
+			this.statusStrip.Size = new System.Drawing.Size(1217, 22);
 			this.statusStrip.TabIndex = 0;
 			this.statusStrip.Text = "statusStrip1";
 			// 
@@ -98,7 +98,7 @@ namespace WebAutomation {
 			// 
 			this.txt_lastchange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.txt_lastchange.AutoSize = true;
-			this.txt_lastchange.Location = new System.Drawing.Point(13, 131);
+			this.txt_lastchange.Location = new System.Drawing.Point(13, 401);
 			this.txt_lastchange.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.txt_lastchange.Name = "txt_lastchange";
 			this.txt_lastchange.Size = new System.Drawing.Size(83, 13);
@@ -119,7 +119,7 @@ namespace WebAutomation {
 			// 
 			this.lbl_lastchange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_lastchange.AutoSize = true;
-			this.lbl_lastchange.Location = new System.Drawing.Point(146, 131);
+			this.lbl_lastchange.Location = new System.Drawing.Point(146, 401);
 			this.lbl_lastchange.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.lbl_lastchange.Name = "lbl_lastchange";
 			this.lbl_lastchange.Size = new System.Drawing.Size(12, 13);
@@ -138,7 +138,7 @@ namespace WebAutomation {
 			this.lbl_msg.Name = "lbl_msg";
 			this.lbl_msg.ReadOnly = true;
 			this.lbl_msg.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.lbl_msg.Size = new System.Drawing.Size(535, 73);
+			this.lbl_msg.Size = new System.Drawing.Size(1054, 343);
 			this.lbl_msg.TabIndex = 4;
 			this.lbl_msg.TabStop = false;
 			this.lbl_msg.Enter += new System.EventHandler(this.lbl_msg_Enter);
@@ -147,7 +147,7 @@ namespace WebAutomation {
 			// 
 			this.txt_db.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.txt_db.AutoSize = true;
-			this.txt_db.Location = new System.Drawing.Point(13, 118);
+			this.txt_db.Location = new System.Drawing.Point(13, 388);
 			this.txt_db.Name = "txt_db";
 			this.txt_db.Size = new System.Drawing.Size(130, 13);
 			this.txt_db.TabIndex = 5;
@@ -157,7 +157,7 @@ namespace WebAutomation {
 			// 
 			this.lbl_db.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_db.AutoSize = true;
-			this.lbl_db.Location = new System.Drawing.Point(146, 118);
+			this.lbl_db.Location = new System.Drawing.Point(146, 388);
 			this.lbl_db.Name = "lbl_db";
 			this.lbl_db.Size = new System.Drawing.Size(12, 13);
 			this.lbl_db.TabIndex = 6;
@@ -167,7 +167,7 @@ namespace WebAutomation {
 			// 
 			this.txt_System.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.txt_System.AutoSize = true;
-			this.txt_System.Location = new System.Drawing.Point(13, 92);
+			this.txt_System.Location = new System.Drawing.Point(13, 362);
 			this.txt_System.Name = "txt_System";
 			this.txt_System.Size = new System.Drawing.Size(55, 13);
 			this.txt_System.TabIndex = 7;
@@ -177,7 +177,7 @@ namespace WebAutomation {
 			// 
 			this.lbl_prozessor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_prozessor.AutoSize = true;
-			this.lbl_prozessor.Location = new System.Drawing.Point(146, 92);
+			this.lbl_prozessor.Location = new System.Drawing.Point(146, 362);
 			this.lbl_prozessor.Name = "lbl_prozessor";
 			this.lbl_prozessor.Size = new System.Drawing.Size(12, 13);
 			this.lbl_prozessor.TabIndex = 8;
@@ -187,7 +187,7 @@ namespace WebAutomation {
 			// 
 			this.lbl_memory.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_memory.AutoSize = true;
-			this.lbl_memory.Location = new System.Drawing.Point(146, 105);
+			this.lbl_memory.Location = new System.Drawing.Point(146, 375);
 			this.lbl_memory.Name = "lbl_memory";
 			this.lbl_memory.Size = new System.Drawing.Size(12, 13);
 			this.lbl_memory.TabIndex = 9;
@@ -197,7 +197,7 @@ namespace WebAutomation {
 			// 
 			this.lbl_volumeinfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lbl_volumeinfo.AutoSize = true;
-			this.lbl_volumeinfo.Location = new System.Drawing.Point(415, 92);
+			this.lbl_volumeinfo.Location = new System.Drawing.Point(415, 362);
 			this.lbl_volumeinfo.Name = "lbl_volumeinfo";
 			this.lbl_volumeinfo.Size = new System.Drawing.Size(12, 13);
 			this.lbl_volumeinfo.TabIndex = 10;
@@ -216,7 +216,7 @@ namespace WebAutomation {
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.SystemColors.Control;
-			this.ClientSize = new System.Drawing.Size(698, 207);
+			this.ClientSize = new System.Drawing.Size(1217, 477);
 			this.Controls.Add(this.txt_msg);
 			this.Controls.Add(this.lbl_msg);
 			this.Controls.Add(this.txt_System);

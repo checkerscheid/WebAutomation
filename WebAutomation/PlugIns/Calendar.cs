@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 137                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 136 2024-10-11 08:03:37Z                     $ #
+//# File-ID      : $Id:: Calendar.cs 137 2024-10-18 23:20:11Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -314,8 +314,9 @@ namespace WebAutomation.PlugIns {
 					case c_rrule._isReminder:
 						if(_dtReminder.ContainsKey(_nextReminderId)) {
 							if(_vReminder.ContainsKey(_nextReminderId) && _vReminder[_nextReminderId] != "") {
-								Datapoints.Get(_dpId).setValue(_vReminder[_nextReminderId]);
-								//Program.MainProg.wpOPCClient.setValue(opcid, vreminder[nextReminderId], TransferId.TransferSchedule);
+								// Program.MainProg.wpOPCClient.setValue(opcid, vreminder[nextReminderId], TransferId.TransferSchedule);
+								// Datapoints.Get(_dpId).setValue(_vReminder[_nextReminderId]); do we need writevalue??
+								Datapoints.Get(_dpId).writeValue(_vReminder[_nextReminderId]);
 								_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: Reminder (DP: {_dpId}, {_vReminder[_nextReminderId]})");
 							}
 							if(_sReminder.ContainsKey(_nextReminderId) && _sReminder[_nextReminderId] > 0) {
@@ -326,9 +327,10 @@ namespace WebAutomation.PlugIns {
 						break;
 					case c_rrule._isStart:
 						if(_vStart != "") {
-                            Datapoints.Get(_dpId).setValue(_vStart);
-                            //Program.MainProg.wpOPCClient.setValue(opcid, vstart, TransferId.TransferSchedule);
-                            _eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: Start (DP: {_dpId}, {_vStart})");
+							// Program.MainProg.wpOPCClient.setValue(opcid, vstart, TransferId.TransferSchedule);
+							// Datapoints.Get(_dpId).setValue(_vStart); do we need writevalue??
+							Datapoints.Get(_dpId).writeValue(_vStart);
+							_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: Start (DP: {_dpId}, {_vStart})");
 						}
 						if(_sStart > 0) {
 							Scene.writeSceneDP(_sStart);
@@ -337,9 +339,10 @@ namespace WebAutomation.PlugIns {
 						break;
 					case c_rrule._isEnd:
 						if(_vEnd != "") {
-                            Datapoints.Get(_dpId).setValue(_vEnd);
-                            //Program.MainProg.wpOPCClient.setValue(opcid, vend, TransferId.TransferSchedule);
-                            _eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: End (DP: {_dpId}, {_vEnd})");
+							// Program.MainProg.wpOPCClient.setValue(opcid, vend, TransferId.TransferSchedule);
+							// Datapoints.Get(_dpId).setValue(_vEnd); do we need writevalue??
+							Datapoints.Get(_dpId).writeValue(_vEnd);
+							_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: End (DP: {_dpId}, {_vEnd})");
 						}
 						if(_sEnd > 0) {
 							Scene.writeSceneDP(_sEnd);

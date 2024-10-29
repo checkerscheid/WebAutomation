@@ -16,6 +16,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -24,6 +25,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using WebAutomation.PlugIns;
 
 namespace WebAutomation.Helper {
 	public static class D1MiniServer {
@@ -624,6 +626,25 @@ namespace WebAutomation.Helper {
 				returns = true;
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
+			}
+			return returns;
+		}
+		public static bool SetRFID(string mac, string RFID) {
+			bool returns = false;
+			string[][] erg;
+			using(SQL sql = new SQL("get User RFID")) {
+				erg = sql.wpQuery(@$"SELECT [u].[name], [u].[lastname], [r].[description]
+					FROM [user] [u]
+					INNER JOIN [rfid] [r] ON [u].[id_user] = [r].[id_user]
+					WHERE [r].[chipid] = '{RFID}'");
+			}
+			if(erg.Length > 0) {
+				for(int i = 0; i < erg.Length; i++) {
+					wpDebug.Write(MethodBase.GetCurrentMethod(), $"Found RFID Chip: '{RFID}', {erg[i][1]}, {erg[i][0]} ({erg[i][2]})");
+				}
+				returns = true;
+			} else {
+				wpDebug.Write(MethodBase.GetCurrentMethod(), $"Neuer RFID Chip: '{RFID}', kein User");
 			}
 			return returns;
 		}

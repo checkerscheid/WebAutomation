@@ -234,6 +234,14 @@ namespace WebAutomation.Helper {
 						cmdfound = true;
 					}
 				}
+				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rfid\=([0-9]*)")) {
+					if(m.Success) { // found D1Mini RFID
+						mac = m.Groups[1].Value.ToLower();
+						string RFID = m.Groups[2].Value;
+						macok = D1MiniServer.SetRFID(mac, RFID);
+						cmdfound = true;
+					}
+				}
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();

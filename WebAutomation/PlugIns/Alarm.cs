@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 138                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 136 2024-10-11 08:03:37Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 138 2024-11-04 15:07:30Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -339,155 +339,160 @@ namespace WebAutomation.PlugIns {
 		/// <param name="value"></param>
 		/// <param name="Now"></param>
 		public void setAlarmValue() {
-			string v = Datapoints.Get(_iddp).Value;
-			DateTime Now = DateTime.Now;
-			string issep;
-			string mustsep;
-			string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-			if(sep == ".") {
-				issep = ",";
-				mustsep = ".";
-			} else {
-				issep = ".";
-				mustsep = ",";
-			}
-			decimal ivaluedec;
-			decimal param1dec;
-			try {
-				switch(_condition) {
-					case "=":
-						if(v == _min) {
-							_nodelaycome = true;
-							if(!_inalarm) {
-								if(_hasDelay) {
-									if(!_timerstarted)
-										TimerStart();
-								} else {
-									SetCome(Now);
-								}
-							}
-						}
-						if(v != _min) {
-							_nodelaycome = false;
-							TimerStop();
-							if(_inalarm)
-								SetGone(Now);
-						}
-						break;
-					case "<>":
-						if(v != _min) {
-							_nodelaycome = true;
-							if(!_inalarm) {
-								if(_hasDelay) {
-									if(!_timerstarted)
-										TimerStart();
-								} else {
-									SetCome(Now);
-								}
-							}
-						}
-						if(v == _min) {
-							_nodelaycome = false;
-							TimerStop();
-							if(_inalarm)
-								SetGone(Now);
-						}
-						break;
-					case ">":
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if(ivaluedec > param1dec) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+			Datapoint dp = Datapoints.Get(_iddp);
+			if (dp != null) {
+				string v = dp.Value;
+				if(v != "") {
+					DateTime Now = DateTime.Now;
+					string issep;
+					string mustsep;
+					string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+					if(sep == ".") {
+						issep = ",";
+						mustsep = ".";
+					} else {
+						issep = ".";
+						mustsep = ",";
+					}
+					decimal ivaluedec;
+					decimal param1dec;
+					try {
+						switch(_condition) {
+							case "=":
+								if(v == _min) {
+									_nodelaycome = true;
+									if(!_inalarm) {
+										if(_hasDelay) {
+											if(!_timerstarted)
+												TimerStart();
+										} else {
+											SetCome(Now);
+										}
 									}
 								}
-							}
-							if(ivaluedec <= param1dec) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case "<":
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if(ivaluedec < param1dec) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+								if(v != _min) {
+									_nodelaycome = false;
+									TimerStop();
+									if(_inalarm)
+										SetGone(Now);
+								}
+								break;
+							case "<>":
+								if(v != _min) {
+									_nodelaycome = true;
+									if(!_inalarm) {
+										if(_hasDelay) {
+											if(!_timerstarted)
+												TimerStart();
+										} else {
+											SetCome(Now);
+										}
 									}
 								}
-							}
-							if(ivaluedec >= param1dec) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case ">x<":
-						// min max
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if((ivaluedec < param1dec || ivaluedec > _max)) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+								if(v == _min) {
+									_nodelaycome = false;
+									TimerStop();
+									if(_inalarm)
+										SetGone(Now);
+								}
+								break;
+							case ">":
+								if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+									Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+									if(ivaluedec > param1dec) {
+										_nodelaycome = true;
+										if(!_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
+									}
+									if(ivaluedec <= param1dec) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
 									}
 								}
-							}
-							if(ivaluedec >= param1dec && ivaluedec <= _max) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case "<x>":
-						// zwischen
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if((ivaluedec >= param1dec && ivaluedec <= _max)) {
-								_nodelaycome = true;
-								if(_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+								break;
+							case "<":
+								if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+									Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+									if(ivaluedec < param1dec) {
+										_nodelaycome = true;
+										if(!_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
+									}
+									if(ivaluedec >= param1dec) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
 									}
 								}
-							}
-							if(ivaluedec < param1dec || ivaluedec > _max) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
+								break;
+							case ">x<":
+								// min max
+								if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+									Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+									if((ivaluedec < param1dec || ivaluedec > _max)) {
+										_nodelaycome = true;
+										if(!_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
+									}
+									if(ivaluedec >= param1dec && ivaluedec <= _max) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
+									}
+								}
+								break;
+							case "<x>":
+								// zwischen
+								if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+									Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+									if((ivaluedec >= param1dec && ivaluedec <= _max)) {
+										_nodelaycome = true;
+										if(_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
+									}
+									if(ivaluedec < param1dec || ivaluedec > _max) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
+									}
+								}
+								break;
+							default:
+								break;
 						}
-						break;
-					default:
-						break;
+					} catch(Exception ex) {
+						_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, "id dp: " + _iddp, "id alarm: " + _idalarm, "v: " + v);
+					}
 				}
-			} catch(Exception ex) {
-				_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		/// <summary>

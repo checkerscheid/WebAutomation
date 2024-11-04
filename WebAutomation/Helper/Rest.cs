@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 138                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 136 2024-10-11 08:03:37Z                         $ #
+//# File-ID      : $Id:: Rest.cs 138 2024-11-04 15:07:30Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -85,6 +85,7 @@ namespace WebAutomation.Helper {
 				bool cmdfound = false;
 				bool macok = false;
 				string mac;
+				string jsonMsg = "";
 				if(wpDebug.debugREST)
 					wpDebug.Write(MethodInfo.GetCurrentMethod(), String.Format("Rest message: {0}", s_message));
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
@@ -236,9 +237,9 @@ namespace WebAutomation.Helper {
 				}
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rfid\=([0-9]*)")) {
 					if(m.Success) { // found D1Mini RFID
-						mac = m.Groups[1].Value.ToLower();
 						string RFID = m.Groups[2].Value;
-						macok = D1MiniServer.SetRFID(mac, RFID);
+						macok = true;
+						jsonMsg = D1MiniServer.SetRFID(RFID);
 						cmdfound = true;
 					}
 				}
@@ -253,7 +254,7 @@ namespace WebAutomation.Helper {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), "RestServer Message not found: {0}", s_message);
 				if(!macok)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), "RestServer MAC not found: {0}", s_message);
-				byte[] answer = encoder.GetBytes($"HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n{{\"Message\":\"{(cmdfound ? "S_OK" : "S_ERROR")}\",\"MAC\":\"{(macok ? "S_OK" : "S_ERROR")}\"}}");
+				byte[] answer = encoder.GetBytes($"HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n{{\"Message\":\"{(cmdfound ? "S_OK" : "S_ERROR")}\",\"MAC\":\"{(macok ? "S_OK" : "S_ERROR")}\"{(jsonMsg == "" ? "" : "," + jsonMsg)}");
 				clientStream.Write(answer, 0, answer.Length);
 				clientStream.Flush();
 				clientStream.Close();

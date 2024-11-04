@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 138                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 136 2024-10-11 08:03:37Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 138 2024-11-04 15:07:30Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -296,6 +296,7 @@ namespace WebAutomation.Helper {
 				try {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
+					saveStatus(_ip, returns);
 				} catch(Exception ex) {
 					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 				}
@@ -303,6 +304,39 @@ namespace WebAutomation.Helper {
 				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status IpError: '{ip}'");
 			}
 			return returns;
+		}
+		private static void saveStatus(IPAddress ip, string status) {
+			using(SQL sql = new SQL("save status")) {
+				string id = "NULL";
+				string[][] erg = sql.wpQuery($"SELECT [id_d1mini] FROM [d1mini] WHERE [ip] = '{ip}'");
+				wpDebug.Write(MethodBase.GetCurrentMethod(), $"Anzahl: {erg.Length}, id: {erg[0][0]}");
+				if(erg.Length > 0) {
+					id = erg[0][0];
+				}
+				sql.wpQuery(@$"MERGE INTO [d1minicfg] AS [TARGET]
+	USING (
+		VALUES (
+			{id}, '{ip}', '{status}', GETDATE()
+		)
+	) AS [SOURCE] (
+			[id_d1mini], [ip], [status], [datetime]
+	) ON
+		[TARGET].[id_d1mini] = [SOURCE].[id_d1mini]
+	WHEN MATCHED AND [TARGET].[status] != [SOURCE].[status] THEN
+		UPDATE SET
+			[TARGET].[ip] = [SOURCE].[ip],
+			[TARGET].[status2] = [TARGET].[status],
+			[TARGET].[datetime2] = [TARGET].[datetime],
+			[TARGET].[status] = [SOURCE].[status],
+			[TARGET].[datetime] = [SOURCE].[datetime]
+	WHEN NOT MATCHED THEN
+		INSERT (
+			[id_d1mini], [ip], [status], [datetime]
+		)
+		VALUES (
+			[SOURCE].[id_d1mini], [SOURCE].[ip], [SOURCE].[status], [SOURCE].[datetime]
+		);");
+			}
 		}
 		public static string getJsonNeoPixel(string ip) {
 			IPAddress _ip;
@@ -316,7 +350,7 @@ namespace WebAutomation.Helper {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
 				} catch(Exception ex) {
-					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}' ({url})");
 				}
 			} else {
 				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson NeoPixel Status IpError: '{ip}'");
@@ -629,22 +663,30 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		public static bool SetRFID(string mac, string RFID) {
-			bool returns = false;
+		public static string SetRFID(string RFID) {
+			string returns = "";
 			string[][] erg;
-			using(SQL sql = new SQL("get User RFID")) {
-				erg = sql.wpQuery(@$"SELECT [u].[name], [u].[lastname], [r].[description]
-					FROM [user] [u]
-					INNER JOIN [rfid] [r] ON [u].[id_user] = [r].[id_user]
-					WHERE [r].[chipid] = '{RFID}'");
-			}
-			if(erg.Length > 0) {
-				for(int i = 0; i < erg.Length; i++) {
-					wpDebug.Write(MethodBase.GetCurrentMethod(), $"Found RFID Chip: '{RFID}', {erg[i][1]}, {erg[i][0]} ({erg[i][2]})");
+			string id = "NULL";
+			try {
+				using(SQL sql = new SQL("get User RFID")) {
+					erg = sql.wpQuery(@$"SELECT TOP(1) [u].[name], [u].[lastname], [r].[id_rfid], [r].[description]
+						FROM [user] [u]
+						INNER JOIN [rfid] [r] ON [u].[id_user] = [r].[id_user]
+						WHERE [r].[chipid] = '{RFID}'");
 				}
-				returns = true;
-			} else {
-				wpDebug.Write(MethodBase.GetCurrentMethod(), $"Neuer RFID Chip: '{RFID}', kein User");
+				if(erg.Length > 0) {
+					wpDebug.Write(MethodBase.GetCurrentMethod(), $"Found RFID Chip: '{RFID}', {erg[0][1]}, {erg[0][0]} ({erg[0][3]})");
+					id = erg[0][2];
+					returns = $"\"user\":{{\"name\":\"{erg[0][1]}, {erg[0][0]}\",\"description\";\"{erg[0][3]}\",\"RFID\":\"{RFID}\"}}";
+				} else {
+					wpDebug.Write(MethodBase.GetCurrentMethod(), $"Neuer RFID Chip: '{RFID}', kein User");
+					returns = $"\"user\":{{\"name\":\"unknown\",\"RFID\":\"{RFID}\"}}";
+				}
+				using(SQL sql = new SQL("save Historical RFID Data")) {
+					sql.wpQuery($"INSERT INTO [rfidactivity] ([id_rfid], [chipid]) VALUES ({id}, {RFID})");
+				}
+			} catch(Exception ex) {
+				wpDebug.WriteError(MethodBase.GetCurrentMethod(), ex);
 			}
 			return returns;
 		}

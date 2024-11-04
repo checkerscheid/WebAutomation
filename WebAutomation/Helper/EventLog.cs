@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 138                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: EventLog.cs 136 2024-10-11 08:03:37Z                     $ #
+//# File-ID      : $Id:: EventLog.cs 138 2024-11-04 15:07:30Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -127,7 +127,7 @@ namespace WebAutomation.Helper {
 				if(i < obj.Length - 1) additional += ", ";
 			}
 			string newErrorString = ErrorString + "\r\n\r\n{2}";
-			Write(mb, EventLogEntryType.Error, newErrorString, ex.Message, ex.StackTrace, additional);
+			Write(mb, EventLogEntryType.Error, newErrorString, ex.Message, ex.StackTrace, ex.Source, additional);
 		}
 	}
 	public class wpDebug {

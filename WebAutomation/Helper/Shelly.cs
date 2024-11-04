@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 138                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 136 2024-10-11 08:03:37Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 138 2024-11-04 15:07:30Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -479,13 +479,16 @@ namespace WebAutomation.Helper {
 				}
 				using(SQL SQL = new SQL("Shellys Long Press D1Mini")) {
 					string[][] Query = SQL.wpQuery(@$"SELECT
-						[ip]
+						[ip], [compiledwith]
 						FROM [d1mini]
 						WHERE [id_restroom] = {this._room}");
 					WebClient webClient = new WebClient();
 					for(int id1mini = 0; id1mini < Query.Length; id1mini++) {
 						try {
-							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixelOff"));
+							if(Query[id1mini][1].Contains("NeoPixel"))
+								webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixelOff"));
+							if(Query[id1mini][1].Contains("CwWw"))
+								webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setCwWw?turn=0"));
 						} catch(Exception ex) {
 							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 139                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 136 2024-10-11 08:03:37Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 139 2024-11-21 13:05:39Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -30,6 +30,7 @@ namespace WebAutomation {
 		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
 	}
 	public class Datapoint {
+		private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
 		private int _id;
 		public int ID { get { return _id; } }
 		private int _idGroup;
@@ -103,17 +104,29 @@ namespace WebAutomation {
 		public void setValue(string value, string from) {
 			DateTime Now = DateTime.Now;
 			if(_value != value) {
-				_value = value;
-				_lastChange = Now;
-				_valueString = parseValueString();
-				Program.MainProg.lastchange = $"[{from}] '{_name}': {_valueString} ({_value})\r\n";
-				Program.MainProg.wpWebSockets.sendDatapoint(this);
-				if(_idTrend != null && Trends.Get((int)_idTrend).Intervall == 0)
-					Trends.Get((int)_idTrend).SetTrendValue();
-				if(_idAlarm != null)
-					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(wpDebug.debugTransferID)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
+				try {
+					_value = value;
+					_lastChange = Now;
+					_valueString = parseValueString();
+					Program.MainProg.lastchange = $"[{from}] '{_name}': {_valueString} ({_value})\r\n";
+					Program.MainProg.wpWebSockets.sendDatapoint(this);
+					if(_idTrend != null) {
+						Trend t = Trends.Get((int)_idTrend);
+						if(t != null && t.Intervall == 0) {
+							t.SetTrendValue();
+						}
+					}
+					if(_idAlarm != null) {
+						Alarm a = Alarms.Get((int)_idAlarm);
+						if(a != null) {
+							a.setAlarmValue();
+						}
+					}
+					if(wpDebug.debugTransferID)
+						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				}
 			}
 		}
 		public string parseValueString() {

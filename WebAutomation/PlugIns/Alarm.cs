@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 138                                                     $ #
+//# Revision     : $Rev:: 139                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 138 2024-11-04 15:07:30Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 139 2024-11-21 13:05:39Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -342,7 +342,7 @@ namespace WebAutomation.PlugIns {
 			Datapoint dp = Datapoints.Get(_iddp);
 			if (dp != null) {
 				string v = dp.Value;
-				if(v != "") {
+				if(v != null || v != "") {
 					DateTime Now = DateTime.Now;
 					string issep;
 					string mustsep;

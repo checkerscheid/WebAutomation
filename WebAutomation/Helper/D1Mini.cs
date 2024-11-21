@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 138                                                     $ #
+//# Revision     : $Rev:: 139                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 138 2024-11-04 15:07:30Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 139 2024-11-21 13:05:39Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
@@ -296,7 +296,7 @@ namespace WebAutomation.Helper {
 				try {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
-					saveStatus(_ip, returns);
+					//saveStatus(_ip, returns);
 				} catch(Exception ex) {
 					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 				}

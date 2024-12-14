@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 152                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Grp.cs 136 2024-10-11 08:03:37Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Grp.cs 152 2024-12-14 16:29:12Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using OPC.Common;

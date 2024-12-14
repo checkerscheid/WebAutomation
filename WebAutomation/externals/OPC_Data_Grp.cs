@@ -1381,7 +1381,7 @@ namespace OPC.Data {
 		/// </summary>
 		public void Dispose() {
 			if (!(ifEnum == null)) {
-				int rc = Marshal.ReleaseComObject(ifEnum);
+				int rc = Marshal.FinalReleaseComObject(ifEnum);
 				ifEnum = null;
 			}
 		}

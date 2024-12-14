@@ -142,12 +142,12 @@ namespace OPC.Common {
 		public void Dispose() {
 			ifEnum = null;
 			if (!(EnumObj == null)) {
-				int rc = Marshal.ReleaseComObject(EnumObj);
+				int rc = Marshal.FinalReleaseComObject(EnumObj);
 				EnumObj = null;
 			}
 			ifList = null;
 			if (!(OPCListObj == null)) {
-				int rc = Marshal.ReleaseComObject(OPCListObj);
+				int rc = Marshal.FinalReleaseComObject(OPCListObj);
 				OPCListObj = null;
 			}
 		}

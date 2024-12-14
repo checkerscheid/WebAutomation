@@ -196,7 +196,7 @@ namespace WebAutomation.externals {
 
 		public static void ReleaseServer(object server) {
 			if ((server != null) && server.GetType().IsCOMObject) {
-				Marshal.ReleaseComObject(server);
+				Marshal.FinalReleaseComObject(server);
 			}
 		}
 

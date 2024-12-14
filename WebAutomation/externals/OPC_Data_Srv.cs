@@ -214,7 +214,7 @@ namespace OPC.Data {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				} finally {
 					wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
-					int rc = Marshal.ReleaseComObject(shutdowncpoint);
+					int rc = Marshal.FinalReleaseComObject(shutdowncpoint);
 					shutdowncpoint = null;
 				}
 			}
@@ -226,7 +226,8 @@ namespace OPC.Data {
 			ifServer = null;
 			if (!(OPCserverObj == null)) {
 				wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
-				int rc = Marshal.ReleaseComObject(OPCserverObj);
+				if(this._name != "CoDeSys.OPC.02")
+					Interop.ReleaseServer(OPCserverObj);
 				OPCserverObj = null;
 			}
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Disconnected", this._name);

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 139                                                     $ #
+//# Revision     : $Rev:: 140                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 139 2024-11-21 13:05:39Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 140 2024-11-26 06:22:47Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -125,7 +125,7 @@ namespace WebAutomation {
 					if(wpDebug.debugTransferID)
 						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
 				} catch(Exception ex) {
-					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, _name, _value);
 				}
 			}
 		}

@@ -32,7 +32,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "152";
+		public const string subversion = "153";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>

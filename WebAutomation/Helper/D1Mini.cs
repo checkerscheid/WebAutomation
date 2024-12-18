@@ -286,6 +286,9 @@ namespace WebAutomation.Helper {
 			return returns.Remove(returns.Length - 1) + "}";
 		}
 		public static string getJsonStatus(string ip) {
+			return getJsonStatus(ip, false);
+		}
+		public static string getJsonStatus(string ip, bool saveStatus) {
 			IPAddress _ip;
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
@@ -296,7 +299,7 @@ namespace WebAutomation.Helper {
 				try {
 					WebClient webClient = new WebClient();
 					returns = webClient.DownloadString(new Uri(url));
-					//saveStatus(_ip, returns);
+					if(saveStatus) saveJsonStatus(_ip, returns);
 				} catch(Exception ex) {
 					wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 				}
@@ -305,7 +308,7 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		private static void saveStatus(IPAddress ip, string status) {
+		private static void saveJsonStatus(IPAddress ip, string status) {
 			using(SQL sql = new SQL("save status")) {
 				string id = "NULL";
 				string[][] erg = sql.wpQuery($"SELECT [id_d1mini] FROM [d1mini] WHERE [ip] = '{ip}'");

@@ -151,6 +151,7 @@ namespace WebAutomation.Helper {
 			public const string cGetBrowseMqtt = "getBrowseMqtt";
 			public const string cGetAllD1MiniSettings = "getAllD1MiniSettings";
 			public const string cGetD1MiniStatus = "getD1MiniStatus";
+			public const string cGetAndSaveD1MiniStatus = "getAndSaveD1MiniStatus";
 			public const string cGetD1MiniNeoPixelStatus = "getD1MiniNeoPixelStatus";
 			public const string cSetD1MiniCmd = "SetD1MiniCmd";
 			public const string cSetD1MiniUrlCmd = "SetD1MiniUrlCmd";
@@ -317,6 +318,9 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cGetD1MiniStatus:
 					returns = D1MiniServer.getJsonStatus(s_befehl[1]);
+					break;
+				case wpBefehl.cGetAndSaveD1MiniStatus:
+					returns = D1MiniServer.getJsonStatus(s_befehl[1], true);
 					break;
 				case wpBefehl.cGetD1MiniNeoPixelStatus:
 					returns = D1MiniServer.getJsonNeoPixel(s_befehl[1]);

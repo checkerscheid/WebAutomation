@@ -129,8 +129,10 @@ namespace WebAutomation.Helper {
 			OnlineTogglerWait = Ini.getInt("Shelly", "OnlineTogglerWait");
 		}
 		public static void Stop() {
-			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
-				kvp.Value.Stop();
+			if(_shellys != null) {
+				foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
+					kvp.Value.Stop();
+				}
 			}
 		}
 		public static string getAllStatus() {

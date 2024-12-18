@@ -681,20 +681,24 @@ namespace WebAutomation.PlugIns {
 				for(int ialarms = 0; ialarms < DBActiveAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBActiveAlarms[ialarms][0]);
 					int idDp = Int32.Parse(DBActiveAlarms[ialarms][1]);
-					Alarm TheAlarm = _alarmList[idAlarm];
-					if(TheAlarm != null) {
-						TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
-						TheAlarm.Gone = Alarm.Default;
-						TheAlarm.InAlarm = true;
-						TheAlarm.Quit = Alarm.Default;
-						TheAlarm.NeedQuit = false;
-						if(DBActiveAlarms[ialarms][3] != "") {
-							TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
-							TheAlarm.InAlarm = false;
-						}
-						if(DBActiveAlarms[ialarms][4] != "") {
-							TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
-							TheAlarm.NeedQuit = true;
+					if(_alarmList.ContainsKey(idAlarm)) {
+						Alarm TheAlarm = _alarmList[idAlarm];
+						try {
+							TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
+							TheAlarm.Gone = Alarm.Default;
+							TheAlarm.InAlarm = true;
+							TheAlarm.Quit = Alarm.Default;
+							TheAlarm.NeedQuit = false;
+							if(DBActiveAlarms[ialarms][3] != "") {
+								TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
+								TheAlarm.InAlarm = false;
+							}
+							if(DBActiveAlarms[ialarms][4] != "") {
+								TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
+								TheAlarm.NeedQuit = true;
+							}
+						} catch(Exception ex) {
+							_eventLog.WriteError(MethodBase.GetCurrentMethod(), ex, $"idAlarm: {idAlarm}");
 						}
 					}
 				}

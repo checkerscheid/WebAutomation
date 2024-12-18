@@ -143,8 +143,10 @@ namespace WebAutomation.Helper {
 		}
 		public static void Stop() {
 			stopSearch();
-			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				kvp.Value.Stop();
+			if(D1Minis != null) {
+				foreach(KeyValuePair<	string, D1MiniDevice> kvp in D1Minis) {
+					kvp.Value.Stop();
+				}
 			}
 		}
 		public static void ForceRenewValue() {

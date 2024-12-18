@@ -225,8 +225,10 @@ namespace WebAutomation.PlugIns {
 		public static void Stop() {
 			if(_threadCleanDB != null)
 				_threadCleanDB.Stop();
-			foreach(KeyValuePair<int, Trend> kvp in _trendList) {
-				kvp.Value.Stop();
+			if(_trendList != null) {
+				foreach(KeyValuePair<int, Trend> kvp in _trendList) {
+					kvp.Value.Stop();
+				}
 			}
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
 		}

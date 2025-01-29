@@ -16,16 +16,13 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using WebAutomation.PlugIns;
 
 namespace WebAutomation.Helper {
 	public static class D1MiniServer {
@@ -292,7 +289,7 @@ namespace WebAutomation.Helper {
 		}
 		public static string getJsonStatus(string ip, bool saveStatus) {
 			IPAddress _ip;
-			string returns = "S_ERROR";
+			string returns = new ret { erg = ret.ERROR }.ToString();
 			if(IPAddress.TryParse(ip, out _ip)) {
 				if(wpDebug.debugD1Mini)
 					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");

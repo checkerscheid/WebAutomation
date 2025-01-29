@@ -1158,29 +1158,29 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 				AlarmsGone,
 				AlarmsQuit);
 		}
-		class ret {
-			public const string OK = "S_OK";
-			public const string ERROR = "S_ERROR";
-			private string _erg = string.Empty;
-			public string erg {
-				get { return _erg; }
-				set { _erg = value; }
-			}
-			private string _message = string.Empty;
-			public string message {
-				get { return _message; }
-				set { _message = value; }
-			}
-			private string _trace = string.Empty;
-			public string trace {
-				get { return _trace; }
-				set { _trace = value; }
-			}
-			public override string ToString() {
-				string msg = (_message != string.Empty) ? $",\"message\":\"{_message}\"" : "";
-				string trc = (_trace != string.Empty) ? $",\"trace\":\"{_trace}\"" : "";
-				return $"{{\"erg\":\"{erg}\"{msg}{trc}}}";
-			}
+	}
+	public class ret {
+		public const string OK = "S_OK";
+		public const string ERROR = "S_ERROR";
+		private string _erg = string.Empty;
+		public string erg {
+			get { return _erg; }
+			set { _erg = value; }
+		}
+		private string _message = string.Empty;
+		public string message {
+			get { return _message; }
+			set { _message = value; }
+		}
+		private string _trace = string.Empty;
+		public string trace {
+			get { return _trace; }
+			set { _trace = value; }
+		}
+		public override string ToString() {
+			string msg = (_message != string.Empty) ? $",\"message\":\"{_message}\"" : "";
+			string trc = (_trace != string.Empty) ? $",\"trace\":\"{_trace}\"" : "";
+			return $"{{\"erg\":\"{erg}\"{msg}{trc}}}";
 		}
 	}
 }

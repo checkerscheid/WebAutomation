@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 136 2024-10-11 08:03:37Z                        $ #
+//# File-ID      : $Id:: Email.cs 165 2025-02-09 09:15:16Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -53,7 +54,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		private void init() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "EMail Client init");
-			eventLog = new Logger(wpEventLog.Mail);
+			eventLog = new Logger(wpLog.ESource.Mail);
 			mailMessage = new MailMessage();
 			reset();
 			string useSSL = Ini.get("Email", "useSSL");

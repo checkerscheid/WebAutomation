@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Router.cs 136 2024-10-11 08:03:37Z                       $ #
+//# File-ID      : $Id:: Router.cs 165 2025-02-09 09:15:16Z                       $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,7 +26,7 @@ namespace WebAutomation.PlugIns {
 		private static Logger eventLog;
 		private static Dictionary<int, List<int>> RouterItems = new Dictionary<int, List<int>>();
 		public static void AddRouter() {
-			eventLog = new Logger(wpEventLog.PlugInRouter);
+			eventLog = new Logger(wpLog.ESource.PlugInRouter);
 			using (SQL SQL = new SQL("Add Router")) {
 				string[][] DBRouter = SQL.wpQuery(@"SELECT [id_dp], [id_to] FROM [router]");
 				for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
@@ -52,7 +53,7 @@ namespace WebAutomation.PlugIns {
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geladen");
 		}
 		public static void UpdateRouter(int fromid) {
-			eventLog = new Logger(wpEventLog.PlugInRouter);
+			eventLog = new Logger(wpLog.ESource.PlugInRouter);
 			using (SQL SQL = new SQL("Update Router for Item")) {
 				string[][] DBRouter = SQL.wpQuery(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
 				if (DBRouter.Length == 0) {

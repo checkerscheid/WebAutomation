@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 136 2024-10-11 08:03:37Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 165 2025-02-09 09:15:16Z          $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -161,7 +162,7 @@ namespace WebAutomation {
 		public WebAutomationServer(string[] args) {
 			InitializeComponent();
 			wpHelp.Epsilon = wpHelp.getEpsilon();
-			wpEventLog.fill();
+			wpLog.fill();
 			string[] pVersion = Application.ProductVersion.Split('.');
 			this.toolStripStatusLabel1.Text = String.Format("{0} V {1}.{2} Build {3}, © {4}",
 				Application.ProductName,
@@ -174,7 +175,7 @@ namespace WebAutomation {
 			this.Text += " [Debug]";
 #endif
 			_isInit = false;
-			eventLog = new Logger(wpEventLog.WebAutomation);
+			eventLog = new Logger(wpLog.ESource.WebAutomation);
 
 			_wpWartung = false;
 			_wpStartMinimized = false;

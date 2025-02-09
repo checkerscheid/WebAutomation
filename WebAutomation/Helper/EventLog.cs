@@ -8,15 +8,17 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 138                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: EventLog.cs 138 2024-11-04 15:07:30Z                     $ #
+//# File-ID      : $Id:: EventLog.cs 165 2025-02-09 09:15:16Z                     $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Forms;
+using static FreakaZone.Libraries.wpEventLog.wpLog;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -41,19 +43,14 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		/// <param name="Source"></param>
-		public Logger(int Source) {
+		public Logger(ESource Source) {
 			try {
 				eventLog = new EventLog();
-				eventLog.Source = wpEventLog.getSrc(Source);
-				EventLogID = Source;
-				eventLog.Log = wpEventLog.LogName;
-				wpEventLog.exists[Source] = true;
+				eventLog.Source = Source.ToString();
+				EventLogID = (int)Source;
+				eventLog.Log = wpLog.LogName;
 			} catch(Exception) {
-				if(wpEventLog.exists[Source]) {
-					wpEventLog.exists[Source] = false;
-					MessageBox.Show(String.Format("Zugriff verweigert beim erstellen des wpEventLog '{0}'",
-						wpEventLog.getSrc(Source)));
-				}
+				MessageBox.Show($"Zugriff verweigert beim erstellen des wpEventLog '{Source}'");
 			}
 			if(!Int16.TryParse(Ini.get("Log", "Category"), out ProjectCategory)) {
 				ProjectCategory = 1001;
@@ -76,11 +73,9 @@ namespace WebAutomation.Helper {
 			if (Message.Length > MaxLength)
 				shortMessage = Message.Substring(0, MaxLength);
 			try {
-				if (wpEventLog.exists[EventLogID]) {
-					if (++EventCounter >= Int16.MaxValue) EventCounter = 0;
-					eventLog.WriteEntry(shortMessage, Type, EventCounter, ProjectCategory);
-					wpDebug.Write(mb, Message);
-				}
+				if (++EventCounter >= Int16.MaxValue) EventCounter = 0;
+				eventLog.WriteEntry(shortMessage, Type, EventCounter, ProjectCategory);
+				wpDebug.Write(mb, Message);
 			} catch(Exception ex) {
 				ex.ToString();
 			}

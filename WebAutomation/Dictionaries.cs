@@ -8,29 +8,28 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 140                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 140 2024-11-26 06:22:47Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 165 2025-02-09 09:15:16Z                 $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 
 namespace WebAutomation {
 	public class DatapointsCollection {
-		private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
+		private static Logger EventLog = new Logger(wpLog.ESource.WebAutomation);
 		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
 	}
 	public class Datapoint {
-		private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
+		private static Logger EventLog = new Logger(wpLog.ESource.WebAutomation);
 		private int _id;
 		public int ID { get { return _id; } }
 		private int _idGroup;
@@ -283,7 +282,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public class Dictionaries {
 			/// <summary>WebAutomationServer Event Log</summary>
-			private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
+			private static Logger EventLog = new Logger(wpLog.ESource.WebAutomation);
 			private static Dictionary<int, OPCItem> _items = new Dictionary<int, OPCItem>();
 			public static Dictionary<int, OPCItem> Items {
 				get { return _items; }

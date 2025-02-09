@@ -8,20 +8,19 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 137                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 137 2024-10-18 23:20:11Z                     $ #
+//# File-ID      : $Id:: Calendar.cs 165 2025-02-09 09:15:16Z                     $ #
 //#                                                                                 #
 //###################################################################################
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
 using WebAutomation.Helper;
+using FreakaZone.Libraries.wpHelper;
+using FreakaZone.Libraries.wpEventLog;
 
 namespace WebAutomation.PlugIns {
 	/// <summary>
@@ -40,7 +39,7 @@ namespace WebAutomation.PlugIns {
 		private Dictionary<string, vevent> events;
 		private Dictionary<string, c_rrule> times;
 		public Calendar(int _calid, int _opcid, string _name, bool _active) {
-			eventLog = new Logger(wpEventLog.PlugInCalendar);
+			eventLog = new Logger(wpLog.ESource.PlugInCalendar);
 			calid = _calid;
 			opcid = _opcid;
 			name = _name;
@@ -177,7 +176,7 @@ namespace WebAutomation.PlugIns {
 			private static int _nextReminderId;
 			private string _rRule;
 
-			private c_frequenz _freq;
+			private CalendarFrequenz _freq;
 
 			private int _intervall;
 			private bool _has_intervall = false;
@@ -217,7 +216,7 @@ namespace WebAutomation.PlugIns {
 					Dictionary<int, int> dtreminder, Dictionary<int, string> vreminder, Dictionary<int, int> sreminder,
 					string dtend, string vend, string send,
 					string rrule) {
-				_eventLog = new Logger(wpEventLog.PlugInCalendar);
+				_eventLog = new Logger(wpLog.ESource.PlugInCalendar);
 				_calId = calid;
 				_dpId = Int32.Parse(dpid);
 				_calName = calname;
@@ -261,7 +260,7 @@ namespace WebAutomation.PlugIns {
 				_renew.Elapsed += new System.Timers.ElapsedEventHandler(renew_elapsed);
 			}
 			public c_rrule(vevent _ev) {
-				_eventLog = new Logger(wpEventLog.PlugInCalendar);
+				_eventLog = new Logger(wpLog.ESource.PlugInCalendar);
 				_calId = _ev.Idcal;
 				_dpId = _ev.IdDp;
 				_calName = _ev.CalName;
@@ -456,7 +455,7 @@ namespace WebAutomation.PlugIns {
 					if(m.Groups.Count > 2) {
 						switch(m.Groups[1].Value.ToLower()) {
 							case "freq":
-								_freq = new c_frequenz(m.Groups[2].Value);
+								_freq = new CalendarFrequenz(m.Groups[2].Value);
 								if(wpDebug.debugCalendar)
 									wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found freq: {m.Groups[2].Value}");
 								break;
@@ -968,7 +967,7 @@ namespace WebAutomation.PlugIns {
 		private Logger eventLog;
 		public Calendars() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Calendars init");
-			eventLog = new Logger(wpEventLog.PlugInCalendar);
+			eventLog = new Logger(wpLog.ESource.PlugInCalendar);
 			using(SQL SQL = new SQL("Calendars")) {
 				string[][] DBCalendar = SQL.wpQuery("SELECT [id_calendar], [id_dp], [name], [active] FROM [calendar]");
 				int calint;

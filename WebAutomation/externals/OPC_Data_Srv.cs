@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 152                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Srv.cs 152 2024-12-14 16:29:12Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Srv.cs 165 2025-02-09 09:15:16Z                 $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using OPC.Common;
 using OPC.Data.Interface;
 using System;
@@ -147,7 +148,7 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public OpcServer(string name) {
-			eventLog = new Logger(wpEventLog.OPCDataServer);
+			eventLog = new Logger(wpLog.ESource.OPCDataServer);
 			State = ServerState.notconnected;
 			_name = name;
 		}

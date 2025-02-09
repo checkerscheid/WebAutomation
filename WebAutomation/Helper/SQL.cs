@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: SQL.cs 136 2024-10-11 08:03:37Z                          $ #
+//# File-ID      : $Id:: SQL.cs 165 2025-02-09 09:15:16Z                          $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Data.SqlClient;
 using System.Reflection;
@@ -54,7 +55,7 @@ namespace WebAutomation.Helper {
 		public SQL(string forwhat) {
 			_available = false;
 			_forwhat = forwhat;
-			eventLog = new Logger(wpEventLog.SQL);
+			eventLog = new Logger(wpLog.ESource.SQL);
 			try {
 				connection = new SqlConnection(String.Format(
 					"Server={0};Trusted_Connection=true;database={1}",

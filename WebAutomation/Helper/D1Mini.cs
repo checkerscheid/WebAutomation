@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 156                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 156 2025-01-29 18:34:20Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 165 2025-02-09 09:15:16Z                       $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -71,7 +72,7 @@ namespace WebAutomation.Helper {
 		}
 		public static void Init() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "D1 Mini Server Start");
-			eventLog = new Logger(wpEventLog.PlugInD1Mini);
+			eventLog = new Logger(wpLog.ESource.PlugInD1Mini);
 			D1Minis = new Dictionary<string, D1MiniDevice>();
 			D1MinisMac = new Dictionary<string, string>();
 			using(SQL SQL = new SQL("Select D1Minis")) {

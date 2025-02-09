@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 138                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 138 2024-11-04 15:07:30Z                         $ #
+//# File-ID      : $Id:: Rest.cs 165 2025-02-09 09:15:16Z                         $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -33,7 +34,7 @@ namespace WebAutomation.Helper {
 		public RestServer() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
 			_isFinished = false;
-			eventLog = new Logger(wpEventLog.Rest);
+			eventLog = new Logger(wpLog.ESource.Rest);
 			RestServerListener = new TcpListener(IPAddress.Any, Ini.getInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";

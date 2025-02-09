@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 136 2024-10-11 08:03:37Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 165 2025-02-09 09:15:16Z                    $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using OPC.Common;
 using OPC.Data;
 using OPC.Data.Interface;
@@ -86,7 +87,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			eventLog = new Logger(wpEventLog.OPC);
+			eventLog = new Logger(wpLog.ESource.OPC);
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "OPC Client init");
 				
 			TheServer = new Dictionary<int, PGAOPCServer>();
@@ -2108,7 +2109,7 @@ namespace WebAutomation.Helper {
 			private volatile bool _doStop;
 			private int _counter;
 			private int _maxCounter;
-			private static Logger eventLog = new Logger(wpEventLog.OPCDataServer);
+			private static Logger eventLog = new Logger(wpLog.ESource.OPCDataServer);
 			public CheckOpcServerState() {
 				_doStop = false;
 				_counter = 0;

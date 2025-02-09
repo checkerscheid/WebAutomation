@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 153                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 153 2024-12-18 14:41:55Z                        $ #
+//# File-ID      : $Id:: Trend.cs 165 2025-02-09 09:15:16Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -195,7 +196,7 @@ namespace WebAutomation.PlugIns {
 		/// </summary>
 		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
 		/// <summary></summary>
-		private static Logger _eventLog = new Logger(wpEventLog.PlugInTrend);
+		private static Logger _eventLog = new Logger(wpLog.ESource.PlugInTrend);
 		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {

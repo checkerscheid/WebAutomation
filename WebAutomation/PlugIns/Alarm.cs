@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 153                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 153 2024-12-18 14:41:55Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 165 2025-02-09 09:15:16Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -264,7 +265,7 @@ namespace WebAutomation.PlugIns {
 		/// <param name="dpname"></param>
 		/// <param name="sec"></param>
 		public Alarm(int idalarm, int dpid, string dpname, int sec) {
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(wpLog.ESource.PlugInAlarm);
 			init(idalarm, dpid, dpname, sec);
 		}
 		/// <summary>
@@ -599,7 +600,7 @@ namespace WebAutomation.PlugIns {
 		/// </summary>
 		public static void Init() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(wpLog.ESource.PlugInAlarm);
 			FillAlarmGroups();
 			using (SQL SQL = new SQL("Init Alarms")) {
 				string[][] DBAlarms = SQL.wpQuery(@"

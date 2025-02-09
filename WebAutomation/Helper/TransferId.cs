@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: TransferId.cs 136 2024-10-11 08:03:37Z                   $ #
+//# File-ID      : $Id:: TransferId.cs 165 2025-02-09 09:15:16Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,7 +24,7 @@ using System.Windows.Forms;
 namespace WebAutomation.Helper {
 	class TransferId {
 		/// <summary>WebAutomationServer Event Log</summary>
-		private static Logger eventLog = new Logger(wpEventLog.TransferId);
+		private static Logger eventLog = new Logger(wpLog.ESource.TransferId);
 		/// <summary>Transfer Grund: OpcRouter</summary>
 		public const int TransferOpcRouter = 1;
 		/// <summary>Transfer Grund: Watchdog</summary>
@@ -225,7 +226,7 @@ namespace WebAutomation.Helper {
 				this.AutoReset = false;
 				this.Elapsed += new System.Timers.ElapsedEventHandler(ttaid_Elapsed);
 				this.Enabled = true;
-				eventLog = new Logger(wpEventLog.TransferId);
+				eventLog = new Logger(wpLog.ESource.TransferId);
 			}
 			private void ttaid_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 				string reason = "unbekannt";

@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 156                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 156 2025-01-29 18:34:20Z                      $ #
+//# File-ID      : $Id:: Program.cs 165 2025-02-09 09:15:16Z                      $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpLicense;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -32,7 +33,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "153";
+		public const string subversion = "156";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>

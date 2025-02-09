@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 152                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Grp.cs 152 2024-12-14 16:29:12Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Grp.cs 165 2025-02-09 09:15:16Z                 $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using OPC.Common;
 using OPC.Data.Interface;
 using System;
@@ -343,7 +344,7 @@ namespace OPC.Data {
 		/// <param name="setActive"></param>
 		/// <param name="requestedUpdateRate"></param>
 		internal OpcGroup(ref IOPCServer ifServerLink, bool isPublic, string groupName, bool setActive, int requestedUpdateRate) {
-			EventLog = new Logger(wpEventLog.OPCDataGroup);
+			EventLog = new Logger(wpLog.ESource.OPCDataGroup);
 			ifServer = ifServerLink;
 
 			state.Name = groupName;

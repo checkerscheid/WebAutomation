@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 136 2024-10-11 08:03:37Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 165 2025-02-09 09:15:16Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
@@ -41,7 +42,7 @@ namespace WebAutomation.Helper {
 			string name = Ini.get("Websockets", "Name");
 			int port = Ini.getInt("Websockets", "Port");
 			try {
-				eventLog = new Logger(wpEventLog.WebSockets);
+				eventLog = new Logger(wpLog.ESource.WebSockets);
 
 				WatsonClients = new Dictionary<Guid, wpTcpClient>();
 				ws = new WatsonWsServer(name, port, false);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreakaZone.Libraries.wpEventLog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -68,7 +69,7 @@ namespace WebAutomation.Helper {
 			if(group == "Log") {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
-				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
+				using(Logger INILog = new Logger(wpLog.ESource.WebAutomation)) {
 					INILog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}
@@ -89,7 +90,7 @@ namespace WebAutomation.Helper {
 			if(group == "Log") {
 				//MessageBox.Show(String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 			} else {
-				using(Logger INILog = new Logger(wpEventLog.WebAutomation)) {
+				using(Logger INILog = new Logger(wpLog.ESource.WebAutomation)) {
 					INILog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, String.Format("Fehlender Eintrag '{1}' in Gruppe '{0}'", group, key));
 				}
 			}

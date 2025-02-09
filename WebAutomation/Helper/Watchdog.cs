@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Watchdog.cs 136 2024-10-11 08:03:37Z                     $ #
+//# File-ID      : $Id:: Watchdog.cs 165 2025-02-09 09:15:16Z                     $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,7 +29,7 @@ namespace WebAutomation.Helper {
 		private int watchdogByte;
 		private int maxWatchdogByte;
 		public Watchdog() {
-			eventLog = new Logger(wpEventLog.PlugInWatchdog);
+			eventLog = new Logger(wpLog.ESource.PlugInWatchdog);
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Watchdog init");
 			int watchdogVerz;
 			if (Int32.TryParse(Ini.get("Watchdog", "Verz"), out watchdogVerz)) {
@@ -117,7 +118,7 @@ namespace WebAutomation.Helper {
 		}
 		public delegate void ServiceStatusChangedEventHandler(ServiceStatusChangedEventArgs e);
 		public wpServiceStatus(string servicename) {
-			eventLog = new Logger(wpEventLog.PlugInServiceStatus);
+			eventLog = new Logger(wpLog.ESource.PlugInServiceStatus);
 			this._serviceName = servicename;
 			if (_serviceName != "" && checkServiceInstalled()) {
 				serviceTimer = new Timer(Timer_Tick, _serviceName, 0, 500);
@@ -192,7 +193,7 @@ namespace WebAutomation.Helper {
 		}
 
 		public wpSystemStatus() {
-			eventLog = new Logger(wpEventLog.PlugInServiceStatus);
+			eventLog = new Logger(wpLog.ESource.PlugInServiceStatus);
 			ramCounter = new PerformanceCounter("Memory", "Available MBytes");
 			cpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName);
 

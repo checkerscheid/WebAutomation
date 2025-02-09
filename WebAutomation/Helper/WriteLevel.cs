@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WriteLevel.cs 136 2024-10-11 08:03:37Z                   $ #
+//# File-ID      : $Id:: WriteLevel.cs 165 2025-02-09 09:15:16Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Reflection;
 /**
@@ -31,7 +32,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		/// <param name="_Me"></param>
 		public static void AddWriteLevel() {
-			eventLog = new Logger(wpEventLog.PlugInWriteLevel);
+			eventLog = new Logger(wpLog.ESource.PlugInWriteLevel);
 			using (SQL SQL = new SQL("Add Write Level")) {
 				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
 					[dp].[id_dp],

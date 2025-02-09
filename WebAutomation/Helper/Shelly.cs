@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 153                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 153 2024-12-18 14:41:55Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 165 2025-02-09 09:15:16Z                       $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
@@ -67,7 +68,7 @@ namespace WebAutomation.Helper {
 		}
 		public static void Init() {
 			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Init");
-			eventLog = new Logger(wpEventLog.PlugInShelly);
+			eventLog = new Logger(wpLog.ESource.PlugInShelly);
 			_shellys = new Dictionary<string, ShellyDeviceHelper>();
 			_ForceMqttUpdateAvailable = new Dictionary<string, ShellyDeviceHelper>();
 			using(SQL SQL = new SQL("Select Shellys")) {

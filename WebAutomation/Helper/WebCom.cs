@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 156                                                     $ #
+//# Revision     : $Rev:: 165                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 156 2025-01-29 18:34:20Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 165 2025-02-09 09:15:16Z                       $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -62,7 +63,7 @@ namespace WebAutomation.Helper {
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(wpEventLog.WEBcom);
+			eventLog = new Logger(wpLog.ESource.WEBcom);
 			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
@@ -716,8 +717,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cReadEvent:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param != null) returns = wpEventLog.readLog(param[0]);
-						else returns = wpEventLog.readLog();
+						if (param != null) returns = wpLog.readLog(param[0]);
+						else returns = wpLog.readLog();
 					} catch (Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);

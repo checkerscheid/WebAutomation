@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 170                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 165 2025-02-09 09:15:16Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 170 2025-02-11 08:50:05Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -311,7 +311,7 @@ namespace WebAutomation.Helper {
 			//TheServer[ServerID].PGAname = ServerName;
 			TheServer[ServerID].Active = active;
 			// opc connect
-			if (TheServer[ServerID].Active) {
+			if (TheServer[ServerID] != null && TheServer[ServerID].Active) {
 				TheServerConnect(ServerID, progid, clsid, externServer);
 			}
 		}
@@ -384,7 +384,7 @@ namespace WebAutomation.Helper {
 			out string GroupLog, out string GroupErr) {
 			GroupLog = "";
 			GroupErr = "";
-			if (TheServer[ServerID].Active) {
+			if (TheServer[ServerID] != null && TheServer[ServerID].Active) {
 				SERVERSTATUS RunningTest = null;
 				TheServer[ServerID].GetStatus(out RunningTest);
 				if (RunningTest != null && RunningTest.eServerState == OPCSERVERSTATE.OPC_STATUS_RUNNING) {
@@ -1168,7 +1168,9 @@ namespace WebAutomation.Helper {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), "Write (TAID-{0}): Item '{1}': old: '{2}', new: '{3}'",
 							taid, Item.OpcItemName, Item.Value, value);
 					}
-					if (TheGroup[Item.Server][Item.Group].Active) {
+					if (TheGroup[Item.Server] != null &&
+						TheGroup[Item.Server][Item.Group] != null &&
+						TheGroup[Item.Server][Item.Group].Active) {
 						if (lockopc.WaitOne(locktimeout)) {
 							try {
 								if (!TheGroup[Item.Server][Item.Group].Write(
@@ -1289,7 +1291,9 @@ namespace WebAutomation.Helper {
 								eventLog.Write(MethodInfo.GetCurrentMethod(), "setValue (TAID-{0}): {1}", taid, log[_Server.Key][_Group.Key]);
 							}
 						}
-						if (TheGroup[_Server.Key][_Group.Key].Active) {
+						if (TheGroup[_Server.Key] != null &&
+							TheGroup[_Server.Key][_Group.Key] != null &&
+							TheGroup[_Server.Key][_Group.Key].Active) {
 							if (lockopc.WaitOne(locktimeout)) {
 								try {
 									if (!TheGroup[_Server.Key][_Group.Key].Write(HSrvToWrite, ValToWrite,

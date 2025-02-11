@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 170                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: EventLog.cs 165 2025-02-09 09:15:16Z                     $ #
+//# File-ID      : $Id:: EventLog.cs 170 2025-02-11 08:50:05Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -324,14 +324,14 @@ namespace WebAutomation.Helper {
 		//	wpDebug.Write(String.Format(msg, args));
 		//}
 		public static void Write(MethodBase mb, string msg) {
-			Debug.AutoFlush = true;
+			Trace.AutoFlush = true;
 			int l = 25;
 			String n = mb.Name;
 			if(n.Length > l) {
 				n = n.Substring(n.Length - l, l);
 			}
 			string dmsg = String.Format("{0:dd.MM.yy HH:mm:ss.fff} [{1}] - {2}", DateTime.Now, n.PadRight(l), msg);
-			Debug.WriteLine(dmsg);
+			Trace.WriteLine(dmsg);
 			if(Program.MainProg != null)
 				Program.MainProg.Message = dmsg;
 		}

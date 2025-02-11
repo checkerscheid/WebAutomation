@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 170                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 165 2025-02-09 09:15:16Z                      $ #
+//# File-ID      : $Id:: Program.cs 170 2025-02-11 08:50:05Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpLicense;
@@ -33,7 +33,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "156";
+		public const string subversion = "165";
 		private static TextWriterTraceListener trtl;
 		private static System.Timers.Timer tlog;
 		/// <summary>
@@ -98,11 +98,11 @@ namespace WebAutomation {
 		}
 
 		private static void renewLog(object sender, System.Timers.ElapsedEventArgs e) {
-			Debug.Listeners.Remove(trtl);
+			Trace.Listeners.Remove(trtl);
 			if (!Directory.Exists("Log")) Directory.CreateDirectory("Log");
 			DateTime now = DateTime.Now;
 			trtl = new TextWriterTraceListener(String.Format("Log\\{0}_{1:yyyy_MM_dd}.log", Application.ProductName, now));
-			Debug.Listeners.Add(trtl);
+			Trace.Listeners.Add(trtl);
 
 			DateTime today = new DateTime(now.Year, now.Month, now.Day);
 			DateTime tonight = today.AddDays(1).AddSeconds(1);

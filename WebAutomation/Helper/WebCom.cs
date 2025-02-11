@@ -8,12 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 170                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 165 2025-02-09 09:15:16Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 170 2025-02-11 08:50:05Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSamsungRemote;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -162,6 +163,8 @@ namespace WebAutomation.Helper {
 			public const string cGetD1MiniServer = "GetD1MiniServer";
 			public const string cSetD1MiniServer = "SetD1MiniServer";
 			public const string cGetShellyStatus = "GetShellyStatus";
+
+			public const string cRemoteControl = "RemoteControl";
 
 			public const string cReadItem = "ReadItem";
 			public const string cReadEvent = "ReadEvent";
@@ -370,6 +373,17 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cGetShellyStatus:
 					ShellyServer.getAllStatus();
 					returns = new ret { erg = ret.OK }.ToString();
+					break;
+				case wpBefehl.cRemoteControl:
+					param = wpBefehl.getParam(s_befehl[1]);
+					Tvs tvs = new Tvs();
+					Tv tv = tvs.Get(param[0]);
+					TVParams tvp = new TVParams(
+						einaus: param[1],
+						tvbutton: param[2],
+						dienst: param[3],
+						richtung: param[4]);
+					returns = new ret { erg = ret.OK, message = tv.Set(tvp) }.ToString();
 					break;
 				case wpBefehl.cReadItem:
 					param = wpBefehl.getParam(s_befehl[1]);

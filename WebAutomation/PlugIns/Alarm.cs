@@ -8,11 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 153                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 153 2024-12-18 14:41:55Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 171 2025-02-13 12:28:06Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -264,7 +266,7 @@ namespace WebAutomation.PlugIns {
 		/// <param name="dpname"></param>
 		/// <param name="sec"></param>
 		public Alarm(int idalarm, int dpid, string dpname, int sec) {
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			init(idalarm, dpid, dpname, sec);
 		}
 		/// <summary>
@@ -514,21 +516,21 @@ namespace WebAutomation.PlugIns {
 				_quit = Now;
 				_needquit = true;
 				sqlautoquit = String.Format("'{0}'",
-					Now.ToString(SQL.DateTimeFormat));
+					Now.ToString(Database.DateTimeFormat));
 				sqlautoquitfrom = "'wpSystem'";
 			} else {
 				_needquit = false;
 				_quit = Alarm.Default;
 			}
-			using (SQL SQL = new SQL("Alarm Come in Historic")) {
-				SQL.wpNonResponse(
+			using (Database Sql = new Database("Alarm Come in Historic")) {
+				Sql.wpNonResponse(
 					"INSERT INTO [alarmhistoric] ([id_alarm], [come], [quit], [quitfrom], [text]) " +
 					"VALUES ({0}, '{1}', {2}, {3}, '{4}')",
 					_idalarm,
-					Now.ToString(SQL.DateTimeFormat),
+					Now.ToString(Database.DateTimeFormat),
 					sqlautoquit, sqlautoquitfrom, this.Alarmtext);
 			}
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 			Program.MainProg.AlarmToMail(this);
 		}
 		/// <summary>
@@ -539,13 +541,13 @@ namespace WebAutomation.PlugIns {
 			_alarmupdate = Now;
 			_gone = Now;
 			_inalarm = false;
-			using (SQL SQL = new SQL("Alarm Gone in Historic")) {
-				SQL.wpNonResponse(
+			using (Database Sql = new Database("Alarm Gone in Historic")) {
+				Sql.wpNonResponse(
 					"UPDATE [alarmhistoric] SET [gone] = '{0}'  WHERE [id_alarm] = {1} AND [gone] IS NULL",
-					Now.ToString(SQL.DateTimeFormat),
+					Now.ToString(Database.DateTimeFormat),
 					_idalarm);
 			}
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 		}
 		public void UpdateDelay(int sec) {
 			TimerStop();
@@ -598,11 +600,11 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		public static void Init() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
+			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			FillAlarmGroups();
-			using (SQL SQL = new SQL("Init Alarms")) {
-				string[][] DBAlarms = SQL.wpQuery(@"
+			using (Database Sql = new Database("Init Alarms")) {
+				string[][] DBAlarms = Sql.wpQuery(@"
 				SELECT
 					[a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
@@ -640,8 +642,8 @@ namespace WebAutomation.PlugIns {
 					} else {
 						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], 0);
 					}
-					int? emailCounter = SQL.convertNumeric(DBAlarms[ialarms][12]);
-					int? emailMinutes = SQL.convertNumeric(DBAlarms[ialarms][13]);
+					int? emailCounter = Database.convertNumeric(DBAlarms[ialarms][12]);
+					int? emailMinutes = Database.convertNumeric(DBAlarms[ialarms][13]);
 					TheAlarm.Alarmtext = DBAlarms[ialarms][1];
 					TheAlarm.Alarmlink = DBAlarms[ialarms][2];
 					TheAlarm.Alarmtype = DBAlarms[ialarms][3];
@@ -666,8 +668,8 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 
-			using(SQL SQL = new SQL("Add Aktive Alarms")) {
-				string[][] DBActiveAlarms = SQL.wpQuery(@"
+			using(Database Sql = new Database("Add Aktive Alarms")) {
+				string[][] DBActiveAlarms = Sql.wpQuery(@"
 			SELECT 
 				[t].[id_alarm], [t].[id_dp], [t].[come], [t].[gone], [t].[quit]
 			FROM (
@@ -732,8 +734,8 @@ namespace WebAutomation.PlugIns {
 			}
 		}
 		public static string FillAlarmGroups() {
-			using(SQL SQL = new SQL("Fill AlarmGroups")) {
-				string[][] DBAlarmGroups = SQL.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
+			using(Database Sql = new Database("Fill AlarmGroups")) {
+				string[][] DBAlarmGroups = Sql.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
 					[key] = 'usealarmgroup1' OR
 					[key] = 'usealarmgroup2' OR
 					[key] = 'usealarmgroup3' OR
@@ -758,40 +760,40 @@ namespace WebAutomation.PlugIns {
 					UseAlarmGroup5 = DBAlarmGroups[9][1] == "True";
 				}
 			}
-			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm1Member = SQL.wpQuery(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm1Member = Sql.wpQuery(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
 				for(int ialarms = 0; ialarms < DBAlarm1Member.Length; ialarms++) {
 					if(!_alarmgroups1member.ContainsKey(Int32.Parse(DBAlarm1Member[ialarms][0]))) {
 						_alarmgroups1member.Add(Int32.Parse(DBAlarm1Member[ialarms][0]), DBAlarm1Member[ialarms][1]);
 					}
 				}
 			}
-			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm2Member = SQL.wpQuery(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm2Member = Sql.wpQuery(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
 				for(int ialarms = 0; ialarms < DBAlarm2Member.Length; ialarms++) {
 					if(!_alarmgroups2member.ContainsKey(Int32.Parse(DBAlarm2Member[ialarms][0]))) {
 						_alarmgroups2member.Add(Int32.Parse(DBAlarm2Member[ialarms][0]), DBAlarm2Member[ialarms][1]);
 					}
 				}
 			}
-			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm3Member = SQL.wpQuery(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm3Member = Sql.wpQuery(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
 				for(int ialarms = 0; ialarms < DBAlarm3Member.Length; ialarms++) {
 					if(!_alarmgroups3member.ContainsKey(Int32.Parse(DBAlarm3Member[ialarms][0]))) {
 						_alarmgroups3member.Add(Int32.Parse(DBAlarm3Member[ialarms][0]), DBAlarm3Member[ialarms][1]);
 					}
 				}
 			}
-			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm4Member = SQL.wpQuery(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm4Member = Sql.wpQuery(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
 				for(int ialarms = 0; ialarms < DBAlarm4Member.Length; ialarms++) {
 					if(!_alarmgroups4member.ContainsKey(Int32.Parse(DBAlarm4Member[ialarms][0]))) {
 						_alarmgroups4member.Add(Int32.Parse(DBAlarm4Member[ialarms][0]), DBAlarm4Member[ialarms][1]);
 					}
 				}
 			}
-			using(SQL SQL = new SQL("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm5Member = SQL.wpQuery(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm5Member = Sql.wpQuery(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
 				for(int ialarms = 0; ialarms < DBAlarm5Member.Length; ialarms++) {
 					if(!_alarmgroups5member.ContainsKey(Int32.Parse(DBAlarm5Member[ialarms][0]))) {
 						_alarmgroups5member.Add(Int32.Parse(DBAlarm5Member[ialarms][0]), DBAlarm5Member[ialarms][1]);

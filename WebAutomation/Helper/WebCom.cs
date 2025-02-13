@@ -8,15 +8,19 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 156                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 156 2025-01-29 18:34:20Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 171 2025-02-13 12:28:06Z                       $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpCommen;
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSamsungRemote;
+using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -26,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WebAutomation.PlugIns;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -58,15 +63,15 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "WebCom init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom init");
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(wpEventLog.WEBcom);
-			WebComListener = new TcpListener(IPAddress.Any, Ini.getInt("TCP", "Port"));
+			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.WEBcom);
+			WebComListener = new TcpListener(IPAddress.Any, IniFile.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", Ini.getInt("TCP", "Port"));
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", IniFile.getInt("TCP", "Port"));
 			WebComServer.Start();
 		}
 		/// <summary>
@@ -161,6 +166,8 @@ namespace WebAutomation.Helper {
 			public const string cGetD1MiniServer = "GetD1MiniServer";
 			public const string cSetD1MiniServer = "SetD1MiniServer";
 			public const string cGetShellyStatus = "GetShellyStatus";
+
+			public const string cRemoteControl = "RemoteControl";
 
 			public const string cReadItem = "ReadItem";
 			public const string cReadEvent = "ReadEvent";
@@ -369,6 +376,18 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cGetShellyStatus:
 					ShellyServer.getAllStatus();
 					returns = new ret { erg = ret.OK }.ToString();
+					break;
+				case wpBefehl.cRemoteControl:
+					param = wpBefehl.getParam(s_befehl[1]);
+					Tvs tvs = new Tvs();
+					Tv tv = tvs.Get(param[0]);
+					TVParams tvp = new TVParams(
+						einaus: param[1],
+						tvbutton: param[2],
+						dienst: param[3],
+						richtung: param[4]);
+					Debug.Write(MethodBase.GetCurrentMethod(), $"RemoteControl: {tvp.ToString()}");
+					returns = new ret { erg = ret.OK, message = tv.Set(tvp) }.ToString();
 					break;
 				case wpBefehl.cReadItem:
 					param = wpBefehl.getParam(s_befehl[1]);
@@ -587,11 +606,11 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cDeleteAlarm:
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
-						using (SQL SQL = new SQL("Delete Alarm")) {
+						using (Database Sql = new Database("Delete Alarm")) {
 							Datapoint AlarmWeg = Datapoints.Get(outint);
 							Alarms.RemoveAlarm(AlarmWeg.idAlarm);
 							Datapoints.Get(outint).idAlarm = null;
-							SQL.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+							Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 						}
 					}
 					returns = new ret { erg = ret.OK }.ToString();
@@ -600,11 +619,11 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
-							using (SQL SQL = new SQL("Delete Alarm")) {
+							using (Database Sql = new Database("Delete Alarm")) {
 								Datapoint AlarmWeg = Datapoints.Get(outint);
 								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
 								Datapoints.Get(outint).idAlarm = null;
-								SQL.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+								Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 							}
 						}
 					}
@@ -716,8 +735,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cReadEvent:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param != null) returns = wpEventLog.readLog(param[0]);
-						else returns = wpEventLog.readLog();
+						if (param != null) returns = FreakaZone.Libraries.wpEventLog.Logger.readLog(param[0]);
+						else returns = FreakaZone.Libraries.wpEventLog.Logger.readLog();
 					} catch (Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -726,10 +745,10 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cReloadSettings:
 					try {
-						Ini.read();
+						IniFile.read();
 						finished();
 						init();
-						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Reload Settings");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Reload Settings");
 						returns = new ret { erg = ret.OK }.ToString();
 					} catch (Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
@@ -739,22 +758,22 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cChangeWartung:
 					Program.MainProg.wpWartung = !Program.MainProg.wpWartung;
 					if(Program.MainProg.wpWartung)
-						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Wartung wurde aktiviert");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Wartung wurde aktiviert");
 					else
 						eventLog.Write(MethodInfo.GetCurrentMethod(), "Wartung deaktiviert");
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cGetDebug:
-					returns = wpDebug.getDebugJson();
+					returns = Debug.getDebugJson();
 					break;
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = wpDebug.changeDebug(param);
+					returns = Debug.changeDebug(param);
 					break;
 				case wpBefehl.cHistoryCleaner:
 					await Task.Run(() => {
-						using(SQL s = new SQL("HistoryCleaner")) {
-							s.HistoryCleaner();
+						using(Database Sql = new Database("HistoryCleaner")) {
+							Sql.HistoryCleaner();
 						}
 					});
 					returns = new ret { erg = ret.OK }.ToString();
@@ -857,8 +876,8 @@ namespace WebAutomation.Helper {
 			string[][] erg;
 			string returns = "";
 			user = user.ToLower();
-			using (SQL sql = new SQL("get User Level")) {
-				erg = sql.wpQuery(@"SELECT TOP 1 [g].[order]
+			using (Database Sql = new Database("get User Level")) {
+				erg = Sql.wpQuery(@"SELECT TOP 1 [g].[order]
 					FROM [user] [u]
 					INNER JOIN [usergroup] [g] ON [u].[id_usergroup] = [g].[id_usergroup]
 					WHERE [login] = '{0}'", user);
@@ -877,7 +896,7 @@ namespace WebAutomation.Helper {
 						values.Add(kvp.Value);
 						log += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.OpcItemName, DateTime.Now, p.Value, kvp.Value);
 					} else {
-						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "keine Berechtigung zum schreiben");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "keine Berechtigung zum schreiben");
 					}
 				}
 				if (ids.Count > 0) {
@@ -885,8 +904,8 @@ namespace WebAutomation.Helper {
 						values.ToArray(), TransferId.TransferScene);
 				}
 				if (log.Length > 0) {
-					using (SQL sql = new SQL("write Scene log")) {
-						sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", log.Substring(0, log.Length - 1));
+					using (Database Sql = new Database("write Scene log")) {
+						Sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", log.Substring(0, log.Length - 1));
 					}
 				}
 			}
@@ -899,10 +918,10 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		private string UpdateAlarm(int idAlarm) {
 			try {
-				using(SQL SQL = new SQL("Update Alarm")) {
+				using(Database Sql = new Database("Update Alarm")) {
 					List<int> Hsrv = new List<int>();
 
-					string[][] DBAlarms = SQL.wpQuery(@"
+					string[][] DBAlarms = Sql.wpQuery(@"
 						SELECT
 							[dp].[id_dp], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 							[g].[name], [dp].[name], [c].[condition], [a].[min], [a].[max], [a].[delay],
@@ -940,13 +959,13 @@ namespace WebAutomation.Helper {
 						TheAlarm.AlarmUpdate = DateTime.Now;
 						eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("Alarm update: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
 					} else {
-						eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 							String.Format("Alarm wurde nicht gefunden: {0} ({1})", DBAlarms[0][1], DBAlarms[0][0]));
 					}
 				}
 				return new ret { erg = ret.OK }.ToString();
 			} catch(Exception ex) {
-				eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error,
+				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 					String.Format("{0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 				return new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 			}
@@ -1028,11 +1047,11 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			TheAlarm.QuitFrom = user;
 			TheAlarm.QuitText = quittext;
 			TheAlarm.NeedQuit = true;
-			using(SQL SQL = new SQL("Quit Alarm")) {
-				SQL.wpNonResponse(@"UPDATE [alarmhistoric]
+			using(Database Sql = new Database("Quit Alarm")) {
+				Sql.wpNonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = ""{0}"", [quitfrom] = ""{1}"", [quittext] = ""{2}""
 					WHERE [id_alarm] = {3} AND [quit] IS NULL",
-					DateTimeNow.ToString(SQL.DateTimeFormat),
+					DateTimeNow.ToString(Database.DateTimeFormat),
 					user,
 					quittext,
 					TheAlarm.IdAlarm);
@@ -1064,11 +1083,11 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 					toinsert += "[id_alarm] = " + alarmid + " OR ";
 				}
 			}
-			using (SQL SQL = new SQL("Quit Alarm")) {
-				SQL.wpNonResponse(@"UPDATE [alarmhistoric]
+			using (Database Sql = new Database("Quit Alarm")) {
+				Sql.wpNonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = '{0}', [quitfrom] = '{1}', [quittext] = '{2}'
 					WHERE ({3}) AND [quit] IS NULL",
-					DateTimeNow.ToString(SQL.DateTimeFormat),
+					DateTimeNow.ToString(Database.DateTimeFormat),
 					param[0],
 					param[param.Length - 1],
 					toinsert.Substring(0, toinsert.Length - 4));
@@ -1122,10 +1141,10 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 						Datapoint TheItem = Datapoints.Get(DPid);
 						returns += $"{{{param[i]}={{Value=\"{TheItem.Value}\"}}{{TimeStamp={TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}}}}}";
 					} catch(Exception ex) {
-						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex, DPid.ToString());
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, DPid.ToString());
 					}
 				} else {
-					eventLog.Write(MethodInfo.GetCurrentMethod(),EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(),ELogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));
 				}
 			}

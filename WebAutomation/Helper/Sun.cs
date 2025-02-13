@@ -8,11 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 136 2024-10-11 08:03:37Z                          $ #
+//# File-ID      : $Id:: Sun.cs 171 2025-02-13 12:28:06Z                          $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Net;
@@ -32,19 +35,19 @@ namespace WebAutomation.Helper {
 		private System.Timers.Timer SunriseTimer;
 		private System.Timers.Timer SunsetTimer;
 		public Sun() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
 			int testSunIsShining, testSunRising, testSunsetting;
-			if(Int32.TryParse(Ini.get("Projekt", "SunIsShining"), out testSunIsShining)) {
+			if(Int32.TryParse(IniFile.get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
 			}
-			if(Int32.TryParse(Ini.get("Projekt", "SunRise"), out testSunRising)) {
+			if(Int32.TryParse(IniFile.get("Projekt", "SunRise"), out testSunRising)) {
 				SunRiseId = testSunRising;
 			}
-			if(Int32.TryParse(Ini.get("Projekt", "SunSet"), out testSunsetting)) {
+			if(Int32.TryParse(IniFile.get("Projekt", "SunSet"), out testSunsetting)) {
 				SunSetId = testSunsetting;
 			}
 			_ = StartSunriseSunsetTimer();
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
 		}
 		private async Task StartSunriseSunsetTimer() {
 			await GetSunsetSunrise();
@@ -71,7 +74,7 @@ namespace WebAutomation.Helper {
 			}
 			setNewSunriseSunsetTimer.Interval = firstStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "setNewSunriseSunsetTimer gestartet - wird ausgelöst in {0}", firstStart);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "setNewSunriseSunsetTimer gestartet - wird ausgelöst in {0}", firstStart);
 		}
 
 		private async void SunriseSunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
@@ -80,12 +83,12 @@ namespace WebAutomation.Helper {
 			TimeSpan nextStart = new DateTime(tomorrow.Year, tomorrow.Month, tomorrow.Day, 1, 0, 0) - Now;
 			setNewSunriseSunsetTimer.Interval = nextStart.TotalMilliseconds;
 			setNewSunriseSunsetTimer.Enabled = true;
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "SunriseSunset Timer gestartet - wird ausgelöst in {0}", nextStart);
 			await GetSunsetSunrise();
 			// clean Database once a night
 			await Task.Run(() => {
-				using(SQL s = new SQL("HistoryCleaner")) {
-					s.HistoryCleaner();
+				using(Database Sql = new Database("HistoryCleaner")) {
+					Sql.HistoryCleaner();
 				}
 			});
 		}
@@ -98,49 +101,53 @@ namespace WebAutomation.Helper {
 		private async Task GetSunsetSunrise() {
 			try {
 				WebClient webClient = new WebClient();
-				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", Ini.get("Projekt", "OpenWeatherCode"));
+				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", IniFile.get("Projekt", "OpenWeatherCode"));
 				webClient.DownloadStringCompleted += (e, args) => {
 					if(args.Error == null) {
-						OpenWeather.weather SunsetSunrise = JsonConvert.DeserializeObject<OpenWeather.weather>(args.Result);
-						sunrise = UnixTimeStampToDateTime(SunsetSunrise.sys.sunrise);
-						sunset = UnixTimeStampToDateTime(SunsetSunrise.sys.sunset);
-						Datapoints.Get(SunRiseId).writeValue(sunrise.ToString(SQL.DateTimeFormat));
-						Datapoints.Get(SunSetId).writeValue(sunset.ToString(SQL.DateTimeFormat));
-						//PDebug.Write(result);
-						wpDebug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
-						DateTime Now = DateTime.Now;
-						if(Now < sunrise) {
-							Datapoints.Get(SunShineId).writeValue("0");
-						} else if(Now >= sunrise && Now < sunset) {
-							Datapoints.Get(SunShineId).writeValue("1");
-						} else if(Now > sunset) {
-							Datapoints.Get(SunShineId).writeValue("0");
-						}
-						TimeSpan toSunrise = sunrise - Now;
-						TimeSpan toSunset = sunset - Now;
-						if(toSunrise.Ticks > 0) {
-							SunriseTimer.Interval = toSunrise.TotalMilliseconds;
-							SunriseTimer.Enabled = true;
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
-						} else {
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunrise war heute schon");
-						}
-						if(toSunset.Ticks > 0) {
-							SunsetTimer.Interval = toSunset.TotalMilliseconds;
-							SunsetTimer.Enabled = true;
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
-						} else {
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), "toSunset war heute schon");
+						try {
+							OpenWeather.weather SunsetSunrise = JsonConvert.DeserializeObject<OpenWeather.weather>(args.Result);
+							sunrise = UnixTimeStampToDateTime(SunsetSunrise.sys.sunrise);
+							sunset = UnixTimeStampToDateTime(SunsetSunrise.sys.sunset);
+							Datapoints.Get(SunRiseId).writeValue(sunrise.ToString(Database.DateTimeFormat));
+							Datapoints.Get(SunSetId).writeValue(sunset.ToString(Database.DateTimeFormat));
+							//PDebug.Write(result);
+							Debug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
+							DateTime Now = DateTime.Now;
+							if(Now < sunrise) {
+								Datapoints.Get(SunShineId).writeValue("0");
+							} else if(Now >= sunrise && Now < sunset) {
+								Datapoints.Get(SunShineId).writeValue("1");
+							} else if(Now > sunset) {
+								Datapoints.Get(SunShineId).writeValue("0");
+							}
+							TimeSpan toSunrise = sunrise - Now;
+							TimeSpan toSunset = sunset - Now;
+							if(toSunrise.Ticks > 0) {
+								SunriseTimer.Interval = toSunrise.TotalMilliseconds;
+								SunriseTimer.Enabled = true;
+								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
+							} else {
+								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise war heute schon");
+							}
+							if(toSunset.Ticks > 0) {
+								SunsetTimer.Interval = toSunset.TotalMilliseconds;
+								SunsetTimer.Enabled = true;
+								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
+							} else {
+								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset war heute schon");
+							}
+						} catch(Exception ex) {
+							Debug.WriteError(MethodBase.GetCurrentMethod(), ex);
 						}
 					} else {
-						wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error);
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error);
 					}
 				};
 				await Task.Run(() => {
 					webClient.DownloadStringAsync(new Uri(url));
 				});
 			} catch(Exception ex) {
-				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public DateTime UnixTimeStampToDateTime(int unixTimeStamp) {

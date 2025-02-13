@@ -8,18 +8,22 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 153                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 153 2024-12-18 14:41:55Z                        $ #
+//# File-ID      : $Id:: Trend.cs 171 2025-02-13 12:28:06Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using WebAutomation.Helper;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.PlugIns {
 	/// <summary>
@@ -59,7 +63,7 @@ namespace WebAutomation.PlugIns {
 				_intervall = value;
 				onChangeMinValue.Interval = SetMinIntervall();
 				onChangeMinValue.Start();
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend intervall changed {_trendname}: {_intervall} sec");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend intervall changed {_trendname}: {_intervall} sec");
 			}
 		}
 		/// <summary></summary>
@@ -102,18 +106,18 @@ namespace WebAutomation.PlugIns {
 			if(onChangeMinValue != null)
 				onChangeMinValue.Stop();
 			onChangeMinValue = null;
-			if(wpDebug.debugTrend)
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend Stop {_trendname}");
+			if(Debug.debugTrend)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend Stop {_trendname}");
 		}
 		public async void SetTrendValue(bool withReset) {
 			if(_active) {
 				string v = Datapoints.Get(_iddp).Value;
 				if(v != null && v != "") {
 					await Task.Run(() => {
-						using(SQL SQL = new SQL("Trend intervall")) {
+						using(Database Sql = new Database("Trend intervall")) {
 							string sql = @$"MERGE INTO [trendvalue] AS [TARGET]
 	USING (
-		VALUES ({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')
+		VALUES ({_idtrend}, '{v}', '{DateTime.Now.ToString(Database.DateTimeFormat)}')
 	) AS [SOURCE] ([id_trend], [value], [time])
 	ON ([TARGET].[id_trend] = [SOURCE].[id_trend] AND [TARGET].[time] = [SOURCE].[time])
 	WHEN NOT MATCHED THEN
@@ -121,8 +125,8 @@ namespace WebAutomation.PlugIns {
 		VALUES ([SOURCE].[id_trend], [SOURCE].[value], [SOURCE].[time]);";
 							//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
 							//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
-							if(SQL.wpNonResponse(sql) == 0) {
-								wpDebug.Write(MethodInfo.GetCurrentMethod(), $"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
+							if(Sql.wpNonResponse(sql) == 0) {
+								Debug.Write(MethodInfo.GetCurrentMethod(), $"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
 							}
 						}
 					});
@@ -135,12 +139,12 @@ namespace WebAutomation.PlugIns {
 		public void Activate() {
 			_active = true;
 			onChangeMinValue.Start();
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend activated {_trendname}");
+			Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend activated {_trendname}");
 		}
 		public void Deactivate() {
 			_active = false;
 			onChangeMinValue.Stop();
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend deactivated {_trendname}");
+			Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend deactivated {_trendname}");
 		}
 		/// <summary>
 		/// 
@@ -161,11 +165,11 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
 			if(_active) onChangeMinValue.Start();
-			if(wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Trend Init {_trendname}");
+			if(Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend Init {_trendname}");
 		}
 		private int SetMinIntervall() {
 			if(_intervall == 0) {
-				if(wpDebug.debugTrend)
+				if(Debug.debugTrend)
 					minMinutes = 1 * 60;
 				else
 					minMinutes = 14 * 60;
@@ -195,13 +199,13 @@ namespace WebAutomation.PlugIns {
 		/// </summary>
 		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
 		/// <summary></summary>
-		private static Logger _eventLog = new Logger(wpEventLog.PlugInTrend);
+		private static Logger _eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInTrend);
 		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends Init");
-			using(SQL SQL = new SQL("get Trend Dictionary")) {
-				string[][] erg = SQL.wpQuery(@"SELECT
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Init");
+			using(Database Sql = new Database("get Trend Dictionary")) {
+				string[][] erg = Sql.wpQuery(@"SELECT
 					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
 					FROM [trend] [t]
 					INNER JOIN [dp] ON [t].[id_dp] = [dp].[id_dp]"
@@ -219,7 +223,7 @@ namespace WebAutomation.PlugIns {
 			}
 			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends gestartet");
 		}
 
 		public static void Stop() {
@@ -230,7 +234,7 @@ namespace WebAutomation.PlugIns {
 					kvp.Value.Stop();
 				}
 			}
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
 		}
 		public static Trend Get(int idTrend) {
 			return _trendList[idTrend];
@@ -240,8 +244,8 @@ namespace WebAutomation.PlugIns {
 			_trendList.Remove(idTrend);
 		}
 		public static void AddTrend(int idDp) {
-			using(SQL SQL = new SQL("Add Trend to Dictionary")) {
-				string[][] erg = SQL.wpQuery(@$"SELECT TOP 1
+			using(Database Sql = new Database("Add Trend to Dictionary")) {
+				string[][] erg = Sql.wpQuery(@$"SELECT TOP 1
 					[id_trend], [name], [intervall], [max], [maxage], [active]
 					FROM [trend] [t] WHERE [id_dp] = {idDp}");
 				int idTrend, intervall, max, maxage;
@@ -265,13 +269,13 @@ namespace WebAutomation.PlugIns {
 			public TrendCleanDB() {
 				_doStop = false;
 				_counter = 0;
-				_folderBase = Ini.get("Trend", "Pfad");
-				_projekt = Ini.get("Projekt", "Nummer");
-				_projekt += (Ini.get("Projekt", "Name") != "") ? (_projekt != "" ? " - " : "") + Ini.get("Projekt", "Name") : "";
+				_folderBase = IniFile.get("Trend", "Pfad");
+				_projekt = IniFile.get("Projekt", "Nummer");
+				_projekt += (IniFile.get("Projekt", "Name") != "") ? (_projekt != "" ? " - " : "") + IniFile.get("Projekt", "Name") : "";
 
 				TrendArchivFolder();
 
-				if (wpDebug.debugTrend) {
+				if (Debug.debugTrend) {
 					_maxCounter = 1 * 60;
 				} else {
 					_maxCounter = 90 * 60;
@@ -305,10 +309,10 @@ namespace WebAutomation.PlugIns {
 							sw.WriteLine("1  SQLCHAR  0  255 \";\"  1  time  Latin1_General_CI_AS");
 							sw.WriteLine("2  SQLCHAR  0  255 \";\\r\\n\"  2  value  Latin1_General_CI_AS");
 						}
-						_eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
+						_eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Formatdatei erzeugt {0}", formatpath);
 					}
 				} else {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Rootpath '{0}' not found for Trendarchiv", p);
 				}
 			}
 			private void DBcleaner() {
@@ -322,11 +326,11 @@ namespace WebAutomation.PlugIns {
 				string ev_save = "";
 				string[][] erg;
 				DateTime parsed;
-				Stopwatch watch = new Stopwatch();
-				Stopwatch watchTrend = new Stopwatch();
+				System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+				System.Diagnostics.Stopwatch watchTrend = new System.Diagnostics.Stopwatch();
 				Dictionary<DateTime, string> DataforExport;
 				watch.Start();
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
 				foreach (KeyValuePair<int, Trend> kvpTrend in _trendList) {
 					if (_doStop) break;
 					deleteToOld = 0;
@@ -338,8 +342,8 @@ namespace WebAutomation.PlugIns {
 					try {
 						Trend t = kvpTrend.Value;
 						if (t.MaxDays > 0 && t.MaxEntries > 0) {
-							using (SQL SQL = new SQL("Save into Archive")) {
-								erg = SQL.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
+							using (Database Sql = new Database("Save into Archive")) {
+								erg = Sql.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
 									FROM [trendvalue] WHERE [id_trend] = {t.IdTrend}
 									AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time]");
@@ -355,19 +359,19 @@ namespace WebAutomation.PlugIns {
 										saveToOld++;
 									}
 								}
-								deleteToOld = SQL.wpNonResponse(@$"WITH CTE AS (
+								deleteToOld = Sql.wpNonResponse(@$"WITH CTE AS (
 									SELECT TOP {_maxEntries} * FROM [trendvalue]
 									WHERE [id_trend] = {t.IdTrend} AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time])
 									DELETE FROM CTE");
 
-								erg = SQL.wpQuery(@$"SELECT [time] FROM [trendvalue]
+								erg = Sql.wpQuery(@$"SELECT [time] FROM [trendvalue]
 									WHERE [id_trend] = {t.IdTrend} ORDER BY [time] DESC
 									OFFSET {t.MaxEntries} ROWS FETCH NEXT 1 ROWS ONLY");
 								DateTime latest;
 								if(erg.Length > 0 && DateTime.TryParse(erg[0][0], out latest)) {
-									string newLastDate = latest.ToString(SQL.DateTimeFormat);
-									erg = SQL.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
+									string newLastDate = latest.ToString(Database.DateTimeFormat);
+									erg = Sql.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
 										FROM [trendvalue] WHERE [time] < '{newLastDate}'
 										AND [id_trend] = {t.IdTrend} ORDER BY [time]");
 									for(int i = 0; i < erg.Length; i++) {
@@ -382,7 +386,7 @@ namespace WebAutomation.PlugIns {
 											saveToMuch++;
 										}
 									}
-									deleteToMuch = SQL.wpNonResponse(@$"WITH CTE AS (
+									deleteToMuch = Sql.wpNonResponse(@$"WITH CTE AS (
 										SELECT TOP {_maxEntries} * FROM [trendvalue]
 										WHERE [time] < '{newLastDate}' AND [id_trend] = {t.IdTrend}
 										ORDER BY [time])
@@ -403,29 +407,29 @@ namespace WebAutomation.PlugIns {
 							if (saveToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
 									saveToOld, t.TrendName, watchTrend.Elapsed);
-								if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
+								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
 							}
 							if (saveToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
 									saveToMuch, t.TrendName, watchTrend.Elapsed);
-								if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
+								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
 							}
 						} else {
-							if (DataforExport.Count > 0) wpDebug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
+							if (DataforExport.Count > 0) Debug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
 						}
 						if (deleteToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
 								deleteToOld, t.TrendName, watchTrend.Elapsed);
-							if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
+							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
 							trendsToOld++;
 						}
 						if (deleteToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
 								deleteToMuch, t.TrendName, watchTrend.Elapsed);
-							if (wpDebug.debugTrend) wpDebug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
+							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
 							trendsToMuch++;
 						}

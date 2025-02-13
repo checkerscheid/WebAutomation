@@ -97,10 +97,11 @@
     <OutputPath>bin\Release\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>preview</LangVersion>
     <ErrorReport>prompt</ErrorReport>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -126,10 +127,7 @@
     <Compile Include="externals\OPC_Data_Grp.cs" />
     <Compile Include="externals\OPC_Data_Srv.cs" />
     <Compile Include="Helper\D1Mini.cs" />
-    <Compile Include="Helper\Helferlein.cs" />
-    <Compile Include="Helper\IniFile.cs" />
     <Compile Include="Helper\Email.cs" />
-    <Compile Include="Helper\EventLog.cs" />
     <Compile Include="Helper\MQTTClient.cs" />
     <Compile Include="Helper\OPCClient.cs" />
     <Compile Include="Helper\OPCHelper.cs" />
@@ -160,7 +158,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helper\WebCom.cs" />
-    <Compile Include="Helper\SQL.cs" />
     <EmbeddedResource Include="BeendenPW.resx">
       <DependentUpon>BeendenPW.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -205,13 +202,29 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\wpEventLog\wpEventLog\wpEventLog.csproj">
+    <ProjectReference Include="..\..\Libraries\wpCommon\wpCommon.csproj">
+      <Project>{b4538f51-b1c8-4ec8-b654-e1a7c341ac3a}</Project>
+      <Name>wpCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\wpEventLog\wpEventLog.csproj">
       <Project>{abea33e2-ef53-41c4-b8db-99925d313207}</Project>
       <Name>wpEventLog</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\wpLicense\wpLicense\wpLicense.csproj">
+    <ProjectReference Include="..\..\Libraries\wpIniFile\wpIniFile.csproj">
+      <Project>{67A8D650-C1D3-4D73-81FC-4B1B52EA3DC9}</Project>
+      <Name>wpIniFile</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\wpLicense\wpLicense.csproj">
       <Project>{c3635d86-72cf-4e2d-ad60-ed3dc41a71a3}</Project>
       <Name>wpLicense</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\wpSamsungRemote\wpSamsungRemote.csproj">
+      <Project>{6ef56d48-b4a2-4739-b73a-82570476ffd7}</Project>
+      <Name>wpSamsungRemote</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\wpSQL\wpSQL.csproj">
+      <Project>{e27b6983-dabb-4f8b-b2a9-fd600130591a}</Project>
+      <Name>wpSQL</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

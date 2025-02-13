@@ -8,12 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WriteLevel.cs 165 2025-02-09 09:15:16Z                   $ #
+//# File-ID      : $Id:: WriteLevel.cs 171 2025-02-13 12:28:06Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Reflection;
 /**
@@ -32,9 +33,9 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		/// <param name="_Me"></param>
 		public static void AddWriteLevel() {
-			eventLog = new Logger(wpLog.ESource.PlugInWriteLevel);
-			using (SQL SQL = new SQL("Add Write Level")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInWriteLevel);
+			using (Database Sql = new Database("Add Write Level")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -53,8 +54,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddWriteLevel(int idserver) {
-			using (SQL SQL = new SQL("Add Write Level for Server")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Server")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -74,8 +75,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddGroupWriteLevel(int idgroup) {
-			using (SQL SQL = new SQL("Add Write Level for Group")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Group")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -95,8 +96,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddItemWriteLevel(int iditem) {
-			using (SQL SQL = new SQL("Add Write Level for Item")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Item")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]

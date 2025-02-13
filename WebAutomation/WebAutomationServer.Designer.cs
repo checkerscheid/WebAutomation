@@ -8,17 +8,19 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 137                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 137 2024-10-18 23:20:11Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 171 2025-02-13 12:28:06Z#$ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Forms;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 /**
 * @defgroup WEBAutomationWindow WEBAutomationWindow
 * @{
@@ -42,7 +44,7 @@ namespace WebAutomation {
 				components.Dispose();
 			}
 			base.Dispose(disposing);
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "{0} - Disposed", Application.ProductName);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "{0} - Disposed", Application.ProductName);
 		}
 
 		#region Vom Windows Form-Designer generierter Code
@@ -282,7 +284,7 @@ namespace WebAutomation {
 			if(_wpStartMinimized) {
 				this.WindowState = FormWindowState.Minimized;
 				this.Hide();
-				eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, Application.ProductName + " Server im 'Minimierten Modus' gestartet");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, Application.ProductName + " Server im 'Minimierten Modus' gestartet");
 			}
 		}
 
@@ -313,7 +315,7 @@ namespace WebAutomation {
 		private void WebAutomationServer_ClientSizeChanged(object sender, EventArgs e) {
 			if(this.WindowState == FormWindowState.Minimized) {
 				this.Hide();
-				SystemIcon.BalloonTipTitle = Application.ProductName + " - " + Ini.get("Projekt", "Nummer");
+				SystemIcon.BalloonTipTitle = Application.ProductName + " - " + IniFile.get("Projekt", "Nummer");
 				SystemIcon.BalloonTipText = "wurde minimiert";
 				SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 				SystemIcon.ShowBalloonTip(1000);
@@ -323,7 +325,7 @@ namespace WebAutomation {
 			}
 		}
 		public void finish() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server - Beginn stop");
+			Debug.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server - Beginn stop");
 			isFinished = true;
 			if(ApacheService != null)
 				ApacheService.ServiceStatusChanged -= ApacheService_ServiceStatusChanged;
@@ -351,11 +353,11 @@ namespace WebAutomation {
 			if(wpMQTTClient != null)
 				wpMQTTClient.Stop();
 			Trends.Stop();
-			eventLog.Write(MethodInfo.GetCurrentMethod(), EventLogEntryType.Warning, Application.ProductName + " Server gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, Application.ProductName + " Server gestoppt");
 		}
 
 		private void WebAutomationServer_FormClosing(object sender, FormClosingEventArgs e) {
-			string pw = Ini.get("Beenden", "PW");
+			string pw = IniFile.get("Beenden", "PW");
 			if(pw.Length > 0) {
 				BeendenPW bpw = new BeendenPW();
 				if(bpw.ShowDialog() == DialogResult.OK) {

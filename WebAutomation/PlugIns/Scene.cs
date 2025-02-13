@@ -8,11 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 10.09.2015                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 77                                                      $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Scene.cs 77 2024-03-13 18:22:41Z                         $ #
+//# File-ID      : $Id:: Scene.cs 171 2025-02-13 12:28:06Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
 using WebAutomation.Helper;
@@ -27,8 +28,8 @@ namespace WebAutomation.PlugIns {
 	public class Scene {
 		public static Dictionary<int, string> getScene(int idscene) {
 			Dictionary<int, string> returns = new Dictionary<int, string>();
-			using (SQL SQL = new SQL("Scene")) {
-				string[][] DBScene = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Scene")) {
+				string[][] DBScene = Sql.wpQuery(@"SELECT
 					[s].[id_scene], [v].[id_dp], [v].[value]
 					FROM [scene] [s]
 					INNER JOIN [scenevalue] [v] ON [s].[id_scene] = [v].[id_scene]

@@ -8,16 +8,19 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 165 2025-02-09 09:15:16Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 171 2025-02-13 12:28:06Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using ShellyDevice;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Reflection;
@@ -67,12 +70,12 @@ namespace WebAutomation.Helper {
 			public string value { get; set; }
 		}
 		public static void Init() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Init");
-			eventLog = new Logger(wpLog.ESource.PlugInShelly);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Init");
+			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInShelly);
 			_shellys = new Dictionary<string, ShellyDeviceHelper>();
 			_ForceMqttUpdateAvailable = new Dictionary<string, ShellyDeviceHelper>();
-			using(SQL SQL = new SQL("Select Shellys")) {
-				string[][] Query1 = SQL.wpQuery(@"SELECT
+			using(Database Sql = new Database("Select Shellys")) {
+				string[][] Query1 = Sql.wpQuery(@"SELECT
 					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_restroom], [s].[name], [s].[type],
 					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
 					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window], [s].[lastcontact]
@@ -120,14 +123,14 @@ namespace WebAutomation.Helper {
 				}
 			}
 			Program.MainProg.wpMQTTClient.shellyChanged += wpMQTTClient_shellyChanged;
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server gestartet");
 		}
 		public static void Start() {
 			foreach(KeyValuePair<string, ShellyDeviceHelper> kvp in _shellys) {
 				kvp.Value.Start();
 			}
-			OnlineTogglerSendIntervall = Ini.getInt("Shelly", "OnlineTogglerSendIntervall");
-			OnlineTogglerWait = Ini.getInt("Shelly", "OnlineTogglerWait");
+			OnlineTogglerSendIntervall = IniFile.getInt("Shelly", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = IniFile.getInt("Shelly", "OnlineTogglerWait");
 		}
 		public static void Stop() {
 			if(_shellys != null) {
@@ -155,7 +158,7 @@ namespace WebAutomation.Helper {
 			if(_shellys.ContainsKey(mac)) {
 				setValue(_shellys[mac].id_onoff, _shellys[mac].name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: Raum: {0}, Status: {1}", _shellys[mac].name, state);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -174,7 +177,7 @@ namespace WebAutomation.Helper {
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Status: {0}, ", window ? "True" : "False");
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -189,7 +192,7 @@ namespace WebAutomation.Helper {
 				setValue(_shellys[mac].id_window, _shellys[mac].name, window ? "True" : "False");
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Window: {0}, ", window ? "True" : "False");
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -206,7 +209,7 @@ namespace WebAutomation.Helper {
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -221,7 +224,7 @@ namespace WebAutomation.Helper {
 				setValue(_shellys[mac].id_temp, _shellys[mac].name, temp.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -236,7 +239,7 @@ namespace WebAutomation.Helper {
 				setValue(_shellys[mac].id_hum, _shellys[mac].name, hum.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -250,7 +253,7 @@ namespace WebAutomation.Helper {
 			if(_shellys.ContainsKey(mac)) {
 				_shellys[mac].setLongPress();
 				string DebugNewValue = String.Format("Raum: {0}", _shellys[mac].name);
-				if(wpDebug.debugShelly)
+				if(Debug.debugShelly)
 					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
 				Program.MainProg.lastchange = DebugNewValue;
 				returns = true;
@@ -269,10 +272,10 @@ namespace WebAutomation.Helper {
 				if(_shellys.ContainsKey(mac)) {
 					if(setting == "info/Online") _shellys[mac].Online = e.value == "0" ? false : true;
 				} else {
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly not init? '{e.topic}', '{e.value}'");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly not init? '{e.topic}', '{e.value}'");
 				}
 			} else {
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly MQTT not active? '{e.topic}', '{e.value}'");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly MQTT not active? '{e.topic}', '{e.value}'");
 			}
 		}
 		public static void addSubscribtions(List<string> topic) {
@@ -348,13 +351,13 @@ namespace WebAutomation.Helper {
 			public bool Online {
 				set {
 					if(value) {
-						if(wpDebug.debugShelly)
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 1");
+						if(Debug.debugShelly)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 1");
 						setOnlineError(false);
 						toreset.Stop();
 					} else {
-						if(wpDebug.debugShelly)
-							wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
+						if(Debug.debugShelly)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 						toreset.Start();
 					}
 				}
@@ -401,8 +404,8 @@ namespace WebAutomation.Helper {
 				if(ShellyType.isGen2(_type) && _mqtt_active) {
 					t.Stop();
 					toreset.Stop();
-					if(wpDebug.debugShelly)
-						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly Device stopped `{_name} sendOnlineQuestion`");
+					if(Debug.debugShelly)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly Device stopped `{_name} sendOnlineQuestion`");
 				}
 			}
 
@@ -421,16 +424,16 @@ namespace WebAutomation.Helper {
 				sendOnlineQuestion();
 			}
 			private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
-				if(wpDebug.debugShelly)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+				if(Debug.debugShelly)
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 				//last chance
 				Ping _ping = new Ping();
 				if(_ping.Send(_ip.ToString(), 750).Status != IPStatus.Success) {
 					setOnlineError();
 				} else {
 					setOnlineError(false);
-					if(wpDebug.debugShelly)
-						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
+					if(Debug.debugShelly)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
 				}
 			}
 			public List<string> getSubscribtions() {
@@ -441,13 +444,13 @@ namespace WebAutomation.Helper {
 				return returns;
 			}
 			private void sendOnlineQuestion() {
-				if(wpDebug.debugShelly)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `sendOnlineQuestion`: {_mqtt_id}/info/Online, 0");
+				if(Debug.debugShelly)
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `sendOnlineQuestion`: {_mqtt_id}/info/Online, 0");
 				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 			}
 			private void setOnlineError(bool e) {
-				if(wpDebug.debugShelly)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `setOnlineError`: {_mqtt_id}/ERROR/Online, {(e ? "1" : "0")}");
+				if(Debug.debugShelly)
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `setOnlineError`: {_mqtt_id}/ERROR/Online, {(e ? "1" : "0")}");
 				_ = Program.MainProg.wpMQTTClient.setValue(_mqtt_id + "/ERROR/Online", e ? "1" : "0");
 			}
 			private void setOnlineError() {
@@ -456,14 +459,14 @@ namespace WebAutomation.Helper {
 
 			private void _doCheckStatus_Elapsed(object sender, ElapsedEventArgs e) {
 				getStatus();
-				if(wpDebug.debugShelly)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), $"ShellyDevice doCheck gestartet '{this.name}'");
+				if(Debug.debugShelly)
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"ShellyDevice doCheck gestartet '{this.name}'");
 			}
 
 			public void setLongPress() {
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), $"register LongPress on {this._name}");
-				using(SQL SQL = new SQL("Shellys Long Press")) {
-					string[][] Query = SQL.wpQuery(@$"SELECT
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"register LongPress on {this._name}");
+				using(Database Sql = new Database("Shellys Long Press")) {
+					string[][] Query = Sql.wpQuery(@$"SELECT
 						[ip], [type], [un], [pw]
 						FROM [shelly]
 						WHERE [id_restroom] = {this._room}");
@@ -480,8 +483,8 @@ namespace WebAutomation.Helper {
 						}
 					}
 				}
-				using(SQL SQL = new SQL("Shellys Long Press D1Mini")) {
-					string[][] Query = SQL.wpQuery(@$"SELECT
+				using(Database Sql = new Database("Shellys Long Press D1Mini")) {
+					string[][] Query = Sql.wpQuery(@$"SELECT
 						[ip], [compiledwith]
 						FROM [d1mini]
 						WHERE [id_restroom] = {this._room}");
@@ -525,14 +528,14 @@ namespace WebAutomation.Helper {
 										if(ShellyType.isGen2(this.type))
 											Datapoints.Get(this.id_onoff).writeValue(sds.output ? "True" : "False", "Shelly");
 									}
-									using(SQL SQL = new SQL("Update Shelly MQTT lastContact")) {
-										string sql = $"UPDATE [shelly] SET [lastcontact] = '{_lastcontact.ToString(SQL.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
-										SQL.wpNonResponse(sql);
-										if(wpDebug.debugShelly)
-											wpDebug.Write(MethodInfo.GetCurrentMethod(), sql);
+									using(Database Sql = new Database("Update Shelly MQTT lastContact")) {
+										string sql = $"UPDATE [shelly] SET [lastcontact] = '{_lastcontact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
+										Sql.wpNonResponse(sql);
+										if(Debug.debugShelly)
+											Debug.Write(MethodInfo.GetCurrentMethod(), sql);
 									}
 								} else {
-									wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
 								}
 							};
 							if(_lastcontact.AddHours(1) < DateTime.Now || force) {
@@ -605,15 +608,15 @@ namespace WebAutomation.Helper {
 										updatesql += $"[mqtt_writeable] = {(_mqtt_writeable ? "1" : "0")}";
 									}
 									if(!String.IsNullOrEmpty(updatesql)) {
-										using(SQL SQL = new SQL("Update Shelly MQTT ID")) {
+										using(Database Sql = new Database("Update Shelly MQTT ID")) {
 											string sql = $"UPDATE [shelly] SET {updatesql} WHERE [id_shelly] = {_id}";
-											SQL.wpNonResponse(sql);
-											if(wpDebug.debugShelly)
-												wpDebug.Write(MethodInfo.GetCurrentMethod(), sql);
+											Sql.wpNonResponse(sql);
+											if(Debug.debugShelly)
+												Debug.Write(MethodInfo.GetCurrentMethod(), sql);
 										}
 									}
 								} else {
-									wpDebug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.name} ({this.ip}), '{target}'");
 								}
 							};
 							webClient.DownloadStringAsync(new Uri(target));

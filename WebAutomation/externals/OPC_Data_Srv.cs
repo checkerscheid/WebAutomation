@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Srv.cs 165 2025-02-09 09:15:16Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Srv.cs 171 2025-02-13 12:28:06Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -148,7 +148,7 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public OpcServer(string name) {
-			eventLog = new Logger(wpLog.ESource.OPCDataServer);
+			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.OPCDataServer);
 			State = ServerState.notconnected;
 			_name = name;
 		}
@@ -214,7 +214,7 @@ namespace OPC.Data {
 				} catch(Exception ex) {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				} finally {
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
+					Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject shutdowncpoint", this._name);
 					int rc = Marshal.FinalReleaseComObject(shutdowncpoint);
 					shutdowncpoint = null;
 				}
@@ -226,12 +226,12 @@ namespace OPC.Data {
 			ifCommon = null;
 			ifServer = null;
 			if (!(OPCserverObj == null)) {
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
 				if(this._name != "CoDeSys.OPC.02")
 					Interop.ReleaseServer(OPCserverObj);
 				OPCserverObj = null;
 			}
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Disconnected", this._name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Disconnected", this._name);
 		}
 		/// <summary>
 		/// 
@@ -245,7 +245,7 @@ namespace OPC.Data {
 					ifServer.GetStatus(out serverStatus);
 				}
 			} catch(Exception ex) {
-				wpDebug.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				serverStatus = null;
 			}
 		}

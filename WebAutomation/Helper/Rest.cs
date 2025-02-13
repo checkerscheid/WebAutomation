@@ -8,12 +8,13 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 165                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 165 2025-02-09 09:15:16Z                         $ #
+//# File-ID      : $Id:: Rest.cs 171 2025-02-13 12:28:06Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -32,14 +33,14 @@ namespace WebAutomation.Helper {
 		private bool _isFinished;
 		private const int threadTimeOut = 500;
 		public RestServer() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
 			_isFinished = false;
-			eventLog = new Logger(wpLog.ESource.Rest);
-			RestServerListener = new TcpListener(IPAddress.Any, Ini.getInt("RestServer", "Port"));
+			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.Rest);
+			RestServerListener = new TcpListener(IPAddress.Any, IniFile.getInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";
 			RestServerThread.Start();
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestartet");
 		}
 		public void finished() {
 			_isFinished = true;
@@ -72,8 +73,8 @@ namespace WebAutomation.Helper {
 		}
 		private void RestServer_HandleClient(object client) {
 			TcpClient tcpClient = (TcpClient)client;
-			if(wpDebug.debugREST)
-				wpDebug.Write(MethodInfo.GetCurrentMethod(), String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
+			if(Debug.debugREST)
+				Debug.Write(MethodInfo.GetCurrentMethod(), String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
 			try {
 				string s_message = "";
 				NetworkStream clientStream = tcpClient.GetStream();
@@ -87,8 +88,8 @@ namespace WebAutomation.Helper {
 				bool macok = false;
 				string mac;
 				string jsonMsg = "";
-				if(wpDebug.debugREST)
-					wpDebug.Write(MethodInfo.GetCurrentMethod(), String.Format("Rest message: {0}", s_message));
+				if(Debug.debugREST)
+					Debug.Write(MethodInfo.GetCurrentMethod(), String.Format("Rest message: {0}", s_message));
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?r\=([0-9ABCDEFabcdef]*)&s\=(true|false)")) {
 					if(m.Success) { // found Shelly State
 						mac = m.Groups[1].Value.ToLower();
@@ -247,7 +248,7 @@ namespace WebAutomation.Helper {
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&rssi\=([-0-9]*)")) {
 					if(m.Success) {
 						mac = m.Groups[1].Value.ToLower();
-						wpDebug.Write(MethodInfo.GetCurrentMethod(), $"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Found D1Mini [{mac}]: RSSI = {m.Groups[2].Value}");
 						cmdfound = true;
 					}
 				}

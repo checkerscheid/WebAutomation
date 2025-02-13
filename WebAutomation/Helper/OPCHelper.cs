@@ -8,17 +8,18 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 136                                                     $ #
+//# Revision     : $Rev:: 171                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCHelper.cs 136 2024-10-11 08:03:37Z                    $ #
+//# File-ID      : $Id:: OPCHelper.cs 171 2025-02-13 12:28:06Z                    $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
 using OPC.Data;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using WebAutomation.PlugIns;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -78,12 +79,12 @@ namespace WebAutomation.Helper {
 		}
 
 		~PGAOPCServer() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Finalize", Name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Finalize", Name);
 			Disconnect();
 			Dispose();
 		}
 		public void Dispose() {
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Dispose", Name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Dispose", Name);
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}
@@ -99,12 +100,12 @@ namespace WebAutomation.Helper {
 		public void Connect(string prgidOPCserver) {
 			this._remoteserver = "localhost";
 			base.Connect(prgidOPCserver, "localhost");
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Connected", Name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Connected", Name);
 		}
 		public new void Connect(string prgidOPCserver, string computername) {
 			base.Connect(prgidOPCserver, computername);
 			this._remoteserver = computername;
-			wpDebug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}:{1}' - Connected", computername, Name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}:{1}' - Connected", computername, Name);
 		}
 	}
 	/// <summary>
@@ -206,8 +207,8 @@ namespace WebAutomation.Helper {
 			get { return _hasFirstValue; }
 			set {
 				if (!hasFirstValue) {
-					using (SQL SQL = new SQL("startup for Datapoint")) {
-						SQL.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = '{1}', [startupquality] = '{2}' WHERE [id_opcdatapoint] = {0}", _hclt, _dbtype, OPCQuality.get(_quality));
+					using (Database Sql = new Database("startup for Datapoint")) {
+						Sql.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = '{1}', [startupquality] = '{2}' WHERE [id_opcdatapoint] = {0}", _hclt, _dbtype, OPCQuality.get(_quality));
 					}
 				}
 				_hasFirstValue = true;

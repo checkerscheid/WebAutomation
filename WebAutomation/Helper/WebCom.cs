@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 183                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 171 2025-02-13 12:28:06Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 183 2025-02-16 01:24:09Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -162,6 +162,7 @@ namespace WebAutomation.Helper {
 			public const string cSetD1MiniUrlCmd = "SetD1MiniUrlCmd";
 			public const string cStartD1MiniSearch = "StartD1MiniSearch";
 			public const string cAddD1Mini = "AddD1Mini";
+			public const string cRenewD1MiniActiveState = "RenewD1MiniActiveState";
 			public const string cDeleteD1Mini = "DeleteD1Mini";
 			public const string cGetD1MiniServer = "GetD1MiniServer";
 			public const string cSetD1MiniServer = "SetD1MiniServer";
@@ -265,7 +266,7 @@ namespace WebAutomation.Helper {
 			string[] param;
 			int outint;
 			int outint2;
-			D1MiniDevice d1md;
+			D1Mini d1md;
 			switch (s_befehl[0]) {
 				case wpBefehl.cHello:
 					returns = new ret { erg = ret.OK, message = "Hello FreakaZone Client" }.ToString();
@@ -337,7 +338,7 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					d1md = D1MiniServer.get(param[0]);
 					if(d1md != null) {
-						D1MiniDevice.cmdList cL = new D1MiniDevice.cmdList(param[1]);
+						D1Mini.cmdList cL = new D1Mini.cmdList(param[1]);
 						if(d1md.sendCmd(cL))
 							returns = new ret { erg = ret.OK }.ToString();
 					}
@@ -356,6 +357,10 @@ namespace WebAutomation.Helper {
 						D1MiniServer.addD1Mini(outint);
 						returns = new ret { erg = ret.OK }.ToString();
 					}
+					break;
+				case wpBefehl.cRenewD1MiniActiveState:
+					D1MiniServer.renewActiveState();
+					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cDeleteD1Mini:
 					param = wpBefehl.getParam(s_befehl[1]);

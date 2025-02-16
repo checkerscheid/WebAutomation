@@ -250,10 +250,8 @@
     <PreBuildEvent>$(ProjectDir)externals\SVNUpdate.exe $(SolutionDir) $(ProjectDir)</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>COPY /Y /B "$(TargetDir)WebAutomation.exe" "$(SolutionDir)"
-COPY /Y /B "$(TargetDir)wpLicense.dll" "$(SolutionDir)"
-COPY /Y /B "$(TargetDir)wpEventLog.dll" "$(SolutionDir)"
-COPY /Y "$(TargetDir)settings.ini" "$(SolutionDir)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

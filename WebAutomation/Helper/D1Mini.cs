@@ -8,15 +8,16 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 183                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 171 2025-02-13 12:28:06Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 183 2025-02-16 01:24:09Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using FreakaZone.Libraries.wpSQL;
+using FreakaZone.Libraries.wpSQL.Table;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -33,9 +34,7 @@ namespace WebAutomation.Helper {
 		/// <summary></summary>
 		private static Logger eventLog;
 
-		private static Dictionary<string, D1MiniDevice> D1Minis;
-		// key: mac, value: name
-		private static Dictionary<string, string> D1MinisMac;
+		private static List<D1Mini> _d1Minis;
 		private static List<string> Subscribtions = new List<string>();
 
 		private static UdpClient udpClient;
@@ -47,8 +46,8 @@ namespace WebAutomation.Helper {
 		public static int OnlineTogglerSendIntervall {
 			set {
 				_onlineTogglerSendIntervall = value;
-				foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-					kvp.Value.SetOnlineTogglerSendIntervall();
+				foreach(D1Mini d1md in _d1Minis) {
+					d1md.SetOnlineTogglerSendIntervall();
 				}
 			}
 			get {
@@ -59,8 +58,8 @@ namespace WebAutomation.Helper {
 		public static int OnlineTogglerWait {
 			set {
 				_onlineTogglerWait = value;
-				foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-					kvp.Value.SetOnlineTogglerWait();
+				foreach(D1Mini d1md in _d1Minis) {
+					d1md.SetOnlineTogglerWait();
 				}
 			}
 			get {
@@ -75,18 +74,16 @@ namespace WebAutomation.Helper {
 		}
 		public static void Init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "D1 Mini Server Start");
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInD1Mini);
-			D1Minis = new Dictionary<string, D1MiniDevice>();
-			D1MinisMac = new Dictionary<string, string>();
+			eventLog = new Logger(Logger.ESource.PlugInD1Mini);
+			_d1Minis = new List<D1Mini>();
 			using(Database Sql = new Database("Select D1Minis")) {
 				try {
-					string[][] Query1 = Sql.wpQuery(@"SELECT
-							[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac],
+					string[][] Query1 = Sql.wpQuery($@"SELECT
+							[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac], [d].[active],
 							[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
 							[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window], [r].[id_analogout]
 						FROM [d1mini] [d]
-						LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]
-						WHERE [active] = 1");
+						LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]");
 					string name, description, mac;
 					int id_d1mini;
 					IPAddress ip;
@@ -96,34 +93,34 @@ namespace WebAutomation.Helper {
 						description = Query1[i][2];
 						IPAddress.TryParse(Query1[i][3], out ip);
 						mac = Query1[i][4];
-						D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
+						D1Mini d1md = new D1Mini(id_d1mini, name, ip, mac, description);
 						d1md.readDeviceDescription = description;
-						D1Minis.Add(name, d1md);
-						D1MinisMac.Add(mac, name);
+						d1md.Active = Query1[i][5] == "True";
+						_d1Minis.Add(d1md);
 
-						if(!String.IsNullOrEmpty(Query1[i][5]))
-							d1md.id_onoff = Int32.Parse(Query1[i][5]);
 						if(!String.IsNullOrEmpty(Query1[i][6]))
-							d1md.id_temp = Int32.Parse(Query1[i][6]);
+							d1md.id_onoff = Int32.Parse(Query1[i][6]);
 						if(!String.IsNullOrEmpty(Query1[i][7]))
-							d1md.id_hum = Int32.Parse(Query1[i][7]);
+							d1md.id_temp = Int32.Parse(Query1[i][7]);
 						if(!String.IsNullOrEmpty(Query1[i][8]))
-							d1md.id_ldr = Int32.Parse(Query1[i][8]);
+							d1md.id_hum = Int32.Parse(Query1[i][8]);
 						if(!String.IsNullOrEmpty(Query1[i][9]))
-							d1md.id_light = Int32.Parse(Query1[i][9]);
-
+							d1md.id_ldr = Int32.Parse(Query1[i][9]);
 						if(!String.IsNullOrEmpty(Query1[i][10]))
-							d1md.id_relais = Int32.Parse(Query1[i][10]);
+							d1md.id_light = Int32.Parse(Query1[i][10]);
+
 						if(!String.IsNullOrEmpty(Query1[i][11]))
-							d1md.id_rain = Int32.Parse(Query1[i][11]);
+							d1md.id_relais = Int32.Parse(Query1[i][11]);
 						if(!String.IsNullOrEmpty(Query1[i][12]))
-							d1md.id_moisture = Int32.Parse(Query1[i][12]);
+							d1md.id_rain = Int32.Parse(Query1[i][12]);
 						if(!String.IsNullOrEmpty(Query1[i][13]))
-							d1md.id_vol = Int32.Parse(Query1[i][13]);
+							d1md.id_moisture = Int32.Parse(Query1[i][13]);
 						if(!String.IsNullOrEmpty(Query1[i][14]))
-							d1md.id_window = Int32.Parse(Query1[i][14]);
+							d1md.id_vol = Int32.Parse(Query1[i][14]);
 						if(!String.IsNullOrEmpty(Query1[i][15]))
-							d1md.id_analogout = Int32.Parse(Query1[i][15]);
+							d1md.id_window = Int32.Parse(Query1[i][15]);
+						if(!String.IsNullOrEmpty(Query1[i][16]))
+							d1md.id_analogout = Int32.Parse(Query1[i][16]);
 
 						addSubscribtions(d1md.getSubscribtions());
 						//d1md.sendCmd("ForceMqttUpdate");
@@ -136,29 +133,29 @@ namespace WebAutomation.Helper {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server gestartet");
 		}
 		public static void Start() {
-			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				kvp.Value.Start();
+			foreach(D1Mini d1md in _d1Minis) {
+				d1md.Start();
 			}
 			OnlineTogglerSendIntervall = IniFile.getInt("D1Mini", "OnlineTogglerSendIntervall");
 			OnlineTogglerWait = IniFile.getInt("D1Mini", "OnlineTogglerWait");
 		}
 		public static void Stop() {
 			stopSearch();
-			if(D1Minis != null) {
-				foreach(KeyValuePair<	string, D1MiniDevice> kvp in D1Minis) {
-					kvp.Value.Stop();
+			if(_d1Minis != null) {
+				foreach(D1Mini d1md in _d1Minis) {
+					d1md.Stop();
 				}
 			}
 		}
 		public static void ForceRenewValue() {
-			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceRenewValue));
+			foreach(D1Mini d1md in _d1Minis) {
+				d1md.sendCmd(new D1Mini.cmdList(D1Mini.cmdList.ForceRenewValue));
 			}
 		}
 		public static bool ForceMqttUpdate() {
 			bool returns = false;
-			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				if(!kvp.Value.sendCmd(new D1MiniDevice.cmdList(D1MiniDevice.cmdList.ForceMqttUpdate)))
+			foreach(D1Mini d1md in _d1Minis) {
+				if(!d1md.sendCmd(new D1Mini.cmdList(D1Mini.cmdList.ForceMqttUpdate)))
 					returns = false;
 			}
 			return returns;
@@ -210,56 +207,51 @@ namespace WebAutomation.Helper {
 		}
 		public static void addD1Mini(int idd1mini) {
 			using(Database Sql = new Database("Select new D1Mini")) {
-				string[][] Query1 = Sql.wpQuery(@$"SELECT
-						[name], [description], [ip], [mac]
-					FROM [d1mini] WHERE [id_d1mini] = {idd1mini}");
-				string name, description, mac;
-				IPAddress ip;
-				if(Query1.Length >= 1) {
-					name = Query1[0][0];
-					description = Query1[0][1];
-					IPAddress.TryParse(Query1[0][2], out ip);
-					mac = Query1[0][3];
-					D1MiniDevice d1md = new D1MiniDevice(name, ip, mac, description);
-					if(!D1Minis.ContainsKey(name)) D1Minis.Add(name, d1md);
-					addSubscribtions(d1md.getSubscribtions());
-				}
+				TableD1Mini td1m = Sql.GetWithId<TableD1Mini>(idd1mini);
+				D1Mini d1md = new D1Mini(td1m);
+				if(!_d1Minis.Exists(t => t.Id == idd1mini))
+					_d1Minis.Add(d1md);
+				addSubscribtions(d1md.getSubscribtions());
 			}
 			Program.MainProg.wpMQTTClient.registerNewD1MiniDatapoints();
 		}
 		public static void removeD1Mini(int idd1mini) {
 			using(Database Sql = new Database("Delete D1Mini")) {
-				string[][] Query1 = Sql.wpQuery($"SELECT [name] FROM [d1mini] WHERE [id_d1mini] = {idd1mini}");
-				string name = "";
-				if(Query1.Length >= 1) {
-					name = Query1[0][0];
-					if(D1Minis.ContainsKey(name))
-						D1Minis.Remove(name);
-					Sql.wpNonResponse($"DELETE FROM [d1mini] WHERE [id_d1mini] = {idd1mini}");
-				}
+				if(_d1Minis.Exists(t => t.Id == idd1mini))
+					_d1Minis.Remove(_d1Minis.Find(t => t.Id == idd1mini));
+				Sql.DeleteWithId<TableD1Mini>(idd1mini);
 			}
 		}
 		private static void wpMQTTClient_d1MiniChanged(object sender, MQTTClient.valueChangedEventArgs e) {
 			int pos = e.topic.IndexOf("/");
 			string name = e.topic.Substring(0, pos);
 			string setting = e.topic.Substring(pos + 1);
-			if(D1Minis.ContainsKey(name)) {
+			if(_d1Minis.Exists(t => t.Name == name)) {
+				D1Mini d1md = _d1Minis.Find(t => t.Name == name);
 				if(setting == "info/DeviceName")
-					D1Minis[name].readDeviceName = e.value;
+					d1md.readDeviceName = e.value;
 				if(setting == "info/DeviceDescription")
-					D1Minis[name].readDeviceDescription = e.value;
+					d1md.readDeviceDescription = e.value;
 				if(setting == "info/Version")
-					D1Minis[name].readVersion = e.value;
+					d1md.readVersion = e.value;
 				if(setting == "info/WiFi/Ip")
-					D1Minis[name].readIp = e.value;
+					d1md.readIp = e.value;
 				if(setting == "info/WiFi/Mac")
-					D1Minis[name].readMac = e.value;
+					d1md.readMac = e.value;
 				if(setting == "info/WiFi/SSID")
-					D1Minis[name].readSsid = e.value;
+					d1md.readSsid = e.value;
 				if(setting == "UpdateMode")
-					D1Minis[name].readUpdateMode = e.value;
+					d1md.readUpdateMode = e.value;
 				if(setting == "info/Online")
-					D1Minis[name].Online = e.value == "0" ? false : true;
+					d1md.Online = e.value == "0" ? false : true;
+			}
+		}
+		public static void renewActiveState() {
+			using(Database db = new Database("Get All D1Mini's")) {
+				List<TableD1Mini> table = db.getTable<TableD1Mini>();
+				foreach(TableD1Mini d1mini in table) {
+					_d1Minis.Find(t => t.Id == d1mini.id_d1mini).Active = d1mini.active;
+				}
 			}
 		}
 		public static void addSubscribtions(List<string> topic) {
@@ -275,15 +267,15 @@ namespace WebAutomation.Helper {
 		public static string getJson() {
 			if(Debug.debugD1Mini) Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini getJson Settings");
 			string returns = "{";
-			foreach(KeyValuePair<string, D1MiniDevice> kvp in D1Minis) {
-				returns += $"\"{kvp.Key}\":{{";
-				returns += $"\"DeviceName\":\"{kvp.Value.readDeviceName}\",";
-				returns += $"\"DeviceDescription\":\"{kvp.Value.readDeviceDescription}\",";
-				returns += $"\"Version\":\"{kvp.Value.readVersion}\",";
-				returns += $"\"Ip\":\"{kvp.Value.readIp}\",";
-				returns += $"\"Mac\":\"{kvp.Value.readMac}\",";
-				returns += $"\"Ssid\":\"{kvp.Value.readSsid}\",";
-				returns += $"\"UpdateMode\":\"{kvp.Value.readUpdateMode}\"";
+			foreach(D1Mini d1md in _d1Minis) {
+				returns += $"\"{d1md.Name}\":{{";
+				returns += $"\"DeviceName\":\"{d1md.readDeviceName}\",";
+				returns += $"\"DeviceDescription\":\"{d1md.readDeviceDescription}\",";
+				returns += $"\"Version\":\"{d1md.readVersion}\",";
+				returns += $"\"Ip\":\"{d1md.readIp}\",";
+				returns += $"\"Mac\":\"{d1md.readMac}\",";
+				returns += $"\"Ssid\":\"{d1md.readSsid}\",";
+				returns += $"\"UpdateMode\":\"{d1md.readUpdateMode}\"";
 				returns += "},";
 			}
 			return returns.Remove(returns.Length - 1) + "}";
@@ -295,16 +287,20 @@ namespace WebAutomation.Helper {
 			IPAddress _ip;
 			string returns = new ret { erg = ret.ERROR }.ToString();
 			if(IPAddress.TryParse(ip, out _ip)) {
-				if(Debug.debugD1Mini)
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");
+				D1Mini d1md = _d1Minis.Find(t => t.IpAddress.ToString() == ip);
+				if(d1md.Active) {
+					if(Debug.debugD1Mini)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");
 
-				string url = $"http://{_ip}/status";
-				try {
-					WebClient webClient = new WebClient();
-					returns = webClient.DownloadString(new Uri(url));
-					if(saveStatus) saveJsonStatus(_ip, returns);
-				} catch(Exception ex) {
-					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+					string url = $"http://{_ip}/status";
+					try {
+						WebClient webClient = new WebClient();
+						returns = webClient.DownloadString(new Uri(url));
+						if(saveStatus)
+							saveJsonStatus(_ip, returns);
+					} catch(Exception ex) {
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+					}
 				}
 			} else {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status IpError: '{ip}'");
@@ -348,34 +344,47 @@ namespace WebAutomation.Helper {
 			IPAddress _ip;
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
-				if(Debug.debugD1Mini)
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getNeoPixel Status {_ip}");
+				D1Mini d1md = _d1Minis.Find(t => t.IpAddress.ToString() == ip);
+				if(d1md.Active) {
+					if(Debug.debugD1Mini)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getNeoPixel Status {_ip}");
 
-				string url = $"http://{_ip}/getNeoPixel";
-				try {
-					WebClient webClient = new WebClient();
-					returns = webClient.DownloadString(new Uri(url));
-				} catch(Exception ex) {
-					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}' ({url})");
+					string url = $"http://{_ip}/getNeoPixel";
+					try {
+						WebClient webClient = new WebClient();
+						returns = webClient.DownloadString(new Uri(url));
+					} catch(Exception ex) {
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}' ({url})");
+					}
 				}
 			} else {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson NeoPixel Status IpError: '{ip}'");
 			}
 			return returns;
 		}
-		public static D1MiniDevice get(string name) {
-			if(!D1Minis.ContainsKey(name)) return null;
-			return D1Minis[name];
+		public static D1Mini get(int id) {
+			if(!_d1Minis.Exists(t => t.Id == id)) return null;
+			return _d1Minis.Find(t => t.Id == id);
+		}
+		public static D1Mini get(string name) {
+			if(!_d1Minis.Exists(t => t.Name == name))
+				return null;
+			return _d1Minis.Find(t => t.Name == name);
 		}
 		public static string sendUrlCmd(string ip, string cmd) {
-			IPAddress _ipAddress = IPAddress.Parse(ip);
+			IPAddress _ip;
 			string returns = "{\"erg\":\"S_ERROR\"}";
-			string url = $"http://{_ipAddress}/{cmd}";
-			try {
-				WebClient webClient = new WebClient();
-				returns = webClient.DownloadString(new Uri(url));
-			} catch(Exception ex) {
-				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ipAddress}: '{returns}'");
+			if(IPAddress.TryParse(ip, out _ip)) {
+				D1Mini d1md = _d1Minis.Find(t => t.IpAddress.ToString() == ip);
+				if(d1md.Active) {
+					string url = $"http://{_ip}/{cmd}";
+					try {
+						WebClient webClient = new WebClient();
+						returns = webClient.DownloadString(new Uri(url));
+					} catch(Exception ex) {
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+					}
+				}
 			}
 			return returns;
 		}
@@ -397,7 +406,7 @@ namespace WebAutomation.Helper {
 						if(Common.IsValidJson(recieved)) {
 							D1MiniBroadcast D1MiniRecieved = JsonConvert.DeserializeObject<D1MiniBroadcast>(recieved);
 							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null &&
-								!D1Minis.ContainsKey(D1MiniRecieved.Iam.FreakaZoneClient)) {
+								!_d1Minis.Exists(t => t.Name == D1MiniRecieved.Iam.FreakaZoneClient)) {
 								foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
 
 								Debug.Write(MethodInfo.GetCurrentMethod(), $"Found new D1Mini: {D1MiniRecieved.Iam.FreakaZoneClient}");
@@ -443,7 +452,7 @@ namespace WebAutomation.Helper {
 							D1MiniBroadcast D1MiniRecieved = JsonConvert.DeserializeObject<D1MiniBroadcast>(recieved);
 							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null) {
 								Program.MainProg.wpWebSockets.sendText(id, "SearchD1Mini",
-									"{\"exists\":" + (D1Minis.ContainsKey(D1MiniRecieved.Iam.FreakaZoneClient) ? "true" : "false") + "," +
+									"{\"exists\":" + (_d1Minis.Exists(t => t.Name == D1MiniRecieved.Iam.FreakaZoneClient) ? "true" : "false") + "," +
 									$"\"recieved\":{recieved}" + "}");
 								//foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
 
@@ -498,8 +507,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetBM(string mac, bool state) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
 				if(Debug.debugD1Mini)
@@ -513,8 +522,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetTemp(string mac, string temp) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_temp, d1m.Name, temp.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
@@ -529,8 +538,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetHum(string mac, string hum) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_hum, d1m.Name, hum.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
@@ -545,8 +554,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetLdr(string mac, string ldr) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_ldr, d1m.Name, ldr.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
@@ -561,8 +570,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetLight(string mac, string light) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_light, d1m.Name, light.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
@@ -577,8 +586,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetRelais(string mac, bool state) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
 				if(Debug.debugD1Mini)
@@ -592,8 +601,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetRain(string mac, string rain) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_rain, d1m.Name, rain.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
@@ -608,8 +617,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetMoisture(string mac, string moisture) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_moisture, d1m.Name, moisture.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
@@ -624,8 +633,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetVolume(string mac, string volume) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_vol, d1m.Name, volume.Replace(".", ","));
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
@@ -640,8 +649,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetWindow(string mac, bool state) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
 				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
 				if(Debug.debugD1Mini)
@@ -655,8 +664,8 @@ namespace WebAutomation.Helper {
 		}
 		public static bool SetAnalogOut(string mac, string analogout) {
 			bool returns = false;
-			if(D1MinisMac.ContainsKey(mac) && D1Minis.ContainsKey(D1MinisMac[mac])) {
-				D1MiniDevice d1m = D1Minis[D1MinisMac[mac]];
+			if(_d1Minis.Exists(t => t.readMac == mac)) {
+				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
 				setValue(d1m.id_analogout, d1m.Name, analogout);
 				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
@@ -697,12 +706,19 @@ namespace WebAutomation.Helper {
 			return returns;
 		}
 	}
-	public class D1MiniDevice {
+	public class D1Mini {
+		private int _id;
+		public int Id {
+			get { return _id; }
+		}
 		private string _name;
 		public string Name {
 			get { return _name; }
 		}
 		private IPAddress _ipAddress;
+		public IPAddress IpAddress {
+			get { return _ipAddress; }
+		}
 		private string _mac;
 		private string _description;
 
@@ -713,6 +729,12 @@ namespace WebAutomation.Helper {
 		public string readMac;
 		public string readSsid;
 		public string readUpdateMode;
+
+		private bool _active;
+		public bool Active {
+			get { return _active; }
+			set { _active = value; }
+		}
 
 		private int _id_onoff;
 		public int id_onoff {
@@ -824,11 +846,21 @@ namespace WebAutomation.Helper {
 			"info/Version", "info/wpFreakaZone",
 			"info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID",
 			"UpdateMode", "info/Online" };
-		public D1MiniDevice(String name, IPAddress ip, String mac, String description) {
+		public D1Mini(int id, String name, IPAddress ip, String mac, String description) {
+			_id = id;
 			_name = name;
 			_ipAddress = ip;
 			_mac = mac;
 			_description = description;
+			_active = true;
+		}
+		public D1Mini(TableD1Mini td1m) {
+			_id = td1m.id_d1mini;
+			_name = td1m.name;
+			_ipAddress = IPAddress.Parse(td1m.ip);
+			_mac = td1m.mac;
+			_description = td1m.description;
+			_active = td1m.active;
 		}
 		public void Start() {
 			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);

@@ -8,21 +8,20 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 183                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 171 2025-02-13 12:28:06Z                        $ #
+//# File-ID      : $Id:: Trend.cs 183 2025-02-16 01:24:09Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using FreakaZone.Libraries.wpSQL;
+using FreakaZone.Libraries.wpSQL.Table;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using WebAutomation.Helper;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.PlugIns {
@@ -101,6 +100,9 @@ namespace WebAutomation.PlugIns {
 		/// <param name="intervall"></param>
 		public Trend(int idtrend, int iddp, string trendname, int intervall, int maxentries, int maxdays, bool active) {
 			Init(idtrend, iddp, trendname, intervall, maxentries, maxdays, active);
+		}
+		public Trend(TableTrend tt) {
+			Init(tt.id_trend, tt.id_dp, tt.name, tt.intervall, tt.max, tt.maxAge, tt.active);
 		}
 		public void Stop() {
 			if(onChangeMinValue != null)
@@ -197,7 +199,7 @@ namespace WebAutomation.PlugIns {
 		/// Key: id_trend<br />
 		/// Value: Trend
 		/// </summary>
-		private static Dictionary<int, Trend> _trendList = new Dictionary<int, Trend>();
+		private static List<Trend> _trendList = new List<Trend>();
 		/// <summary></summary>
 		private static Logger _eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInTrend);
 		private static TrendCleanDB _threadCleanDB;
@@ -205,20 +207,10 @@ namespace WebAutomation.PlugIns {
 		public static void Init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Init");
 			using(Database Sql = new Database("get Trend Dictionary")) {
-				string[][] erg = Sql.wpQuery(@"SELECT
-					[t].[id_trend], [dp].[id_dp], [t].[name], [t].[intervall], [t].[max], [t].[maxage], [t].[active]
-					FROM [trend] [t]
-					INNER JOIN [dp] ON [t].[id_dp] = [dp].[id_dp]"
-				);
-				int idTrend, idDp, intervall, max, maxage;
-				for(int i = 0; i < erg.Length; i++) {
-					idTrend = Int32.Parse(erg[i][0]);
-					idDp = Int32.Parse(erg[i][1]);
-					intervall = Int32.Parse(erg[i][3]);
-					max = Int32.Parse(erg[i][4]);
-					maxage = Int32.Parse(erg[i][5]);
-					_trendList.Add(idTrend, new Trend(idTrend, idDp, erg[i][2], intervall, max, maxage, erg[i][6] == "True"));
-					Datapoints.Get(idDp).idTrend = idTrend;
+				List<TableTrend> tt = Sql.getTable<TableTrend>();
+				foreach(TableTrend t in tt) {
+					_trendList.Add(new Trend(t));
+					Datapoints.Get(t.id_dp).idTrend = t.id_trend;
 				}
 			}
 			_threadCleanDB = new TrendCleanDB();
@@ -230,30 +222,26 @@ namespace WebAutomation.PlugIns {
 			if(_threadCleanDB != null)
 				_threadCleanDB.Stop();
 			if(_trendList != null) {
-				foreach(KeyValuePair<int, Trend> kvp in _trendList) {
-					kvp.Value.Stop();
+				foreach(Trend t in _trendList) {
+					t.Stop();
 				}
 			}
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
 		}
 		public static Trend Get(int idTrend) {
-			return _trendList[idTrend];
+			return _trendList.Find(t => t.IdTrend == idTrend);
 		}
 		public static void RemoveTrend(int idTrend) {
-			_trendList[idTrend].Stop();
-			_trendList.Remove(idTrend);
+			if(_trendList.Exists(t => t.IdTrend == idTrend)) {
+				_trendList.Find(t => t.IdTrend == idTrend).Stop();
+				_trendList.Remove(_trendList.Find(t => t.IdTrend == idTrend));
+			}
 		}
 		public static void AddTrend(int idDp) {
 			using(Database Sql = new Database("Add Trend to Dictionary")) {
-				string[][] erg = Sql.wpQuery(@$"SELECT TOP 1
-					[id_trend], [name], [intervall], [max], [maxage], [active]
-					FROM [trend] [t] WHERE [id_dp] = {idDp}");
-				int idTrend, intervall, max, maxage;
-				idTrend = Int32.Parse(erg[0][0]);
-				intervall = Int32.Parse(erg[0][2]);
-				max = Int32.Parse(erg[0][3]);
-				maxage = Int32.Parse(erg[0][4]);
-				_trendList.Add(idTrend, new Trend(idTrend, idDp, erg[0][1], intervall, max, maxage, erg[0][5] == "True"));
+				TableTrend tt = Sql.GetWithId<TableTrend>(idDp);
+				if(!_trendList.Exists(t => t.IdDP == idDp))
+					_trendList.Add(new Trend(tt));
 			}
 		}
 		/// <summary>
@@ -331,7 +319,7 @@ namespace WebAutomation.PlugIns {
 				Dictionary<DateTime, string> DataforExport;
 				watch.Start();
 				Debug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
-				foreach (KeyValuePair<int, Trend> kvpTrend in _trendList) {
+				foreach (Trend t in _trendList) {
 					if (_doStop) break;
 					deleteToOld = 0;
 					deleteToMuch = 0;
@@ -340,7 +328,6 @@ namespace WebAutomation.PlugIns {
 					DataforExport = new Dictionary<DateTime, string>();
 					watchTrend.Restart();
 					try {
-						Trend t = kvpTrend.Value;
 						if (t.MaxDays > 0 && t.MaxEntries > 0) {
 							using (Database Sql = new Database("Save into Archive")) {
 								erg = Sql.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]

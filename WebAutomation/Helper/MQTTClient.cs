@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 183                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 171 2025-02-13 12:28:06Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 183 2025-02-16 01:24:09Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -420,13 +420,13 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		public bool shellyMqttUpdate() {
 			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
-			foreach(KeyValuePair<string, ShellyServer.ShellyDeviceHelper> kvp in ShellyServer.ForceMqttUpdateAvailable) {
-				msg.Topic = $"{kvp.Value.mqtt_id}/ForceMqttUpdate";
+			foreach(ShellyServer.Shelly s in ShellyServer.ForceMqttUpdateAvailable) {
+				msg.Topic = $"{s.MqttId}/ForceMqttUpdate";
 				try {
 					msg.PayloadSegment = getFromString("1");
 					_mqttClient.PublishAsync(msg);
 					if(Debug.debugMQTT)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"ForceMqttUpdate: {kvp.Value.mqtt_id}");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"ForceMqttUpdate: {s.MqttId}");
 				} catch(Exception ex) {
 					if(Debug.debugMQTT)
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, msg.Topic);

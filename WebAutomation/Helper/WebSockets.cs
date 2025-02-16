@@ -16,11 +16,9 @@
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using Newtonsoft.Json;
-using ShellyDevice;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -43,7 +41,7 @@ namespace WebAutomation.Helper {
 			string name = IniFile.get("Websockets", "Name");
 			int port = IniFile.getInt("Websockets", "Port");
 			try {
-				eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.WebSockets);
+				eventLog = new Logger(Logger.ESource.WebSockets);
 
 				WatsonClients = new Dictionary<Guid, wpTcpClient>();
 				ws = new WatsonWsServer(name, port, false);

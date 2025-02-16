@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using WebAutomation.Helper;
 
 namespace WebAutomation.PlugIns {
 	/// <summary>

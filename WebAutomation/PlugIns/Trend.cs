@@ -201,7 +201,7 @@ namespace WebAutomation.PlugIns {
 		/// </summary>
 		private static List<Trend> _trendList = new List<Trend>();
 		/// <summary></summary>
-		private static Logger _eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInTrend);
+		private static Logger _eventLog = new Logger(Logger.ESource.PlugInTrend);
 		private static TrendCleanDB _threadCleanDB;
 
 		public static void Init() {

@@ -21,9 +21,7 @@ using System.Collections;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using WebAutomation;
 using WebAutomation.externals;
-using WebAutomation.Helper;
 /**
  * @addtogroup externals
  * @{
@@ -148,7 +146,7 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public OpcServer(string name) {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.OPCDataServer);
+			eventLog = new Logger(Logger.ESource.OPCDataServer);
 			State = ServerState.notconnected;
 			_name = name;
 		}

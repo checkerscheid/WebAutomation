@@ -22,8 +22,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
-using WebAutomation;
-using WebAutomation.Helper;
 /**
 * @addtogroup externals
 * @{
@@ -344,7 +342,7 @@ namespace OPC.Data {
 		/// <param name="setActive"></param>
 		/// <param name="requestedUpdateRate"></param>
 		internal OpcGroup(ref IOPCServer ifServerLink, bool isPublic, string groupName, bool setActive, int requestedUpdateRate) {
-			EventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.OPCDataGroup);
+			EventLog = new Logger(Logger.ESource.OPCDataGroup);
 			ifServer = ifServerLink;
 
 			state.Name = groupName;

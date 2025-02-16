@@ -24,7 +24,7 @@ using static FreakaZone.Libraries.wpEventLog.Logger;
 namespace WebAutomation.Helper {
 	class TransferId {
 		/// <summary>WebAutomationServer Event Log</summary>
-		private static Logger eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.TransferId);
+		private static Logger eventLog = new Logger(Logger.ESource.TransferId);
 		/// <summary>Transfer Grund: OpcRouter</summary>
 		public const int TransferOpcRouter = 1;
 		/// <summary>Transfer Grund: Watchdog</summary>
@@ -226,7 +226,7 @@ namespace WebAutomation.Helper {
 				this.AutoReset = false;
 				this.Elapsed += new System.Timers.ElapsedEventHandler(ttaid_Elapsed);
 				this.Enabled = true;
-				eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.TransferId);
+				eventLog = new Logger(Logger.ESource.TransferId);
 			}
 			private void ttaid_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 				string reason = "unbekannt";

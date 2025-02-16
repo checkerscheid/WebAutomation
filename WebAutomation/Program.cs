@@ -17,7 +17,6 @@ using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using FreakaZone.Libraries.wpLicense;
 using System;
-using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;

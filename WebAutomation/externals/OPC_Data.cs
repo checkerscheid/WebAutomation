@@ -13,9 +13,7 @@
 //# File-ID      : $Id:: OPC_Data.cs 62 2023-12-19 18:28:44Z                      $ #
 //#                                                                                 #
 //###################################################################################
-using OPC.Common;
 using System;
-using System.Reflection;
 using System.Runtime.InteropServices;
 /**
  * @addtogroup externals

@@ -67,7 +67,7 @@ namespace WebAutomation.Helper {
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.WEBcom);
+			eventLog = new Logger(Logger.ESource.WEBcom);
 			WebComListener = new TcpListener(IPAddress.Any, IniFile.getInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
@@ -740,8 +740,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cReadEvent:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param != null) returns = FreakaZone.Libraries.wpEventLog.Logger.readLog(param[0]);
-						else returns = FreakaZone.Libraries.wpEventLog.Logger.readLog();
+						if (param != null) returns = Logger.readLog(param[0]);
+						else returns = Logger.readLog();
 					} catch (Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);

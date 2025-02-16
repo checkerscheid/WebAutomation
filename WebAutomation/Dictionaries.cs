@@ -26,11 +26,11 @@ using WebAutomation.PlugIns;
 
 namespace WebAutomation {
 	public class DatapointsCollection {
-		private static Logger EventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.WebAutomation);
+		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
 		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
 	}
 	public class Datapoint {
-		private static Logger EventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.WebAutomation);
+		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
 		private int _id;
 		public int ID { get { return _id; } }
 		private int _idGroup;

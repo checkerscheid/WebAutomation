@@ -35,7 +35,7 @@ namespace WebAutomation.Helper {
 		public RestServer() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
 			_isFinished = false;
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.Rest);
+			eventLog = new Logger(Logger.ESource.Rest);
 			RestServerListener = new TcpListener(IPAddress.Any, IniFile.getInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";

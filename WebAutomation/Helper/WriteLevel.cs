@@ -33,7 +33,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		/// <param name="_Me"></param>
 		public static void AddWriteLevel() {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInWriteLevel);
+			eventLog = new Logger(Logger.ESource.PlugInWriteLevel);
 			using (Database Sql = new Database("Add Write Level")) {
 				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],

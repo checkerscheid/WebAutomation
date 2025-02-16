@@ -16,7 +16,6 @@
 using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
-using WebAutomation.Helper;
 /**
 * @addtogroup WebAutomation
 * @{

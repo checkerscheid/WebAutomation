@@ -18,7 +18,6 @@ using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using WebAutomation.Helper;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.PlugIns {
@@ -27,7 +26,7 @@ namespace WebAutomation.PlugIns {
 		private static Logger eventLog;
 		private static Dictionary<int, List<int>> RouterItems = new Dictionary<int, List<int>>();
 		public static void AddRouter() {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInRouter);
+			eventLog = new Logger(Logger.ESource.PlugInRouter);
 			using (Database Sql = new Database("Add Router")) {
 				string[][] DBRouter = Sql.wpQuery(@"SELECT [id_dp], [id_to] FROM [router]");
 				for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
@@ -54,7 +53,7 @@ namespace WebAutomation.PlugIns {
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geladen");
 		}
 		public static void UpdateRouter(int fromid) {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInRouter);
+			eventLog = new Logger(Logger.ESource.PlugInRouter);
 			using (Database Sql = new Database("Update Router for Item")) {
 				string[][] DBRouter = Sql.wpQuery(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
 				if (DBRouter.Length == 0) {

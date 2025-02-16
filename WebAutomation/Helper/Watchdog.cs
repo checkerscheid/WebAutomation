@@ -120,7 +120,7 @@ namespace WebAutomation.Helper {
 		}
 		public delegate void ServiceStatusChangedEventHandler(ServiceStatusChangedEventArgs e);
 		public wpServiceStatus(string servicename) {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInServiceStatus);
+			eventLog = new Logger(Logger.ESource.PlugInServiceStatus);
 			this._serviceName = servicename;
 			if (_serviceName != "" && checkServiceInstalled()) {
 				serviceTimer = new Timer(Timer_Tick, _serviceName, 0, 500);
@@ -195,7 +195,7 @@ namespace WebAutomation.Helper {
 		}
 
 		public wpSystemStatus() {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.PlugInServiceStatus);
+			eventLog = new Logger(Logger.ESource.PlugInServiceStatus);
 			ramCounter = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes");
 			cpuCounter = new System.Diagnostics.PerformanceCounter("Process", "% Processor Time", System.Diagnostics.Process.GetCurrentProcess().ProcessName);
 

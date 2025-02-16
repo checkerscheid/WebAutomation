@@ -88,7 +88,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.OPC);
+			eventLog = new Logger(Logger.ESource.OPC);
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "OPC Client init");
 				
 			TheServer = new Dictionary<int, PGAOPCServer>();
@@ -2114,7 +2114,7 @@ namespace WebAutomation.Helper {
 			private volatile bool _doStop;
 			private int _counter;
 			private int _maxCounter;
-			private static Logger eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.OPCDataServer);
+			private static Logger eventLog = new Logger(Logger.ESource.OPCDataServer);
 			public CheckOpcServerState() {
 				_doStop = false;
 				_counter = 0;

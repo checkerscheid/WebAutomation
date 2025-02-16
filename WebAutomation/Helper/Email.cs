@@ -55,7 +55,7 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		private void init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "EMail Client init");
-			eventLog = new Logger(FreakaZone.Libraries.wpEventLog.Logger.ESource.Mail);
+			eventLog = new Logger(Logger.ESource.Mail);
 			mailMessage = new MailMessage();
 			reset();
 			string useSSL = IniFile.get("Email", "useSSL");

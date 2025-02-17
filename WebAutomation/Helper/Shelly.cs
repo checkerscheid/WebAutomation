@@ -138,6 +138,13 @@ namespace WebAutomation.Helper {
 				}
 			}
 		}
+		public static void removeShelly(int id) {
+			using(Database Sql = new Database("Delete Shelly")) {
+				if(_shellies.Exists(t => t.Id == id))
+					_shellies.Remove(_shellies.Find(t => t.Id == id));
+				Sql.DeleteWithId<TableShelly>(id);
+			}
+		}
 		public static string getAllStatus() {
 			foreach(Shelly s in _shellies) {
 				s.getStatus(true);

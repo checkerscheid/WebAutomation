@@ -18,6 +18,7 @@ using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using FreakaZone.Libraries.wpSamsungRemote;
 using FreakaZone.Libraries.wpSQL;
+using FreakaZone.Libraries.wpSQL.Table;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -91,13 +92,27 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		private static class wpBefehl {
 			/// <summary></summary>
+			#region Server
 			public const string cHello = "Hello Server";
 			public const string cVersion = "getVersion";
+			public const string cChangeWartung = "changeWartung";
+			public const string cReloadSettings = "ReloadSettings"; // cfg from SQL
+			public const string cReadEvent = "ReadEvent";
+			public const string cGetDebug = "wpGetDebug";
+			public const string cSetDebug = "wpSetDebug";
+			public const string cHistoryCleaner = "HistoryCleaner";
+			public const string cInsertDummy = "InsertDummy";
+			#endregion
 
+			#region Datapoints
 			public const string cActiveDP = "ActiveDP";
 			public const string cActiveDPextended = "ActiveDPextended";
 			public const string cSystem = "ActiveSystem";
+			public const string cWrite = "WriteDP";
+			public const string cWriteMulti = "WriteMultiDP";
+			#endregion
 
+			#region OPC
 			public const string cOPCServer = "BrowseOPCServer";
 			public const string cOPCGroup = "BrowseOPCGroup";
 			public const string cOPCSubGroup = "BrowseOPCSubGroup";
@@ -120,7 +135,10 @@ namespace WebAutomation.Helper {
 			public const string cRemoveOPCGroup = "RemoveOPCGroup";
 			public const string cRemoveOPCItem = "RemoveOPCItem";
 			public const string cMoveOPCItem = "MoveOPCItem";
+			public const string cReadItem = "ReadItem";
+			#endregion
 
+			#region Alarm
 			public const string cAlarms = "ActiveAlarms";
 			public const string cQuitAlarm = "QuitAlarm";
 			public const string cQuitAlarms = "QuitAlarms";
@@ -129,31 +147,52 @@ namespace WebAutomation.Helper {
 			public const string cDeleteAlarm = "DeleteAlarm";
 			public const string cDeleteAlarms = "DeleteAlarms";
 			public const string cUpdateAlarmGroups = "UpdateAlarmGroups";
-
 			public const string cUpdateMail = "UpdateMail";
-			public const string cCalendarRenew = "CalendarRenew";
-			public const string cForceSceneRenew = "ForceSceneRenew";
+			#endregion
+
+			#region Trend
 			public const string cSaveNewTrend = "SaveNewTrend";
 			public const string cUpdateTrend = "UpdateTrend";
 			public const string cDeleteTrend = "DeleteTrend";
-			public const string cUpdateTrendIntervall = "UpdateTrendIntervall";
 			public const string cActivateTrend = "ActivateTrend";
 			public const string cDeactivateTrend = "DeactivateTrend";
+			public const string cUpdateTrendIntervall = "UpdateTrendIntervall";
 			public const string cUpdateTrendMaxEntries = "UpdateTrendMaxEntries";
 			public const string cUpdateTrendMaxDays = "UpdateTrendMaxDays";
-			public const string cUpdateRouter = "UpdateRouter";
+			#endregion
 
-			public const string cWrite = "WriteDP";
-			public const string cWriteMulti = "WriteMultiDP";
+			#region Calendar
+			public const string cCalendarRenew = "CalendarRenew";
+			#endregion
+
+			#region Scene
+			public const string cForceSceneRenew = "ForceSceneRenew";
 			public const string cWriteScene = "WriteSceneDP";
-			public const string cPublishTopic = "publishTopic";
+			#endregion
 
-			public const string cForceMqttUpdate = "ForceMqttUpdate";
-			public const string cShellyMqttUpdate = "shellyMqttUpdate";
-			public const string cD1MiniMqttUpdate = "d1MiniMqttUpdate";
+			#region Router
+			public const string cUpdateRouter = "UpdateRouter";
+			#endregion
+
+			#region MQTT
+			public const string cPublishTopic = "publishTopic";
 			public const string cSetBrowseMqtt = "setBrowseMqtt";
 			public const string cUnsetBrowseMqtt = "unsetBrowseMqtt";
 			public const string cGetBrowseMqtt = "getBrowseMqtt";
+			#endregion
+
+			#region ShellyAndD1Mini
+			public const string cForceMqttUpdate = "ForceMqttUpdate";
+			#endregion
+
+			#region Shelly
+			public const string cShellyMqttUpdate = "shellyMqttUpdate";
+			public const string cGetShellyStatus = "GetShellyStatus";
+			public const string cDeleteShelly = "DeleteShelly";
+			#endregion
+
+			#region D1Mini
+			public const string cD1MiniMqttUpdate = "d1MiniMqttUpdate";
 			public const string cGetAllD1MiniSettings = "getAllD1MiniSettings";
 			public const string cGetD1MiniStatus = "getD1MiniStatus";
 			public const string cGetAndSaveD1MiniStatus = "getAndSaveD1MiniStatus";
@@ -166,18 +205,12 @@ namespace WebAutomation.Helper {
 			public const string cDeleteD1Mini = "DeleteD1Mini";
 			public const string cGetD1MiniServer = "GetD1MiniServer";
 			public const string cSetD1MiniServer = "SetD1MiniServer";
-			public const string cGetShellyStatus = "GetShellyStatus";
+			#endregion
 
+			#region Remote
 			public const string cRemoteControl = "RemoteControl";
+			#endregion
 
-			public const string cReadItem = "ReadItem";
-			public const string cReadEvent = "ReadEvent";
-
-			public const string cChangeWartung = "changeWartung";
-			public const string cReloadSettings = "ReloadSettings"; // cfg from SQL
-			public const string cGetDebug = "wpGetDebug";
-			public const string cSetDebug = "wpSetDebug";
-			public const string cHistoryCleaner = "HistoryCleaner";
 			/// <summary>
 			/// 
 			/// </summary>
@@ -274,6 +307,11 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cVersion:
 					string[] pVersion = Application.ProductVersion.Split('.');
 					returns = String.Format("{0}.{1} Build {2}", pVersion[0], pVersion[1], Program.subversion);
+					break;
+				case wpBefehl.cInsertDummy:
+					using(Database Sql = new Database("Insert Test Dummy")) {
+						returns = Sql.Insert<TableTv>(new TableTv("Dummy1", "12", 51, "h", "67", true)).ToString();
+					}
 					break;
 				case wpBefehl.cActiveDP:
 					returns = getActiveDP(wpBefehl.getParam(s_befehl[1]));
@@ -377,6 +415,15 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cSetD1MiniServer:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = D1MiniServer.setServerSetting(param[0], param[1]);
+					break;
+				case wpBefehl.cDeleteShelly:
+					param = wpBefehl.getParam(s_befehl[1]);
+					for(int i = 0; i < param.Length; i++) {
+						if(Int32.TryParse(param[i], out outint)) {
+							ShellyServer.removeShelly(outint);
+						}
+					}
+					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cGetShellyStatus:
 					ShellyServer.getAllStatus();

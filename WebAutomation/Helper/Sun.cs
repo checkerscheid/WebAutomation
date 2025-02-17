@@ -50,7 +50,6 @@ namespace WebAutomation.Helper {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
 		}
 		private async Task StartSunriseSunsetTimer() {
-			await GetSunsetSunrise();
 
 			setNewSunriseSunsetTimer = new System.Timers.Timer();
 			setNewSunriseSunsetTimer.Elapsed += SunriseSunsetTimer_Elapsed;
@@ -63,6 +62,8 @@ namespace WebAutomation.Helper {
 			SunsetTimer = new System.Timers.Timer();
 			SunsetTimer.Elapsed += SunsetTimer_Elapsed;
 			SunsetTimer.AutoReset = false;
+
+			await GetSunsetSunrise();
 
 			TimeSpan firstStart = new TimeSpan();
 			DateTime Now = DateTime.Now;

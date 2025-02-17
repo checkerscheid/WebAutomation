@@ -8,27 +8,25 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 171 2025-02-13 12:28:06Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 188 2025-02-17 00:57:33Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpSQL;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Schema;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 
 namespace WebAutomation {
-	public class DatapointsCollection {
-		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
-		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
-	}
 	public class Datapoint {
 		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
 		private int _id;
@@ -36,6 +34,7 @@ namespace WebAutomation {
 		private int _idGroup;
 		private int _idNamespace;
 		private int? _idOpc;
+		public int? IdOpc => _idOpc;
 		private int? _idMqtt;
 		private int? _idTrend;
 		public int? idTrend { get { return _idTrend; } set { _idTrend = value; } }
@@ -202,20 +201,15 @@ namespace WebAutomation {
 	}
 	
 	public static class Datapoints {
-		private static Dictionary<int, Datapoint> DP = new Dictionary<int, Datapoint>();
-		private static Dictionary<string, int> DPnames = new Dictionary<string, int>();
-		private static Dictionary<int, int> OPCList = new Dictionary<int, int>();
+		private static List<Datapoint> _dp = new List<Datapoint>();
 		public static void Init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Init");
 			using(Database Sql = new Database("fill Datapoints")) {
-				string[][] erg = Sql.wpQuery("SELECT [id_dp], [id_opcdatapoint] FROM [dp]");
+				string[][] erg = Sql.wpQuery("SELECT [id_dp] FROM [dp]");
 				for(int idp = 0; idp < erg.Length; idp++) {
 					int iddp = Int32.Parse(erg[idp][0]);
 					try {
 						Add(iddp, new Datapoint(iddp));
-						if(erg[idp][1] != "") {
-							OPCList.Add(Int32.Parse(erg[idp][1]), iddp);
-						}
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"is verkehrt: {iddp}?");
 					}
@@ -231,41 +225,37 @@ namespace WebAutomation {
 		}
 
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpShellyServer");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpShellyServer");
 		}
 		private static void D1MiniServer_valueChanged(object sender, D1MiniServer.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpD1MiniServer");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpD1MiniServer");
 		}
 
 		private static void MQTTClient_valueChanged(object sender, MQTTClient.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpMQTTClient");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpMQTTClient");
 		}
 		private static void wpOPCClient_valueChanged(object sender, OPCClient.valueChangedEventArgs e) {
-			if(OPCList.ContainsKey(e.idOPCPoint))
-				Get(OPCList[e.idOPCPoint]).setValue(e.value, "wpOPCClient");
+			if(_dp.Exists(t => t.IdOpc == e.idOPCPoint))
+				_dp.Find(t => t.IdOpc == e.idOPCPoint).setValue(e.value, "wpOPCClient");
 		}
 		public static void Add(int id, Datapoint dp) {
-			if(DP.ContainsKey(id))
-				DP[id] = dp;
-			else
-				DP.Add(id, dp);
-			if(DPnames.ContainsKey(dp.Name))
-				DPnames[dp.Name] = id;
-			else
-				DPnames.Add(dp.Name, id);
+			if(_dp.Exists(t => t.ID == id)) {
+				int i = _dp.FindIndex(t => t.ID == id);
+				_dp[i] = dp;
+			} else
+				_dp.Add(dp);
 		}
 		public static Datapoint Get(int id) {
-			if(DP.ContainsKey(id))
-				return DP[id];
+			if(_dp.Exists(t => t.ID == id))
+				return _dp.Find(t => t.ID == id);
 			return null;
 		}
 		public static Datapoint Get(string name) {
-			if(DPnames.ContainsKey(name))
-				if(DP.ContainsKey(DPnames[name]))
-					return DP[DPnames[name]];
+			if(_dp.Exists(t => t.Name == name))
+				return _dp.Find(t => t.Name == name);
 			return null;
 		}
 		public static void writeValues(List<int> DpIds, string value) {
@@ -279,84 +269,84 @@ namespace WebAutomation {
 			}
 		}
 	}
-	public class Server {
-		/// <summary></summary>
-		public class Dictionaries {
-			/// <summary>WebAutomationServer Event Log</summary>
-			private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
-			private static Dictionary<int, OPCItem> _items = new Dictionary<int, OPCItem>();
-			public static Dictionary<int, OPCItem> Items {
-				get { return _items; }
-				set { _items = value; }
-			}
-			//private static List<int> OPCItemsError;
-			public static void addItem(int id, OPCItem value) {
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) Items[id] = value;
-						else Items.Add(id, value);
-					} catch(Exception ex) {
-						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					} finally {
-						Monitor.Exit(Items);
-					}
-				} else {
-					Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (addItem:{1})", id);
+	public class OpcDatapoints {
+		/// <summary>WebAutomationServer Event Log</summary>
+		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
+		private static List<OPCItem> _items = new List<OPCItem>();
+		public static List<OPCItem> Items {
+			get { return _items; }
+			set { _items = value; }
+		}
+		//private static List<int> OPCItemsError;
+		public static void addItem(OPCItem value) {
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == value.Hclt)) {
+						int i = Items.FindIndex(t => t.Hclt == value.Hclt);
+						Items[i] = value;
+					} else
+						Items.Add(value);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (addItem:{1})", value.Hclt);
 			}
-			public static OPCItem getItem(int id) {
-				OPCItem returns = null;
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) {
-							returns = Items[id];
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					} finally {
-						Monitor.Exit(Items);
+		}
+		public static OPCItem getItem(int id) {
+			OPCItem returns = null;
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
+						returns = Items.Find(t => t.Hclt == id);
 					}
-				} else {
-					Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
-				return returns;
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 			}
-			public static bool checkItem(int id) {
-				bool returns = false;
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) {
+			return returns;
+		}
+		public static bool checkItem(int id) {
+			bool returns = false;
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
 							returns = true;
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					} finally {
-						Monitor.Exit(Items);
 					}
-				} else {
-					Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
-				return returns;
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 			}
-			public static void deleteItem(int Datapoints) {
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(Datapoints)) {
-							Items[Datapoints] = null;
-							Items.Remove(Datapoints);
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					} finally {
-						Monitor.Exit(Items);
+			return returns;
+		}
+		public static void deleteItem(int id) {
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
+						Items[Items.FindIndex(t => t.Hclt == id)] = null;
+						Items.Remove(Items.Find(t => t.Hclt == id));
 					}
-				} else {
-					Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (deleteItem:{1})", Datapoints);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (deleteItem:{1})", id);
 			}
-			public static void deleteItems(int[] Datapoints) {
-				for(int i = 0; i < Datapoints.Length; i++) deleteItem(Datapoints[i]);
-			}
+		}
+		public static void deleteItems(int[] Datapoints) {
+			for(int i = 0; i < Datapoints.Length; i++) deleteItem(Datapoints[i]);
 		}
 	}
 }

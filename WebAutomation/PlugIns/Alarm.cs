@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 171 2025-02-13 12:28:06Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 188 2025-02-17 00:57:33Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -569,7 +569,7 @@ namespace WebAutomation.PlugIns {
 		/// Key: id_alarm<br />
 		/// Value: Alarm
 		/// </summary>
-		private static Dictionary<int, Alarm> _alarmList = new Dictionary<int, Alarm>();
+		private static List<Alarm> _alarmList = new List<Alarm>();
 		/// <summary></summary>
 		private static Logger _eventLog;
 
@@ -662,7 +662,7 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmnames5 = DBAlarms[ialarms][23];
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
-					_alarmList.Add(idAlarm, TheAlarm);
+					_alarmList.Add(TheAlarm);
 					Datapoints.Get(idDp).idAlarm = idAlarm;
 				}
 			}
@@ -682,8 +682,8 @@ namespace WebAutomation.PlugIns {
 				for(int ialarms = 0; ialarms < DBActiveAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBActiveAlarms[ialarms][0]);
 					int idDp = Int32.Parse(DBActiveAlarms[ialarms][1]);
-					if(_alarmList.ContainsKey(idAlarm)) {
-						Alarm TheAlarm = _alarmList[idAlarm];
+					if(_alarmList.Exists(t => t.IdAlarm == idAlarm)) {
+						Alarm TheAlarm = _alarmList.Find(t => t.IdAlarm == idAlarm);
 						try {
 							TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
 							TheAlarm.Gone = Alarm.Default;
@@ -706,14 +706,14 @@ namespace WebAutomation.PlugIns {
 			}
 			_eventLog.Write(MethodInfo.GetCurrentMethod(), "Alarms gestartet");
 		}
-		public static Dictionary<int, Alarm> getActiveAlarms() {
-			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();
+		public static List<Alarm> getActiveAlarms() {
+			List<Alarm> returns = new List<Alarm>();
 			try {
-				foreach(KeyValuePair<int, Alarm> kvp in _alarmList) {
-					if(kvp.Value != null) {
-						kvp.Value.setAlarmValue();
-						if(kvp.Value.InAlarm || !kvp.Value.NeedQuit) {
-							returns.Add(kvp.Key, kvp.Value);
+				foreach(Alarm a in _alarmList) {
+					if(a != null) {
+						a.setAlarmValue();
+						if(a.InAlarm || !a.NeedQuit) {
+							returns.Add(a);
 						}
 					}
 				}
@@ -724,12 +724,12 @@ namespace WebAutomation.PlugIns {
 		}
 		public static Alarm Get(int? idAlarm) {
 			if(idAlarm == null) return null;
-			return _alarmList[(int)idAlarm];
+			return _alarmList.Find(t => t.IdAlarm == idAlarm);
 		}
 		public static void RemoveAlarm(int? idAlarm) {
 			if(idAlarm != null) {
-				_alarmList[(int)idAlarm].Stop();
-				_alarmList.Remove((int)idAlarm);
+				_alarmList.Find(t => t.IdAlarm == idAlarm).Stop();
+				_alarmList.Remove(_alarmList.Find(t => t.IdAlarm == idAlarm));
 			}
 		}
 		public static string FillAlarmGroups() {

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 171 2025-02-13 12:28:06Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 188 2025-02-17 00:57:33Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -283,7 +283,7 @@ namespace WebAutomation.Helper {
 					for (int i = 0; i < DBDatapoints.Length; i++) {
 						if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 					}
-					Server.Dictionaries.deleteItems(toDelete.ToArray());
+					OpcDatapoints.deleteItems(toDelete.ToArray());
 				}
 			} catch (Exception ex) {
 				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -447,9 +447,9 @@ namespace WebAutomation.Helper {
 		/// <param name="OPCPath"></param>
 		private void TheItemAdd(int ServerID, int GroupID, int PointID, string OPCPath, string PointName,
 			bool active, VarEnum OPCType) {
-			if (!Server.Dictionaries.checkItem(PointID)) {
+			if (!OpcDatapoints.checkItem(PointID)) {
 				// local add
-				Server.Dictionaries.addItem(PointID, new OPCItem(PointID, OPCPath, PointName, GroupID, ServerID));
+				OpcDatapoints.addItem(new OPCItem(PointID, OPCPath, PointName, GroupID, ServerID));
 				// opc add
 				if (active) TheItemConnect(ServerID, GroupID, PointID, OPCPath, OPCType);
 			}
@@ -470,9 +470,8 @@ namespace WebAutomation.Helper {
 			List<VarEnum> OPCTypes = new List<VarEnum>();
 			if (PointID.Length == OPCPath.Length && PointID.Length  == OPCType.Length) {
 				for (int i = 0; i <= PointID.Length; i++) {
-					if (Server.Dictionaries.getItem(PointID[i]) == null) {
-						Server.Dictionaries.addItem(PointID[i],
-							new OPCItem(PointID[i], OPCPath[i], PointName[i], GroupID, ServerID));
+					if (OpcDatapoints.getItem(PointID[i]) == null) {
+						OpcDatapoints.addItem(new OPCItem(PointID[i], OPCPath[i], PointName[i], GroupID, ServerID));
 						if (active[i]) {
 							PointIDs.Add(PointID[i]);
 							OPCPaths.Add(OPCPath[i]);
@@ -504,7 +503,7 @@ namespace WebAutomation.Helper {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						String.Format("Gruppe '{0}' - Item nicht aktiv: '{1}'\r\n\t{2}",
 						TheGroup[ServerID][GroupID].Name,
-						Server.Dictionaries.getItem(PointID).OpcItemName,
+						OpcDatapoints.getItem(PointID).OpcItemName,
 						HRESULTS.getError(TestItem[0].Error)));
 					if (TestItem[0].HandleServer != 0) {
 						TheGroup[ServerID][GroupID].RemoveItems(new int[] { TestItem[0].HandleServer }, out arrErr);
@@ -516,8 +515,8 @@ namespace WebAutomation.Helper {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), "Item konnte nicht aktiviert werden: '{0}'", OPCPath);
 					}
 					// local store information from opc server
-					Server.Dictionaries.getItem(PointID).Hsrv = TestItem[0].HandleServer;
-					Server.Dictionaries.getItem(PointID).DBType = TestItem[0].CanonicalDataType;
+					OpcDatapoints.getItem(PointID).Hsrv = TestItem[0].HandleServer;
+					OpcDatapoints.getItem(PointID).DBType = TestItem[0].CanonicalDataType;
 					Hsrv[ServerID][GroupID].Add(TestItem[0].HandleServer);
 					TheGroup[ServerID][GroupID].PGAactive = true;
 				}
@@ -548,12 +547,12 @@ namespace WebAutomation.Helper {
 							eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 								String.Format("Gruppe '{0}' - Item nicht aktiv: '{1}'\r\n\t{2}",
 								TheGroup[ServerID][GroupID].Name,
-								Server.Dictionaries.getItem(PointID[i]).OpcItemName,
+								OpcDatapoints.getItem(PointID[i]).OpcItemName,
 								HRESULTS.getError(TestItem[i].Error)));
 						} else {
 							// local store information from opc server
-							Server.Dictionaries.getItem(PointID[i]).Hsrv = TestItem[i].HandleServer;
-							Server.Dictionaries.getItem(PointID[i]).DBType = TestItem[i].CanonicalDataType;
+							OpcDatapoints.getItem(PointID[i]).Hsrv = TestItem[i].HandleServer;
+							OpcDatapoints.getItem(PointID[i]).DBType = TestItem[i].CanonicalDataType;
 							Hsrv[ServerID][GroupID].Add(TestItem[i].HandleServer);
 						}
 					}
@@ -702,7 +701,7 @@ namespace WebAutomation.Helper {
 					for(int i = 0; i < DBDatapoints.Length; i++) {
 						if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 					}
-					Server.Dictionaries.deleteItems(toDelete.ToArray());
+					OpcDatapoints.deleteItems(toDelete.ToArray());
 					Sql.wpNonResponse("DELETE FROM [opcserver] WHERE [id_opcserver] = {0}", ServerID);
 				}
 			} catch (Exception ex) {
@@ -773,7 +772,7 @@ namespace WebAutomation.Helper {
 						for (int i = 0; i < DBDatapoints.Length; i++) {
 							if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 						}
-						Server.Dictionaries.deleteItems(toDelete.ToArray());
+						OpcDatapoints.deleteItems(toDelete.ToArray());
 						Sql.wpNonResponse("DELETE FROM [opcgroup] WHERE [id_opcgroup] = {0}", GroupID);
 					}
 				}
@@ -823,7 +822,7 @@ namespace WebAutomation.Helper {
 			using(Database Sql = new Database("Delete OPC Items")) {
 				Sql.wpNonResponse(where.Substring(0, where.Length - 4));
 			}
-			Server.Dictionaries.deleteItems(PointID);
+			OpcDatapoints.deleteItems(PointID);
 			/// TODO: Gruppe entfernen, wenn keine Datenpunkte mehr vorhanden sind
 			return "S_OK";
 		}
@@ -1000,7 +999,7 @@ namespace WebAutomation.Helper {
 			DateTime DateTimeNow = DateTime.Now;
 			string lastchange = "";
 			foreach (OPCItemState s in e.sts) {
-				OPCItem ItemChanged = Server.Dictionaries.getItem(s.HandleClient);
+				OPCItem ItemChanged = OpcDatapoints.getItem(s.HandleClient);
 				if (ItemChanged == null) {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "[ReadCompleted] Item momentan in Gebrauch id: '{0}'",
 						s.HandleClient);
@@ -1048,7 +1047,7 @@ namespace WebAutomation.Helper {
 			if (running) {
 				DateTime DateTimeNow = DateTime.Now;
 				foreach (OPCItemState s in e.sts) {
-					OPCItem ItemChanged = Server.Dictionaries.getItem(s.HandleClient);
+					OPCItem ItemChanged = OpcDatapoints.getItem(s.HandleClient);
 					if (ItemChanged == null) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 							"[DataChanged] Item momentan in Gebrauch id: '{0}'", s.HandleClient);
@@ -1099,7 +1098,7 @@ namespace WebAutomation.Helper {
 		public void TheGroup_WriteCompleted(object sender, WriteCompleteEventArgs e) {
 			string strevlog = "";
 			for(int i = 0; i < e.res.Length; i++) {
-				OPCItem TheItem = Server.Dictionaries.getItem(e.res[i].HandleClient);
+				OPCItem TheItem = OpcDatapoints.getItem(e.res[i].HandleClient);
 				if (TheItem != null) {
 					// Fuehrt zu einer Schleife!!!
 					// if (Program.MainProg.IsTaster(e.res[i].HandleClient))
@@ -1143,7 +1142,7 @@ namespace WebAutomation.Helper {
 		public string setValue(int opcid, string value, int transferreason) {
 			if (!running) return "";
 			try {
-				OPCItem Item = Server.Dictionaries.getItem(opcid);
+				OPCItem Item = OpcDatapoints.getItem(opcid);
 				if (Item != null) {
 					int[] aE = new int[] { 1 };
 					int cI;
@@ -1232,7 +1231,7 @@ namespace WebAutomation.Helper {
 				Dictionary<int, Dictionary<int, Dictionary<int, object>>> Items =
 					new Dictionary<int, Dictionary<int, Dictionary<int, object>>>();
 				for (int i = 0; i < opcid.Length; i++) {
-					OPCItem TheItem = Server.Dictionaries.getItem(opcid[i]);
+					OPCItem TheItem = OpcDatapoints.getItem(opcid[i]);
 					if (TheItem != null) {
 						if (Items.ContainsKey(TheItem.Server)) {
 							if (Items[TheItem.Server].ContainsKey(TheItem.Group)) {
@@ -1832,7 +1831,7 @@ namespace WebAutomation.Helper {
 				if (TheItemStates.Value == HRESULTS.S_OK) {
 					iGood++;
 				} else {
-					sGood += String.Format("{{{0}={1}}}", Server.Dictionaries.getItem(TheItemStates.Key).OpcItemName,
+					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.getItem(TheItemStates.Key).OpcItemName,
 						HRESULTS.getError(TheItemStates.Value));
 				}
 			}
@@ -1846,7 +1845,7 @@ namespace WebAutomation.Helper {
 				if (TheItemQuality.Value == (short)OPC_QUALITY_STATUS.OK) {
 					iGood++;
 				} else {
-					sGood += String.Format("{{{0}={1}}}", Server.Dictionaries.getItem(TheItemQuality.Key).OpcItemName,
+					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.getItem(TheItemQuality.Key).OpcItemName,
 						OpcGroup.QualityToString(TheItemQuality.Value));
 				}
 			}
@@ -2066,7 +2065,7 @@ namespace WebAutomation.Helper {
 		}
 
 		public int ChangeOPCItemType(int iditem, VarEnum newtype) {
-			OPCItem TheItem = Server.Dictionaries.getItem(iditem);
+			OPCItem TheItem = OpcDatapoints.getItem(iditem);
 			int[] arrErr;
 			int cI;
 			if (!TheGroup[TheItem.Server][TheItem.Group].SetDatatypes(
@@ -2087,7 +2086,7 @@ namespace WebAutomation.Helper {
 		}
 		public void ReadOPC(int iditem) {
 			if (!running) return;
-			OPCItem TheItem = Server.Dictionaries.getItem(iditem);
+			OPCItem TheItem = OpcDatapoints.getItem(iditem);
 			int[] arrErr;
 			int cI;
 			if (TheItem != null) {

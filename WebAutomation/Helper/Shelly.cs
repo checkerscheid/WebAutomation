@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 183                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 183 2025-02-16 01:24:09Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 188 2025-02-17 00:57:33Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -273,8 +273,8 @@ namespace WebAutomation.Helper {
 			int pos = e.topic.IndexOf("/");
 			string name = e.topic.Substring(0, pos);
 			string setting = e.topic.Substring(pos + 1);
-			if(_shellies.Exists(t => t.Name == name)) {
-				Shelly s = _shellies.Find(t => t.Name == name);
+			if(_shellies.Exists(t => t.MqttId == name)) {
+				Shelly s = _shellies.Find(t => t.MqttId == name);
 				if(setting == "info/Online") s.Online = e.value == "0" ? false : true;
 			} else {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly MQTT not active? '{e.topic}', '{e.value}'");

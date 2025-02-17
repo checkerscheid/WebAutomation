@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 183                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 183 2025-02-16 01:24:09Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 188 2025-02-17 00:57:33Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -573,7 +573,7 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					if (Int32.TryParse(param[0], out outint) &&
 						Int32.TryParse(param[1], out outint2)) {
-						OPCItem TheItem = Server.Dictionaries.getItem(outint);
+						OPCItem TheItem = OpcDatapoints.getItem(outint);
 						if(TheItem != null) {
 							returns = Program.MainProg.wpOPCClient.moveOPCItem(TheItem, outint2);
 						}
@@ -860,7 +860,7 @@ namespace WebAutomation.Helper {
 				List<string> ValuesToWrite = new List<string>();
 				for(int i = 1; i < param.Length; i = i + 2) {
 					if (Int32.TryParse(param[i], out outint)) {
-						OPCItem TheItem = Server.Dictionaries.getItem(outint);
+						OPCItem TheItem = OpcDatapoints.getItem(outint);
 						string korrekt = param[i + 1];
 						IDsToWrite.Add(outint);
 						ValuesToWrite.Add(korrekt);
@@ -895,7 +895,7 @@ namespace WebAutomation.Helper {
 				OPCItem p;
 				Dictionary<int, string> d = Scene.getScene(idscene);
 				foreach (KeyValuePair<int, string> kvp in d) {
-					p = Server.Dictionaries.getItem(kvp.Key);
+					p = OpcDatapoints.getItem(kvp.Key);
 					if (p != null /*&& p.WriteLevel <= level*/) {
 						ids.Add(kvp.Key);
 						values.Add(kvp.Value);
@@ -1006,29 +1006,29 @@ $"{{DateTime={Now.ToString("yyyy-MM-ddTHH:mm:ss")}}}" +
 $"{{Date={Now.ToString("dd.MM.yyyy")}}}" +
 $"{{Time={Now.ToString("HH:mm:ss")}}}" +
 $"{{Alarme=";
-			foreach (KeyValuePair<int, Alarm> TheAlarm in Alarms.getActiveAlarms()) {
+			foreach (Alarm TheAlarm in Alarms.getActiveAlarms()) {
 				returns +=
-	$"{{{TheAlarm.Value.IdAlarm}={{" +
-		$"{{id={TheAlarm.Value.IdAlarm}}}" +
-		$"{{DpName={TheAlarm.Value.DpName}}}" +
-		$"{{Come={TheAlarm.Value.Come}}}" +
-		$"{{Gone={(TheAlarm.Value.Gone == Alarm.Default ? "-" : TheAlarm.Value.Gone.ToString())}}}" +
-		$"{{Quit={(TheAlarm.Value.Quit == Alarm.Default ? "-" : TheAlarm.Value.Quit.ToString())}}}" +
-		$"{{Type={TheAlarm.Value.Alarmtype}}}" +
-		$"{{Group={TheAlarm.Value.Alarmgroup}}}" +
-		$"{{Text={TheAlarm.Value.Alarmtext}}}" +
-		$"{{Link={TheAlarm.Value.Alarmlink}}}" +
-		$"{{AlarmUpdate={TheAlarm.Value.AlarmUpdate.ToString()}}}" +
+	$"{{{TheAlarm.IdAlarm}={{" +
+		$"{{id={TheAlarm.IdAlarm}}}" +
+		$"{{DpName={TheAlarm.DpName}}}" +
+		$"{{Come={TheAlarm.Come}}}" +
+		$"{{Gone={(TheAlarm.Gone == Alarm.Default ? "-" : TheAlarm.Gone.ToString())}}}" +
+		$"{{Quit={(TheAlarm.Quit == Alarm.Default ? "-" : TheAlarm.Quit.ToString())}}}" +
+		$"{{Type={TheAlarm.Alarmtype}}}" +
+		$"{{Group={TheAlarm.Alarmgroup}}}" +
+		$"{{Text={TheAlarm.Alarmtext}}}" +
+		$"{{Link={TheAlarm.Alarmlink}}}" +
+		$"{{AlarmUpdate={TheAlarm.AlarmUpdate.ToString()}}}" +
 		$"{(Alarms.UseAlarmGroup1 ?
-			$"{{AlarmGroup1={TheAlarm.Value.Alarmnames1}}}" : "")}" +
+			$"{{AlarmGroup1={TheAlarm.Alarmnames1}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup2 ?
-			$"{{AlarmGroup2={TheAlarm.Value.Alarmnames2}}}" : "")}" +
+			$"{{AlarmGroup2={TheAlarm.Alarmnames2}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup3 ?
-			$"{{AlarmGroup3={TheAlarm.Value.Alarmnames3}}}" : "")}" +
+			$"{{AlarmGroup3={TheAlarm.Alarmnames3}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup4 ?
-			$"{{AlarmGroup4={TheAlarm.Value.Alarmnames4}}}" : "")}" +
+			$"{{AlarmGroup4={TheAlarm.Alarmnames4}}}" : "")}" +
 		$"{(Alarms.UseAlarmGroup5 ?
-			$"{{AlarmGroup5={TheAlarm.Value.Alarmnames5}}}" : "")}" +
+			$"{{AlarmGroup5={TheAlarm.Alarmnames5}}}" : "")}" +
 	$"}}";
 			}
 			returns +=
@@ -1166,11 +1166,11 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			int AlarmsCome = 0;
 			int AlarmsGone = 0;
 			int AlarmsQuit = 0;
-			foreach (KeyValuePair<int, Alarm> TheAlarm in Alarms.getActiveAlarms()) {
-				if (TheAlarm.Value.Come != Alarm.Default && TheAlarm.Value.Gone == Alarm.Default)
+			foreach (Alarm TheAlarm in Alarms.getActiveAlarms()) {
+				if (TheAlarm.Come != Alarm.Default && TheAlarm.Gone == Alarm.Default)
 					AlarmsCome++;
-				if (TheAlarm.Value.Gone != Alarm.Default) AlarmsGone++;
-				if (TheAlarm.Value.Quit == Alarm.Default) AlarmsQuit++;
+				if (TheAlarm.Gone != Alarm.Default) AlarmsGone++;
+				if (TheAlarm.Quit == Alarm.Default) AlarmsQuit++;
 			}
 			return String.Format(@"{{WatchDog={0}}}{{DateTime={1}}}{{Date={2}}}{{Time={3}}}
 				{{AlarmsCome={4}}}{{AlarmsGone={5}}}{{AlarmsQuit={6}}}",

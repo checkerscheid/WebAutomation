@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 183                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 183 2025-02-16 01:24:09Z                      $ #
+//# File-ID      : $Id:: Program.cs 188 2025-02-17 00:57:33Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -32,7 +32,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "185";
+		public const string subversion = "188";
 		private static Debug debug;
 		/// <summary>
 		/// Der Haupteinstiegspunkt für die Anwendung.
@@ -63,7 +63,7 @@ namespace WebAutomation {
 			Mutex m = new Mutex(true, Application.ProductName + IniFile.get("TCP", "Port"), out createdNew);
 			if(createdNew) {
 				try {
-					debug = new Debug();
+					debug = new Debug(Application.ProductName);
 					Debug.Write(MethodInfo.GetCurrentMethod(), "START" +
 						"\r\n####################################################################\r\n\r\n");
 					MainProg = new WebAutomationServer(args);

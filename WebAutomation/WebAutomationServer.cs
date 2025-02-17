@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 171 2025-02-13 12:28:06Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 188 2025-02-17 00:57:33Z          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -551,19 +551,13 @@ namespace WebAutomation {
 			bool entered = false;
 			int notEntered = 0;
 			while(!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
+				if(Monitor.TryEnter(OpcDatapoints.Items, 5000)) {
 					try {
-						foreach(KeyValuePair<int, OPCItem> TheItems in Server.Dictionaries.Items) {
-							//if (TheItems.Value.Alarm != null) {
-							//	if (TheItems.Value.Alarm.Idalarm == id) {
-							//		returns = TheItems.Value.Alarm;
-							//	}
-							//}
-						}
+						returns = Alarms.Get(id);
 					} catch(Exception ex) {
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
+						Monitor.Exit(OpcDatapoints.Items);
 						entered = true;
 					}
 				} else {

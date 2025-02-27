@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 188 2025-02-17 00:57:33Z                        $ #
+//# File-ID      : $Id:: Trend.cs 194 2025-02-27 14:23:52Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -207,7 +207,7 @@ namespace WebAutomation.PlugIns {
 		public static void Init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Init");
 			using(Database Sql = new Database("get Trend Dictionary")) {
-				List<TableTrend> tt = Sql.getTable<TableTrend>();
+				List<TableTrend> tt = Sql.Select<TableTrend>();
 				foreach(TableTrend t in tt) {
 					_trendList.Add(new Trend(t));
 					Datapoints.Get(t.id_dp).idTrend = t.id_trend;
@@ -239,7 +239,7 @@ namespace WebAutomation.PlugIns {
 		}
 		public static void AddTrend(int idDp) {
 			using(Database Sql = new Database("Add Trend to Dictionary")) {
-				TableTrend tt = Sql.GetWithId<TableTrend>(idDp);
+				TableTrend tt = Sql.Select<TableTrend>(idDp);
 				if(!_trendList.Exists(t => t.IdDP == idDp))
 					_trendList.Add(new Trend(tt));
 			}

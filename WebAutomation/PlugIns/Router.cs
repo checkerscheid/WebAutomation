@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Router.cs 188 2025-02-17 00:57:33Z                       $ #
+//# File-ID      : $Id:: Router.cs 194 2025-02-27 14:23:52Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpSQL;
+using FreakaZone.Libraries.wpSQL.Table;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -28,24 +29,19 @@ namespace WebAutomation.PlugIns {
 		public static void AddRouter() {
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
 			using (Database Sql = new Database("Add Router")) {
-				string[][] DBRouter = Sql.wpQuery(@"SELECT [id_dp], [id_to] FROM [router]");
-				for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
+				List<TableRouter> ltr = Sql.Select<TableRouter>();
+				foreach(TableRouter tr in ltr) {
 					try {
-						int idfrom;
-						int idto;
-						if (Int32.TryParse(DBRouter[irouter][0], out idfrom) &&
-							Int32.TryParse(DBRouter[irouter][1], out idto)) {
-							if(!RouterItems.ContainsKey(idfrom)) {
-								RouterItems.Add(idfrom, new List<int>());
-							}
-							if(!RouterItems.ContainsKey(idto) && !RouterItems[idfrom].Contains(idto)) {
-								RouterItems[idfrom].Add(idto);
-							} else {
-								eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
-									"Route würde einen Loop erzeugen! {0}", idto);
-							}
+						if(!RouterItems.ContainsKey(tr.id_dp)) {
+							RouterItems.Add(tr.id_dp, new List<int>());
 						}
-					} catch (Exception ex) {
+						if(!RouterItems.ContainsKey(tr.id_to) && !RouterItems[tr.id_dp].Contains(tr.id_to)) {
+							RouterItems[tr.id_dp].Add(tr.id_to);
+						} else {
+							eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
+								"Route würde einen Loop erzeugen! {0}", tr.id_to);
+						}
+					} catch(Exception ex) {
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}

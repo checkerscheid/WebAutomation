@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 183                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 183 2025-02-16 01:24:09Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 194 2025-02-27 14:23:52Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -21,6 +21,7 @@ using FreakaZone.Libraries.wpSQL.Table;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -78,51 +79,11 @@ namespace WebAutomation.Helper {
 			_d1Minis = new List<D1Mini>();
 			using(Database Sql = new Database("Select D1Minis")) {
 				try {
-					string[][] Query1 = Sql.wpQuery($@"SELECT
-							[d].[id_d1mini], [d].[name], [d].[description], [d].[ip], [d].[mac], [d].[active],
-							[r].[id_onoff], [r].[id_temp], [r].[id_hum], [r].[id_ldr], [r].[id_light],
-							[r].[id_relais], [r].[id_rain], [r].[id_moisture], [r].[id_vol], [r].[id_window], [r].[id_analogout]
-						FROM [d1mini] [d]
-						LEFT JOIN [rest] [r] ON [d].[id_d1mini] = [r].[id_d1mini]");
-					string name, description, mac;
-					int id_d1mini;
-					IPAddress ip;
-					for(int i = 0; i < Query1.Length; i++) {
-						Int32.TryParse(Query1[i][0], out id_d1mini);
-						name = Query1[i][1];
-						description = Query1[i][2];
-						IPAddress.TryParse(Query1[i][3], out ip);
-						mac = Query1[i][4];
-						D1Mini d1md = new D1Mini(id_d1mini, name, ip, mac, description);
-						d1md.readDeviceDescription = description;
-						d1md.Active = Query1[i][5] == "True";
-						_d1Minis.Add(d1md);
-
-						if(!String.IsNullOrEmpty(Query1[i][6]))
-							d1md.id_onoff = Int32.Parse(Query1[i][6]);
-						if(!String.IsNullOrEmpty(Query1[i][7]))
-							d1md.id_temp = Int32.Parse(Query1[i][7]);
-						if(!String.IsNullOrEmpty(Query1[i][8]))
-							d1md.id_hum = Int32.Parse(Query1[i][8]);
-						if(!String.IsNullOrEmpty(Query1[i][9]))
-							d1md.id_ldr = Int32.Parse(Query1[i][9]);
-						if(!String.IsNullOrEmpty(Query1[i][10]))
-							d1md.id_light = Int32.Parse(Query1[i][10]);
-
-						if(!String.IsNullOrEmpty(Query1[i][11]))
-							d1md.id_relais = Int32.Parse(Query1[i][11]);
-						if(!String.IsNullOrEmpty(Query1[i][12]))
-							d1md.id_rain = Int32.Parse(Query1[i][12]);
-						if(!String.IsNullOrEmpty(Query1[i][13]))
-							d1md.id_moisture = Int32.Parse(Query1[i][13]);
-						if(!String.IsNullOrEmpty(Query1[i][14]))
-							d1md.id_vol = Int32.Parse(Query1[i][14]);
-						if(!String.IsNullOrEmpty(Query1[i][15]))
-							d1md.id_window = Int32.Parse(Query1[i][15]);
-						if(!String.IsNullOrEmpty(Query1[i][16]))
-							d1md.id_analogout = Int32.Parse(Query1[i][16]);
-
-						addSubscribtions(d1md.getSubscribtions());
+					List<TableD1Mini> ltd1m = Sql.SelectJoin<TableD1Mini, TableRest>();
+					foreach(TableD1Mini td1m in ltd1m) {
+						D1Mini d1m = new D1Mini(td1m);
+						_d1Minis.Add(d1m);
+						addSubscribtions(d1m.getSubscribtions());
 						//d1md.sendCmd("ForceMqttUpdate");
 					}
 				} catch(Exception ex) {
@@ -207,7 +168,7 @@ namespace WebAutomation.Helper {
 		}
 		public static void addD1Mini(int idd1mini) {
 			using(Database Sql = new Database("Select new D1Mini")) {
-				TableD1Mini td1m = Sql.GetWithId<TableD1Mini>(idd1mini);
+				TableD1Mini td1m = Sql.Select<TableD1Mini>(idd1mini);
 				D1Mini d1md = new D1Mini(td1m);
 				if(!_d1Minis.Exists(t => t.Id == idd1mini))
 					_d1Minis.Add(d1md);
@@ -219,7 +180,7 @@ namespace WebAutomation.Helper {
 			using(Database Sql = new Database("Delete D1Mini")) {
 				if(_d1Minis.Exists(t => t.Id == idd1mini))
 					_d1Minis.Remove(_d1Minis.Find(t => t.Id == idd1mini));
-				Sql.DeleteWithId<TableD1Mini>(idd1mini);
+				Sql.Delete<TableD1Mini>(idd1mini);
 			}
 		}
 		private static void wpMQTTClient_d1MiniChanged(object sender, MQTTClient.valueChangedEventArgs e) {
@@ -248,7 +209,7 @@ namespace WebAutomation.Helper {
 		}
 		public static void renewActiveState() {
 			using(Database db = new Database("Get All D1Mini's")) {
-				List<TableD1Mini> table = db.getTable<TableD1Mini>();
+				List<TableD1Mini> table = db.Select<TableD1Mini>();
 				foreach(TableD1Mini d1mini in table) {
 					_d1Minis.Find(t => t.Id == d1mini.id_d1mini).Active = d1mini.active;
 				}
@@ -509,12 +470,17 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
-				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_onoff > 0) {
+					setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
+					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idOnOff nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -524,13 +490,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_temp, d1m.Name, temp.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_temp > 0) {
+					setValue(d1m.id_temp, d1m.Name, temp.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idTemp nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -540,13 +511,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_hum, d1m.Name, hum.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_hum > 0) {
+					setValue(d1m.id_hum, d1m.Name, hum.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idHum nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -556,13 +532,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_ldr, d1m.Name, ldr.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_ldr > 0) {
+					setValue(d1m.id_ldr, d1m.Name, ldr.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idLdr nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -572,13 +553,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_light, d1m.Name, light.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_light > 0) {
+					setValue(d1m.id_light, d1m.Name, light.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idLight nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -588,12 +574,17 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
-				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_relais > 0) {
+					setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
+					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idRelais nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -603,13 +594,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_rain, d1m.Name, rain.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_rain > 0) {
+					setValue(d1m.id_rain, d1m.Name, rain.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idRain nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -619,13 +615,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_moisture, d1m.Name, moisture.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_moisture > 0) {
+					setValue(d1m.id_moisture, d1m.Name, moisture.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {	
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idOnOff nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -635,13 +636,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_vol, d1m.Name, volume.Replace(".", ","));
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_vol > 0) {
+					setValue(d1m.id_vol, d1m.Name, volume.Replace(".", ","));
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idVol nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -651,12 +657,17 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
-				string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_window > 0) {
+					setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
+					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idWindow nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -666,13 +677,18 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				setValue(d1m.id_analogout, d1m.Name, analogout);
-				string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
-				DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
-				if(Debug.debugD1Mini)
-					eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
-				Program.MainProg.lastchange = DebugNewValue;
-				returns = true;
+				if(d1m.id_analogout > 0) {
+					setValue(d1m.id_analogout, d1m.Name, analogout);
+					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
+					DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
+					Program.MainProg.lastchange = DebugNewValue;
+					returns = true;
+				} else {
+					if(Debug.debugD1Mini)
+						eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini: {d1m.Name}, idAnalog nicht gesetzt");
+				}
 			} else {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"D1Mini nicht gefunden: {mac}");
 			}
@@ -861,6 +877,19 @@ namespace WebAutomation.Helper {
 			_mac = td1m.mac;
 			_description = td1m.description;
 			_active = td1m.active;
+			TableRest tr = (TableRest)td1m.SubValues.First();
+			_id_onoff = tr.id_onoff;
+			_id_temp = tr.id_temp;
+			_id_hum = tr.id_hum;
+			_id_ldr = tr.id_ldr;
+			_id_light = tr.id_light;
+
+			_id_relais = tr.id_relais;
+			_id_rain = tr.id_rain;
+			_id_moisture = tr.id_moisture;
+			_id_vol = tr.id_vol;
+			_id_window = tr.id_window;
+			_id_analogout = tr.id_analogout;
 		}
 		public void Start() {
 			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);

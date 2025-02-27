@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 190                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 190 2025-02-18 19:50:45Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 194 2025-02-27 14:23:52Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -101,7 +101,10 @@ namespace WebAutomation.Helper {
 			public const string cGetDebug = "wpGetDebug";
 			public const string cSetDebug = "wpSetDebug";
 			public const string cHistoryCleaner = "HistoryCleaner";
+			// SQL TEST
 			public const string cInsertDummy = "InsertDummy";
+			public const string cSelectScene = "SelectScene";
+			// SQL TEST END
 			#endregion
 
 			#region Datapoints
@@ -311,6 +314,11 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cInsertDummy:
 					using(Database Sql = new Database("Insert Test Dummy")) {
 						returns = Sql.Insert<TableTv>(new TableTv("Dummy1", "12", 51, "h", "67", true)).ToString();
+					}
+					break;
+				case wpBefehl.cSelectScene:
+					using(Database Sql = new Database("Select Scene")) {
+						returns = Sql.SelectJoin<TableScene, TableSceneValue>().ToString();
 					}
 					break;
 				case wpBefehl.cActiveDP:

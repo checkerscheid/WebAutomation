@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 190                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 190 2025-02-18 19:50:45Z                      $ #
+//# File-ID      : $Id:: Program.cs 194 2025-02-27 14:23:52Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -32,7 +32,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "188";
+		public const string subversion = "190";
 		private static Debug debug;
 		/// <summary>
 		/// Der Haupteinstiegspunkt für die Anwendung.

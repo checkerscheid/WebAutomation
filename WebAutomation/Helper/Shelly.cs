@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 190                                                     $ #
+//# Revision     : $Rev:: 194                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 190 2025-02-18 19:50:45Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 194 2025-02-27 14:23:52Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -21,11 +21,13 @@ using Newtonsoft.Json;
 using ShellyDevice;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Timers;
+using static WebAutomation.Helper.ShellyServer;
 
 namespace WebAutomation.Helper {
 	public static class ShellyServer {
@@ -76,45 +78,15 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(Logger.ESource.PlugInShelly);
 			_shellies = new List<Shelly>();
 			using(Database Sql = new Database("Select Shellys")) {
-				string[][] Query1 = Sql.wpQuery(@"SELECT
-					[s].[id_shelly], [s].[ip], [s].[mac], [s].[id_restroom], [s].[name], [s].[type],
-					[s].[mqtt_active], [s].[mqtt_server], [s].[mqtt_id], [s].[mqtt_prefix], [s].[mqtt_writeable],
-					[r].[id_onoff] ,[r].[id_temp] ,[r].[id_hum] ,[r].[id_ldr], [r].[id_window], [s].[lastcontact]
-					FROM [shelly] [s]
-					LEFT JOIN [rest] [r] ON [s].[id_shelly] = [r].[id_shelly]
-					WHERE [s].[active] = 1");
-				int id_shelly, idroom;
-				string ip, shmac, name, type, mqttserver, idmqtt, mqttprefix;
-				bool mqttactive, mqttwriteable;
-				for(int ishelly = 0; ishelly < Query1.Length; ishelly++) {
+				List<TableShelly> lts = Sql.SelectJoin<TableShelly, TableRest>();
+				foreach(TableShelly ts in lts) {
 					try {
-						Int32.TryParse(Query1[ishelly][0], out id_shelly);
-						ip = Query1[ishelly][1];
-						shmac = Query1[ishelly][2].ToLower();
-						Int32.TryParse(Query1[ishelly][3], out idroom);
-						name = Query1[ishelly][4];
-						type = Query1[ishelly][5];
-
-						mqttactive = Query1[ishelly][6] == "True";
-						mqttserver = Query1[ishelly][7];
-						idmqtt = Query1[ishelly][8];
-						mqttprefix = Query1[ishelly][9];
-						mqttwriteable = Query1[ishelly][10] == "True";
-						Shelly sdh = new Shelly(id_shelly, ip, shmac, idroom, name, type,
-								mqttactive, mqttserver, idmqtt, mqttprefix, mqttwriteable);
-						if(!String.IsNullOrEmpty(Query1[ishelly][11])) sdh.IdOnOff = Int32.Parse(Query1[ishelly][11]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][12])) sdh.IdTemp = Int32.Parse(Query1[ishelly][12]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][13])) sdh.IdHum = Int32.Parse(Query1[ishelly][13]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][14])) sdh.IdLdr = Int32.Parse(Query1[ishelly][14]);
-						if(!String.IsNullOrEmpty(Query1[ishelly][15])) sdh.IdWindow = Int32.Parse(Query1[ishelly][15]);
-
-						if(!String.IsNullOrEmpty(Query1[ishelly][16])) sdh.LastContact = DateTime.Parse(Query1[ishelly][16]);
-
-						sdh.getStatus(true);
-						sdh.getMqttStatus();
-						_shellies.Add(sdh);
-						if(ShellyType.isGen2(type) && sdh.MqttActive) {
-							addSubscribtions(sdh.getSubscribtions());
+						Shelly s = new Shelly(ts);
+						s.getStatus(true);
+						s.getMqttStatus();
+						_shellies.Add(s);
+						if(ShellyType.isGen2(s.Type) && s.MqttActive) {
+							addSubscribtions(s.getSubscribtions());
 						}
 					} catch(Exception ex) {
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -142,7 +114,7 @@ namespace WebAutomation.Helper {
 			using(Database Sql = new Database("Delete Shelly")) {
 				if(_shellies.Exists(t => t.Id == id))
 					_shellies.Remove(_shellies.Find(t => t.Id == id));
-				Sql.DeleteWithId<TableShelly>(id);
+				Sql.Delete<TableShelly>(id);
 			}
 		}
 		public static string getAllStatus() {
@@ -305,6 +277,13 @@ namespace WebAutomation.Helper {
 			private string _mac;
 			public string Mac => _mac;
 			private int _room;
+
+			private bool _active;
+			public bool Active {
+				get { return _active; }
+				set { _active = value; }
+			}
+
 			private int _idOnOff;
 			public int IdOnOff {
 				get { return _idOnOff; }
@@ -408,11 +387,21 @@ namespace WebAutomation.Helper {
 				_room = ts.id_restroom;
 				_name = ts.name;
 				_type = ts.type;
+				_active = ts.active;
 				_mqtt_active = ts.mqtt_active;
 				_mqttServer = ts.mqtt_server;
 				_mqttId = ts.mqtt_id;
 				_mqttPrefix = ts.mqtt_prefix;
 				_mqttWriteable = ts.mqtt_writeable;
+				_lastContact = ts.lastcontact;
+
+				TableRest tr = (TableRest)ts.SubValues.First();
+				_idOnOff = tr.id_onoff;
+				_idTemp = tr.id_temp;
+				_idHum = tr.id_hum;
+				_idLdr = tr.id_ldr;
+				_idWindow = tr.id_window;
+
 				_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
 				_doCheckStatus.AutoReset = true;
 				_doCheckStatus.Elapsed += _doCheckStatus_Elapsed;
@@ -543,7 +532,7 @@ namespace WebAutomation.Helper {
 				} else {
 					target = $"{url}/status";
 				}
-				if(!ShellyType.isBat(this.Type)) {
+				if(!ShellyType.isBat(this.Type) && this.Active) {
 					try {
 						using(WebClient webClient = new WebClient()) {
 							webClient.Credentials = new NetworkCredential("wpLicht", "turner");
@@ -590,7 +579,7 @@ namespace WebAutomation.Helper {
 				} else {
 					target = $"{url}/settings";
 				}
-				if(!ShellyType.isBat(this.Type)) {
+				if(!ShellyType.isBat(this.Type) && this.Active) {
 					try {
 						using(WebClient webClient = new WebClient()) {
 							webClient.Credentials = new NetworkCredential("wpLicht", "turner");

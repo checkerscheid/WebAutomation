@@ -26,6 +26,16 @@ using WatsonWebsocket;
 
 namespace WebAutomation.Helper {
 	public class WebSockets {
+
+		#region Server
+		private const string cAddDatapoints = "addDatapoints";
+		private const string cGetRegistered = "getRegistered";
+		#endregion
+		#region D1Mini
+		private const string cGetD1MiniJson = "getD1MiniJson";
+		private const string cStartD1MiniSearch = "startD1MiniSearch";
+		#endregion
+
 		/// <summary></summary>
 		private Logger eventLog;
 
@@ -83,21 +93,22 @@ namespace WebAutomation.Helper {
 			WatsonClients.Remove(e.Client.Guid);
 			Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client disconnected: {e.Client.Guid}");
 		}
+
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			switch(cmd.command.ToString()) {
-				case "addDatapoints":
+				case cAddDatapoints:
 					addDatapoints(client, cmd.data);
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server command: addDatapoints");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server command: {cAddDatapoints}");
 					if(Debug.debugWebSockets)
 						Debug.Write(MethodInfo.GetCurrentMethod(), "data: {0}", cmd.data);
 					break;
-				case "getRegistered":
+				case cGetRegistered:
 					getRegistered(client);
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: getRegistered");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetRegistered}");
 					if(Debug.debugWebSockets)
 						Debug.Write(MethodInfo.GetCurrentMethod(), "qst: {0}", cmd);
 					break;
-				case "getD1MiniJson":
+				case cGetD1MiniJson:
 					ws.SendAsync(client.id,
 						"{\"response\":\"getD1MiniJson\"," +
 						"\"data\":{" +
@@ -105,12 +116,12 @@ namespace WebAutomation.Helper {
 							"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
 						"}}");
 					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: getD1MiniJson");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetD1MiniJson}");
 					break;
-				case "startD1MiniSearch":
+				case cStartD1MiniSearch:
 					D1MiniServer.startSearch(client.id);
 					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: startD1MiniSearch");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cStartD1MiniSearch}");
 					break;
 				default:
 					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Type not found");
@@ -155,16 +166,9 @@ namespace WebAutomation.Helper {
 			ws.SendAsync(client.id, "{\"response\":\"getRegistered\",\"data\":[" + client.getDatapoints() + "]}");
 		}
 
-		public void sendText(wpTcpClient client, string text) {
-			try {
-				client.message += text;
-			} catch(Exception ex) {
-				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-			}
-		}
-		public void sendText(Guid id, string response, string msg) {
+		public void sendText(wpTcpClient client, string response, string msg) {
 			string answer = $"{{\"response\":\"{response}\",\"data\":{msg}}}";
-			ws.SendAsync(id, answer);
+			ws.SendAsync(client.id, answer);
 		}
 		public void sendDatapoint(string name) {
 			Datapoint datapoint = Datapoints.Get(name);

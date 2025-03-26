@@ -749,7 +749,10 @@ namespace WebAutomation.Helper {
 		private bool _active;
 		public bool Active {
 			get { return _active; }
-			set { _active = value; }
+			set {
+				Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini {nameof(Active)} changed from {_active} to {value}");
+				_active = value;
+			}
 		}
 
 		private int _id_onoff;

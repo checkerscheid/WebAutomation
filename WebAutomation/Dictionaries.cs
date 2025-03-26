@@ -253,6 +253,11 @@ namespace WebAutomation {
 				return _dp.Find(t => t.ID == id);
 			return null;
 		}
+		public static Datapoint GetFromAlarmId(int id) {
+			if(_dp.Exists(t => t.idAlarm == id))
+				return _dp.Find(t => t.idAlarm == id);
+			return null;
+		}
 		public static Datapoint Get(string name) {
 			if(_dp.Exists(t => t.Name == name))
 				return _dp.Find(t => t.Name == name);

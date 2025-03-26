@@ -667,10 +667,12 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
 						using (Database Sql = new Database("Delete Alarm")) {
-							Datapoint AlarmWeg = Datapoints.Get(outint);
-							Alarms.RemoveAlarm(AlarmWeg.idAlarm);
-							Datapoints.Get(outint).idAlarm = null;
-							Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+							Datapoint AlarmWeg = Datapoints.GetFromAlarmId(outint);
+							if(AlarmWeg != null) {
+								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
+								AlarmWeg.idAlarm = null;
+								Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+							}
 						}
 					}
 					returns = new ret { erg = ret.OK }.ToString();
@@ -680,10 +682,12 @@ namespace WebAutomation.Helper {
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
 							using (Database Sql = new Database("Delete Alarm")) {
-								Datapoint AlarmWeg = Datapoints.Get(outint);
-								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
-								Datapoints.Get(outint).idAlarm = null;
-								Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+								Datapoint AlarmWeg = Datapoints.GetFromAlarmId(outint);
+								if(AlarmWeg != null) {
+									Alarms.RemoveAlarm(AlarmWeg.idAlarm);
+									AlarmWeg.idAlarm = null;
+									Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+								}
 							}
 						}
 					}

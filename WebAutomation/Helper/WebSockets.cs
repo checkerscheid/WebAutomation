@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 196                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 188 2025-02-17 00:57:33Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 196 2025-03-30 13:06:32Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -23,6 +23,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WatsonWebsocket;
+using static WebAutomation.Helper.ShellyServer;
 
 namespace WebAutomation.Helper {
 	public class WebSockets {
@@ -75,7 +76,8 @@ namespace WebAutomation.Helper {
 			} else {
 				try {
 					dynamic stuff = JsonConvert.DeserializeObject(s);
-					executeCommand(WatsonClients[e.Client.Guid], stuff);
+					if(WatsonClients.ContainsKey(e.Client.Guid))
+						executeCommand(WatsonClients[e.Client.Guid], stuff);
 				} catch(Exception ex) {
 					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, s);
 				}
@@ -95,37 +97,88 @@ namespace WebAutomation.Helper {
 		}
 
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
-			switch(cmd.command.ToString()) {
-				case cAddDatapoints:
-					addDatapoints(client, cmd.data);
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server command: {cAddDatapoints}");
+			if(cmd.src != null) {
+				Shelly shelly = ShellyServer.getShellyFromWsId(cmd.src.ToString());
+				if(shelly != null) {
+					//if(shelly.IdOnOff > 0) {
+					//	Datapoint dp = Datapoints.Get(shelly.IdOnOff);
+					//	if(dp != null &&
+					//		cmd["params"] != null &&
+					//		cmd["params"]["switch:0"] != null &&
+					//		cmd["params"]["switch:0"]["output"] != null
+					//		) {
+					//		dp.setValue((string)cmd["params"]["switch:0"]["output"]);
+					//	}
+					//}
+					if(shelly.IdVoltage > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdVoltage);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["voltage"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["voltage"]);
+						}
+					}
+					if(shelly.IdCurrent > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdCurrent);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["current"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["current"]);
+						}
+					}
+					if(shelly.IdPower > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdPower);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["apower"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["apower"]);
+						}
+					}
 					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), "data: {0}", cmd.data);
-					break;
-				case cGetRegistered:
-					getRegistered(client);
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetRegistered}");
-					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), "qst: {0}", cmd);
-					break;
-				case cGetD1MiniJson:
-					ws.SendAsync(client.id,
-						"{\"response\":\"getD1MiniJson\"," +
-						"\"data\":{" +
-							$"\"ip\":\"{cmd.data}\"," +
-							"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
-						"}}");
-					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetD1MiniJson}");
-					break;
-				case cStartD1MiniSearch:
-					D1MiniServer.startSearch(client.id);
-					if(Debug.debugWebSockets)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cStartD1MiniSearch}");
-					break;
-				default:
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Type not found");
-					break;
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly: {shelly.ToString()}");
+				} else {
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Websocket Shelly unknown: {cmd.src.ToString()}");
+				}
+			}
+			if(cmd.command != null) {
+				switch(cmd.command?.ToString()) {
+					case cAddDatapoints:
+						addDatapoints(client, cmd.data);
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server command: {cAddDatapoints}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "data: {0}", cmd.data);
+						break;
+					case cGetRegistered:
+						getRegistered(client);
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetRegistered}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "qst: {0}", cmd);
+						break;
+					case cGetD1MiniJson:
+						ws.SendAsync(client.id,
+							"{\"response\":\"getD1MiniJson\"," +
+							"\"data\":{" +
+								$"\"ip\":\"{cmd.data}\"," +
+								"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
+							"}}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetD1MiniJson}");
+						break;
+					case cStartD1MiniSearch:
+						D1MiniServer.startSearch(client.id);
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cStartD1MiniSearch}");
+						break;
+					default:
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Type not found");
+						break;
+				}
 			}
 		}
 		private void addDatapoints(wpTcpClient client, dynamic datapoints) {

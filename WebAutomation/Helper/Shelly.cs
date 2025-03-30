@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 194                                                     $ #
+//# Revision     : $Rev:: 196                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 194 2025-02-27 14:23:52Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 196 2025-03-30 13:06:32Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -83,6 +83,7 @@ namespace WebAutomation.Helper {
 					try {
 						Shelly s = new Shelly(ts);
 						s.getStatus(true);
+						s.getHttpShelly(true);
 						s.getMqttStatus();
 						_shellies.Add(s);
 						if(ShellyType.isGen2(s.Type) && s.MqttActive) {
@@ -116,6 +117,9 @@ namespace WebAutomation.Helper {
 					_shellies.Remove(_shellies.Find(t => t.Id == id));
 				Sql.Delete<TableShelly>(id);
 			}
+		}
+		public static Shelly getShellyFromWsId(string wsId) {
+			return _shellies.Find(t => t.WsId == wsId);
 		}
 		public static string getAllStatus() {
 			foreach(Shelly s in _shellies) {
@@ -309,6 +313,21 @@ namespace WebAutomation.Helper {
 				get { return _idWindow; }
 				set { _idWindow = value; }
 			}
+			public int _idVoltage;
+			public int IdVoltage {
+				get { return _idVoltage; }
+				set { _idVoltage = value; }
+			}
+			private int _idCurrent;
+			public int IdCurrent {
+				get { return _idCurrent; }
+				set { _idCurrent = value; }
+			}
+			private int _idPower;
+			public int IdPower {
+				get { return _idPower; }
+				set { _idPower = value; }
+			}
 			private string _name;
 			public string Name {
 				get { return _name; }
@@ -321,8 +340,8 @@ namespace WebAutomation.Helper {
 				}
 			}
 
-			private bool _mqtt_active;
-			public bool MqttActive { get => _mqtt_active; }
+			private bool _mqttActive;
+			public bool MqttActive { get => _mqttActive; }
 			private string _mqttServer;
 			public string MqttServer { get => _mqttServer; }
 			private string _mqttId;
@@ -331,12 +350,17 @@ namespace WebAutomation.Helper {
 			public string MqttPrefix { get => _mqttPrefix; }
 			private bool _mqttWriteable;
 			public bool MqttWriteable { get => _mqttWriteable; }
+			private string _wsId;
+			public string WsId { get => _wsId; }
 			private string _type;
 			public string Type {
 				get { return _type; }
 			}
 			private Timer _doCheckStatus;
 			private long _doCheckStatusIntervall = 30; // min
+
+			private Timer _doCheckShelly;
+			private long _doCheckShellyIntervall = 30; // min
 			public bool Online {
 				set {
 					if(value) {
@@ -357,7 +381,7 @@ namespace WebAutomation.Helper {
 				"info/Online" };
 
 			public Shelly(int id, string ip, string mac, int id_room, string name, string type,
-				bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable) {
+				bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable, string ws_id) {
 				_id = id;
 				IPAddress ipaddress;
 				if(IPAddress.TryParse(ip, out ipaddress)) {
@@ -367,14 +391,20 @@ namespace WebAutomation.Helper {
 				_room = id_room;
 				_name = name;
 				_type = type;
-				_mqtt_active = mqtt_active;
+				_mqttActive = mqtt_active;
 				_mqttServer = mqtt_server;
 				_mqttId = mqtt_id;
 				_mqttPrefix = mqtt_prefix;
 				_mqttWriteable = mqtt_writeable;
+				_wsId = ws_id;
 				_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
 				_doCheckStatus.AutoReset = true;
 				_doCheckStatus.Elapsed += _doCheckStatus_Elapsed;
+				if(ShellyType.isGen2(_type)) {
+					_doCheckShelly = new Timer(_doCheckShellyIntervall * 60 * 1000);
+					_doCheckShelly.AutoReset = true;
+					_doCheckShelly.Elapsed += _doCheckShelly_Elapsed;
+				}
 			}
 
 			public Shelly(TableShelly ts) {
@@ -388,11 +418,12 @@ namespace WebAutomation.Helper {
 				_name = ts.name;
 				_type = ts.type;
 				_active = ts.active;
-				_mqtt_active = ts.mqtt_active;
+				_mqttActive = ts.mqtt_active;
 				_mqttServer = ts.mqtt_server;
 				_mqttId = ts.mqtt_id;
 				_mqttPrefix = ts.mqtt_prefix;
 				_mqttWriteable = ts.mqtt_writeable;
+				_wsId = ts.ws_id;
 				_lastContact = ts.lastcontact;
 
 				TableRest tr = (TableRest)ts.SubValues.First();
@@ -401,14 +432,22 @@ namespace WebAutomation.Helper {
 				_idHum = tr.id_hum;
 				_idLdr = tr.id_ldr;
 				_idWindow = tr.id_window;
+				_idVoltage = tr.id_voltage;
+				_idCurrent = tr.id_current;
+				_idPower = tr.id_power;
 
 				_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
 				_doCheckStatus.AutoReset = true;
 				_doCheckStatus.Elapsed += _doCheckStatus_Elapsed;
+				if(ShellyType.isGen2(_type)) {
+					_doCheckShelly = new Timer(_doCheckShellyIntervall * 60 * 1000);
+					_doCheckShelly.AutoReset = true;
+					_doCheckShelly.Elapsed += _doCheckShelly_Elapsed;
+				}
 			}
 
 			public void Start() {
-				if(ShellyType.isGen2(_type) && _mqtt_active) {
+				if(ShellyType.isGen2(_type) && _mqttActive) {
 					t = new Timer(OnlineTogglerSendIntervall * 1000);
 					t.Elapsed += onlineCheck_Elapsed;
 					if(OnlineTogglerSendIntervall > 0) {
@@ -421,7 +460,7 @@ namespace WebAutomation.Helper {
 				}
 			}
 			public void Stop() {
-				if(ShellyType.isGen2(_type) && _mqtt_active) {
+				if(ShellyType.isGen2(_type) && _mqttActive) {
 					t.Stop();
 					toreset.Stop();
 					if(Debug.debugShelly)
@@ -459,7 +498,7 @@ namespace WebAutomation.Helper {
 			public List<string> getSubscribtions() {
 				List<string> returns = new List<string>();
 				foreach(string topic in subscribeList) {
-					if(_mqtt_active) returns.Add(_mqttId + "/" + topic);
+					if(_mqttActive) returns.Add(_mqttId + "/" + topic);
 				}
 				return returns;
 			}
@@ -481,6 +520,11 @@ namespace WebAutomation.Helper {
 				getStatus();
 				if(Debug.debugShelly)
 					Debug.Write(MethodInfo.GetCurrentMethod(), $"ShellyDevice doCheck gestartet '{this.Name}'");
+			}
+			private void _doCheckShelly_Elapsed(object sender, ElapsedEventArgs e) {
+				getHttpShelly();
+				if(Debug.debugShelly)
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"ShellyDevice doCheckShelly gestartet '{this.Name}'");
 			}
 
 			public void setLongPress() {
@@ -571,6 +615,47 @@ namespace WebAutomation.Helper {
 					}
 				}
 			}
+			public void getHttpShelly() {
+				getHttpShelly(false);
+			}
+			public void getHttpShelly(bool force) {
+				string target = $"http://{this._ip.ToString()}/shelly";
+				if(ShellyType.isGen2(this.Type) && !ShellyType.isBat(this.Type) && this.Active) {
+					try {
+						using(WebClient webClient = new WebClient()) {
+							webClient.Credentials = new NetworkCredential("wpLicht", "turner");
+							webClient.DownloadStringCompleted += (e, args) => {
+								if(args.Error == null) {
+									_lastContact = DateTime.Now;
+									dynamic stuff = JsonConvert.DeserializeObject(args.Result);
+									string updatesql = "";
+									if(stuff.id != null && this._wsId != (string)stuff.id) {
+										this._wsId = stuff.id;
+										updatesql += $"[ws_id] = '{stuff.id}', ";
+									}
+									using(Database Sql = new Database("Update Shelly lastContact")) {
+										string sql = $"UPDATE [shelly] SET {updatesql}[lastcontact] = '{_lastContact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
+										Sql.wpNonResponse(sql);
+										if(Debug.debugShelly)
+											Debug.Write(MethodInfo.GetCurrentMethod(), sql);
+									}
+								} else {
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+								}
+							};
+							if(_lastContact.AddHours(1) < DateTime.Now || force) {
+								Task.Run(() => {
+									webClient.DownloadStringAsync(new Uri(target));
+								});
+								_doCheckShelly.Stop();
+								_doCheckShelly.Start();
+							}
+						}
+					} catch(Exception ex) {
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+					}
+				}
+			}
 			public void getMqttStatus() {
 				string url = "http://" + this._ip.ToString();
 				string target = "";
@@ -602,10 +687,10 @@ namespace WebAutomation.Helper {
 										res_mqtt_writeable = true;
 									}
 									string updatesql = "";
-									if(_mqtt_active != res_mqtt_enable) {
-										_mqtt_active = res_mqtt_enable;
+									if(_mqttActive != res_mqtt_enable) {
+										_mqttActive = res_mqtt_enable;
 										if(!String.IsNullOrEmpty(updatesql)) updatesql += ", ";
-										updatesql += $"[mqtt_active] = {(_mqtt_active ? "1" : "0")}";
+										updatesql += $"[mqtt_active] = {(_mqttActive ? "1" : "0")}";
 									}
 									if(_mqttServer != res_mqtt_server) {
 										_mqttServer = res_mqtt_server;
@@ -645,6 +730,9 @@ namespace WebAutomation.Helper {
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
 					}
 				}
+			}
+			public override string ToString() {
+				return $"id: {_id}, ip: {_ip}, mac: {_mac}, room: {_room}, name: {_name}, type: {_type}, active: {_active}, mqtt_active: {_mqttActive}, mqtt_server: {_mqttServer}, mqtt_id: {_mqttId}, mqtt_prefix: {_mqttPrefix}, mqtt_writeable: {_mqttWriteable}, ws_id: {_wsId}";
 			}
 		}
 	}

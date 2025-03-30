@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 194                                                     $ #
+//# Revision     : $Rev:: 196                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 194 2025-02-27 14:23:52Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 196 2025-03-30 13:06:32Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -412,7 +412,7 @@ namespace WebAutomation.Helper {
 						if(Common.IsValidJson(recieved)) {
 							D1MiniBroadcast D1MiniRecieved = JsonConvert.DeserializeObject<D1MiniBroadcast>(recieved);
 							if(D1MiniRecieved != null && D1MiniRecieved.Iam != null) {
-								Program.MainProg.wpWebSockets.sendText(id, "SearchD1Mini",
+								Program.MainProg.wpWebSockets.sendText(new WebSockets.wpTcpClient(id), "SearchD1Mini",
 									"{\"exists\":" + (_d1Minis.Exists(t => t.Name == D1MiniRecieved.Iam.FreakaZoneClient) ? "true" : "false") + "," +
 									$"\"recieved\":{recieved}" + "}");
 								//foundNewD1Mini.Add(D1MiniRecieved.Iam.FreakaZoneClient, D1MiniRecieved);
@@ -424,7 +424,7 @@ namespace WebAutomation.Helper {
 					} catch(SocketException ex) {
 						if(ex.SocketErrorCode == SocketError.TimedOut) {
 							searchActive = false;
-							Program.MainProg.wpWebSockets.sendText(id, "SearchD1MiniFinished", "\"S_OK\"");
+							Program.MainProg.wpWebSockets.sendText(new WebSockets.wpTcpClient(id), "SearchD1MiniFinished", "\"S_OK\"");
 							Debug.Write(MethodInfo.GetCurrentMethod(), "Search finished, cause: Timeout");
 						} else {
 							searchActive = false;

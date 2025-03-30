@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 196                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 188 2025-02-17 00:57:33Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 196 2025-03-30 13:06:32Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;

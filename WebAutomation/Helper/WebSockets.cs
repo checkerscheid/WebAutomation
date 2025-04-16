@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 196                                                     $ #
+//# Revision     : $Rev:: 199                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 196 2025-03-30 13:06:32Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 199 2025-04-16 01:10:09Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -179,6 +180,11 @@ namespace WebAutomation.Helper {
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Type not found");
 						break;
 				}
+			}
+		}
+		public void sendAll(string msg) {
+			foreach(KeyValuePair<Guid, wpTcpClient> entry in WatsonClients) {
+				ws.SendAsync(entry.Key, msg);
 			}
 		}
 		private void addDatapoints(wpTcpClient client, dynamic datapoints) {

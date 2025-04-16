@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 196                                                     $ #
+//# Revision     : $Rev:: 199                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 196 2025-03-30 13:06:32Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 199 2025-04-16 01:10:09Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -212,6 +212,10 @@ namespace WebAutomation.Helper {
 
 			#region Remote
 			public const string cRemoteControl = "RemoteControl";
+			#endregion
+
+			#region Shopping
+			public const string cSetProductChecked = "SetProductChecked";
 			#endregion
 
 			/// <summary>
@@ -448,6 +452,11 @@ namespace WebAutomation.Helper {
 						richtung: param[4]);
 					Debug.Write(MethodBase.GetCurrentMethod(), $"RemoteControl: {tvp.ToString()}");
 					returns = new ret { erg = ret.OK, message = tv.Set(tvp) }.ToString();
+					break;
+				case wpBefehl.cSetProductChecked:
+					param = wpBefehl.getParam(s_befehl[1]);
+					Shopping.setProductChecked(param[0] == "1", Int32.Parse(param[1]), Int32.Parse(param[2]));
+					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cReadItem:
 					param = wpBefehl.getParam(s_befehl[1]);

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCHelper.cs 171 2025-02-13 12:28:06Z                    $ #
+//# File-ID      : $Id:: OPCHelper.cs 203 2025-04-27 15:09:36Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -28,7 +28,7 @@ namespace WebAutomation.Helper {
 	/// <summary>
 	/// 
 	/// </summary>
-	public class PGAOPCServer:OpcServer {
+	public class wpOPCServer:OpcServer {
 		/// <summary></summary>
 		private bool disposed = false;
 		/// <summary></summary>
@@ -71,14 +71,14 @@ namespace WebAutomation.Helper {
 		/// <param name="name"></param>
 		/// <param name="progid"></param>
 		/// <param name="clsid"></param>
-		public PGAOPCServer(int id, string name, string progid, string clsid):base(name) {
+		public wpOPCServer(int id, string name, string progid, string clsid):base(name) {
 			_id = id;
 			_progid = progid;
 			_clsid = clsid;
 			Name = name;
 		}
 
-		~PGAOPCServer() {
+		~wpOPCServer() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Finalize", Name);
 			Disconnect();
 			Dispose();
@@ -108,21 +108,6 @@ namespace WebAutomation.Helper {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}:{1}' - Connected", computername, Name);
 		}
 	}
-	/// <summary>
-	/// 
-	/// </summary>
-	/*public class PGAOPCGroup {
-		private DateTime _lastChange;
-		public DateTime LastChange {
-			get { return _lastChange; }
-			set { _lastChange = value; }
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		public PGAOPCGroup() {
-		}
-	}*/
 	/// <summary>
 	/// 
 	/// </summary>

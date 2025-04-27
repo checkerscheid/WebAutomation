@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 188 2025-02-17 00:57:33Z                        $ #
+//# File-ID      : $Id:: Email.cs 203 2025-04-27 15:09:36Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -111,10 +111,6 @@ namespace WebAutomation.Helper {
 			}
 			string MailToInMail = IniFile.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
-			string HelpdeskLinkInMail = IniFile.get("Email", "HelpdeskLinkInMail");
-			string HelpdeskNameInMail = IniFile.get("Email", "HelpdeskNameInMail");
-			if(HelpdeskNameInMail == "") HelpdeskNameInMail = HelpdeskLinkInMail;
-			if(HelpdeskLinkInMail != "") HelpdeskLinkInMail = @"24 h PGA Helpdesk Portal: <a href='https://" + HelpdeskLinkInMail + "'>" + HelpdeskNameInMail + @"</a><br />";
 			string LinkToInMail = IniFile.get("Email", "LinkToInMail");
 			string LinkNameInMail = IniFile.get("Email", "LinkNameInMail");
 			if(LinkNameInMail == "") LinkNameInMail = LinkToInMail;
@@ -144,7 +140,6 @@ namespace WebAutomation.Helper {
 				" + impressumStadt + @"<br />
 				" + impressumTelefon + @"<br />
 				" + MailToInMail + @"
-				" + HelpdeskLinkInMail + @"
 				" + LinkToInMail + @"
 			</p>
 		</div>";

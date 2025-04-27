@@ -8,15 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 126                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 126 2024-07-09 22:53:08Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 203 2025-04-27 15:09:36Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -810,29 +809,27 @@ namespace WebAutomation.Helper {
 			int outint;
 			string returns = "";
 			try {
-				List<int> IDsToWrite = new List<int>();
-				List<string> ValuesToWrite = new List<string>();
+				Dictionary<int, string> toWrite = new Dictionary<int, string>();
 				for(int i = 1; i < param.Length; i = i + 2) {
 					if (Int32.TryParse(param[i], out outint)) {
-						OPCItem TheItem = Server.Dictionaries.getItem(outint);
+						OPCItem TheItem = OpcDatapoints.getItem(outint);
 						string korrekt = param[i + 1];
-						IDsToWrite.Add(outint);
-						ValuesToWrite.Add(korrekt);
+						toWrite.Add(outint, korrekt);
 					} else {
 						returns += "ERROR: ID: " + param[i] + " DOSNT EXISTS<br />";
 					}
 				}
-				returns += Program.MainProg.wpOPCClient.setValues(IDsToWrite.ToArray(), ValuesToWrite.ToArray(),
+				returns.message += Program.MainProg.wpOPCClient.setValues(IDsToWrite.ToArray(), ValuesToWrite.ToArray(),
 					TransferId.TransferNormalOP);
 			} catch (Exception ex) {
-				returns += ex.Message;
+				returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace };
 			}
 			return returns;
 		}
 		private string writeSceneDP(int idscene, string user) {
 			int level = 0;
 			string[][] erg;
-			string returns = "";
+			ret returns = new ret { erg = ret.OK, message = "" };
 			user = user.ToLower();
 			using (SQL sql = new SQL("get User Level")) {
 				erg = sql.wpQuery(@"SELECT TOP 1 [g].[order]
@@ -844,17 +841,18 @@ namespace WebAutomation.Helper {
 				Int32.TryParse(erg[0][0], out level)) {
 				List<int> ids = new List<int>();
 				List<string> values = new List<string>();
-				string log = "";
-				OPCItem p;
+				Datapoint p;
+				returns.message = $"WriteScene ({{idscene}}):";
+				string sqlLog = "";
 				Dictionary<int, string> d = Scene.getScene(idscene);
 				foreach (KeyValuePair<int, string> kvp in d) {
-					p = Server.Dictionaries.getItem(kvp.Key);
+					p = OpcDatapoints.getItem(kvp.Key);
 					if (p != null /*&& p.WriteLevel <= level*/) {
 						ids.Add(kvp.Key);
 						values.Add(kvp.Value);
 						log += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.OpcItemName, DateTime.Now, p.Value, kvp.Value);
 					} else {
-						eventLog.Write(EventLogEntryType.Warning, "keine Berechtigung zum schreiben");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "keine Berechtigung zum schreiben");
 					}
 				}
 				if (ids.Count > 0) {
@@ -862,12 +860,16 @@ namespace WebAutomation.Helper {
 						values.ToArray(), TransferId.TransferScene);
 				}
 				if (log.Length > 0) {
-					using (SQL sql = new SQL("write Scene log")) {
-						sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", log.Substring(0, log.Length - 1));
+					using (Database Sql = new Database("write Scene log")) {
+						Sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", log.Substring(0, log.Length - 1));
 					}
 				}
+				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, returns.message);
+			} else {
+				returns.erg = ret.ERROR;
+				returns.message = "User nicht gefunden";
 			}
-			return returns;
+			return returns.ToString();
 		}
 		/// <summary>
 		/// 
@@ -1134,6 +1136,30 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 				AlarmsCome,
 				AlarmsGone,
 				AlarmsQuit);
+		}
+	}
+	public class ret {
+		public const string OK = "S_OK";
+		public const string ERROR = "S_ERROR";
+		private string _erg = string.Empty;
+		public string erg {
+			get { return _erg; }
+			set { _erg = value; }
+		}
+		private string _message = string.Empty;
+		public string message {
+			get { return _message; }
+			set { _message = value; }
+		}
+		private string _trace = string.Empty;
+		public string trace {
+			get { return _trace; }
+			set { _trace = value; }
+		}
+		public override string ToString() {
+			string msg = (_message != string.Empty) ? $",\"message\":\"{_message}\"" : "";
+			string trc = (_trace != string.Empty) ? $",\"trace\":\"{_trace}\"" : "";
+			return $"{{\"erg\":\"{erg}\"{msg}{trc}}}";
 		}
 	}
 }

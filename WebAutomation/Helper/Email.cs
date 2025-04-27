@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 120 2024-07-04 15:08:20Z                        $ #
+//# File-ID      : $Id:: Email.cs 203 2025-04-27 15:09:36Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -108,12 +108,12 @@ namespace WebAutomation.Helper {
 			}
 			string MailToInMail = Ini.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
-			string HelpdeskLinkInMail = Ini.get("Email", "HelpdeskLinkInMail");
-			string HelpdeskNameInMail = Ini.get("Email", "HelpdeskNameInMail");
+			string HelpdeskLinkInMail = IniFile.get("Email", "HelpdeskLinkInMail");
+			string HelpdeskNameInMail = IniFile.get("Email", "HelpdeskNameInMail");
 			if(HelpdeskNameInMail == "") HelpdeskNameInMail = HelpdeskLinkInMail;
 			if(HelpdeskLinkInMail != "") HelpdeskLinkInMail = @"24 h PGA Helpdesk Portal: <a href='https://" + HelpdeskLinkInMail + "'>" + HelpdeskNameInMail + @"</a><br />";
-			string LinkToInMail = Ini.get("Email", "LinkToInMail");
-			string LinkNameInMail = Ini.get("Email", "LinkNameInMail");
+			string LinkToInMail = IniFile.get("Email", "LinkToInMail");
+			string LinkNameInMail = IniFile.get("Email", "LinkNameInMail");
 			if(LinkNameInMail == "") LinkNameInMail = LinkToInMail;
 			if(LinkToInMail != "") LinkToInMail = @"WEB: <a href='https://" + LinkToInMail + "'>" + LinkNameInMail + @"</a><br />";
 			mailMessage.Body = @"
@@ -141,7 +141,6 @@ namespace WebAutomation.Helper {
 				" + impressumStadt + @"<br />
 				" + impressumTelefon + @"<br />
 				" + MailToInMail + @"
-				" + HelpdeskLinkInMail + @"
 				" + LinkToInMail + @"
 			</p>
 		</div>";

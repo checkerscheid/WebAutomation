@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 127                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 127 2024-07-12 02:02:39Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 203 2025-04-27 15:09:36Z          $ #
 //#                                                                                 #
 //###################################################################################
 using System;
@@ -272,7 +272,7 @@ namespace WebAutomation {
 			eventLog.Write("{0} Server initialisiert", Application.ProductName);
 
 			ThreadEmailSender = new Thread(new ThreadStart(createEmail));
-			ThreadEmailSender.Name = "PGA Email Sender";
+			ThreadEmailSender.Name = "wpEmail Sender";
 			ThreadEmailSender.Start();
 
 			_SystemItems = new Dictionary<string, string>();

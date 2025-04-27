@@ -314,8 +314,6 @@ namespace OPC.Data {
 		private int callbackcookie = 0;
 		private DateTime lastchange;
 		public System.Timers.Timer forceRead;
-		/// <summary></summary>
-		private bool _PGAactive;
 		/// <summary>
 		/// marshaling helpers:
 		/// </summary>
@@ -326,12 +324,14 @@ namespace OPC.Data {
 		private readonly Type typeOPCITEMRESULT;
 		/// <summary></summary>
 		private readonly int sizeOPCITEMRESULT;
+		/// <summary></summary>
+		private bool _wpActive;
 		/// <summary>
 		/// 
 		/// </summary>
-		public bool PGAactive {
-			set { this._PGAactive = value; }
-			get { return this._PGAactive; }
+		public bool wpActive {
+			set { this._wpActive = value; }
+			get { return this._wpActive; }
 		}
 		/// <summary>
 		/// 

@@ -37,7 +37,7 @@ namespace WebAutomation.Helper {
 		/// <summary></summary>
 		private bool running;
 		/// <summary></summary>
-		private Dictionary<int, PGAOPCServer> TheServer;
+		private Dictionary<int, wpOPCServer> TheServer;
 		/// <summary>TheGroup[ServerID][GroupID] = OpcGroup</summary>
 		private Dictionary<int, Dictionary<int, OpcGroup>> TheGroup;
 		/// <summary>Hsrv[ServerID][GroupID] = List[Hsrv]</summary>
@@ -88,7 +88,7 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(wpEventLog.OPC);
 			eventLog.Write("OPC Client init");
 				
-			TheServer = new Dictionary<int, PGAOPCServer>();
+			TheServer = new Dictionary<int, wpOPCServer>();
 			TheGroup = new Dictionary<int, Dictionary<int, OpcGroup>>();
 			Hsrv = new Dictionary<int, Dictionary<int, List<int>>>();
 
@@ -297,16 +297,12 @@ namespace WebAutomation.Helper {
 			string externServer, bool active) {
 			// local add
 			if (!TheServer.ContainsKey(ServerID))
-				TheServer.Add(ServerID, new PGAOPCServer(ServerID, ServerName, progid, clsid));
+				TheServer.Add(ServerID, new wpOPCServer(ServerID, ServerName, progid, clsid));
 			if (!TheGroup.ContainsKey(ServerID))
 				TheGroup.Add(ServerID, new Dictionary<int, OpcGroup>());
 			if (!Hsrv.ContainsKey(ServerID))
 				Hsrv.Add(ServerID, new Dictionary<int, List<int>>());
 
-			//TheServer[ServerID].ProgID = progid;
-			//TheServer[ServerID].ClsID = clsid;
-			//TheServer[ServerID].PGAid = ServerID;
-			//TheServer[ServerID].PGAname = ServerName;
 			TheServer[ServerID].Active = active;
 			// opc connect
 			if (TheServer[ServerID].Active) {
@@ -388,7 +384,7 @@ namespace WebAutomation.Helper {
 				if (RunningTest != null && RunningTest.eServerState == OPCSERVERSTATE.OPC_STATUS_RUNNING) {
 					try {
 						TheGroup[ServerID][GroupID] = TheServer[ServerID].AddGroup(GroupName, false, Duration);
-						TheGroup[ServerID][GroupID].PGAactive = active;
+						TheGroup[ServerID][GroupID].wpActive = active;
 						if (Program.MainProg.wpForceRead) {
 #if DEBUGFORCEREAD
 							TheGroup[ServerID][GroupID].forceRead = new System.Timers.Timer(Duration * 5);
@@ -516,7 +512,7 @@ namespace WebAutomation.Helper {
 					Server.Dictionaries.getItem(PointID).Hsrv = TestItem[0].HandleServer;
 					Server.Dictionaries.getItem(PointID).DBType = TestItem[0].CanonicalDataType;
 					Hsrv[ServerID][GroupID].Add(TestItem[0].HandleServer);
-					TheGroup[ServerID][GroupID].PGAactive = true;
+					TheGroup[ServerID][GroupID].wpActive = true;
 				}
 			}
 		}
@@ -828,7 +824,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void activate() {
-			foreach(KeyValuePair<int, PGAOPCServer> pServer in TheServer) {
+			foreach(KeyValuePair<int, wpOPCServer> pServer in TheServer) {
 				activate(pServer.Key);
 			}
 		}
@@ -844,7 +840,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void activate(int ServerID, int GroupID) {
-			PGAOPCServer pServer = TheServer[ServerID];
+			wpOPCServer pServer = TheServer[ServerID];
 			OpcGroup pGroup = TheGroup[ServerID][GroupID];
 			if (pGroup != null) {
 				try {
@@ -852,7 +848,7 @@ namespace WebAutomation.Helper {
 						// pGroup.SetEnable(false);
 						pGroup.Active = false;
 					}
-					if (pGroup.PGAactive) {
+					if (pGroup.wpActive) {
 						if (Program.MainProg.wpForceRead) {
 							// pGroup.forceRead.Enabled = true;
 							pGroup.forceRead.Start();
@@ -919,7 +915,7 @@ namespace WebAutomation.Helper {
 			//ThreadOpcChecker.Join(1500);
 			//CheckOPCServerstateTimer.Tick -= new EventHandler(CheckOPCServerstate_Tick);
 			//CheckOPCServerstateTimer.Stop();
-			foreach(KeyValuePair<int, PGAOPCServer> opcserver in TheServer) {
+			foreach(KeyValuePair<int, wpOPCServer> opcserver in TheServer) {
 				try {
 					string TheLog = "";
 					foreach(KeyValuePair<int, OpcGroup> opcgroup in TheGroup[opcserver.Key]) {
@@ -973,7 +969,7 @@ namespace WebAutomation.Helper {
 		/// <param name="e"></param>
 		public void TheServer_ShutdownRequested(object sender, ShutdownRequestEventArgs e) {
 			PGAOPCServer Server = (PGAOPCServer)sender;
-			eventLog.Write(EventLogEntryType.Error, "OPC Server '{0}' Shutdown: {1}",
+			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "OPC Server '{0}' Shutdown: {1}",
 				Server.Name,
 				e.shutdownReason);
 			//t_shutdown = new System.Timers.Timer(10000);
@@ -1463,7 +1459,7 @@ namespace WebAutomation.Helper {
 			OPCbrowsed = "";
 			OpcServer theSrv = null;
 			bool connected = false;
-			foreach(KeyValuePair<int, PGAOPCServer> available in TheServer) {
+			foreach(KeyValuePair<int, wpOPCServer> available in TheServer) {
 				if (available.Value.Progid == theSrvId && available.Value.Remoteserver == remoteserver) {
 					theSrv = available.Value;
 					connected = true;
@@ -1536,7 +1532,7 @@ namespace WebAutomation.Helper {
 			OPCbrowsed = "";
 			OpcServer theSrv = null;
 			bool connected = false;
-			foreach(KeyValuePair<int, PGAOPCServer> available in TheServer) {
+			foreach(KeyValuePair<int, wpOPCServer> available in TheServer) {
 				if(available.Value.Progid == theSrvId && available.Value.Remoteserver == remoteserver) {
 					theSrv = available.Value;
 					connected = true;
@@ -1654,7 +1650,7 @@ namespace WebAutomation.Helper {
 			string selectednode;
 			OpcServer theSrv = null;
 			bool connected = false;
-			foreach (KeyValuePair<int, PGAOPCServer> available in TheServer) {
+			foreach (KeyValuePair<int, wpOPCServer> available in TheServer) {
 				if (available.Value.Progid == theSrvId && available.Value.Remoteserver == remoteserver) {
 					theSrv = available.Value;
 					connected = true;
@@ -1871,7 +1867,7 @@ namespace WebAutomation.Helper {
 			if (TheGroup[idserver][idgroup].Active) {
 				TheGroup[idserver][idgroup].SetEnable(false);
 				TheGroup[idserver][idgroup].Active = false;
-				TheGroup[idserver][idgroup].PGAactive = false;
+				TheGroup[idserver][idgroup].wpActive = false;
 				removeEvents(TheGroup[idserver][idgroup], idserver, idgroup);
 				using (SQL SQL = new SQL("OPC Group deactivate")) {
 					SQL.wpNonResponse("UPDATE [opcgroup] SET [active] = 0 WHERE [id_opcgroup] = {0}", idgroup);
@@ -1880,7 +1876,7 @@ namespace WebAutomation.Helper {
 			} else {
 				TheGroup[idserver][idgroup].SetEnable(true);
 				TheGroup[idserver][idgroup].Active = true;
-				TheGroup[idserver][idgroup].PGAactive = true;
+				TheGroup[idserver][idgroup].wpActive = true;
 				addEvents(TheGroup[idserver][idgroup], idserver, idgroup);
 				using (SQL SQL = new SQL("OPC Group activate")) {
 					SQL.wpNonResponse("UPDATE [opcgroup] SET [active] = 1 WHERE [id_opcgroup] = {0}", idgroup);
@@ -1899,156 +1895,6 @@ namespace WebAutomation.Helper {
 				return "True";
 			}
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		//private void CheckOPCServerstate_Tick(object sender, EventArgs e) {
-		//	CheckOPCServerstate();
-		//}
-		//private void CheckOPCServerstate() {
-		//	string aktServername = "";
-		//	int aktServerid = 0;
-		//	try {
-		//		SERVERSTATUS ss;
-		//		foreach (KeyValuePair<int, PGAOPCServer> os in TheServer) {
-		//			aktServername = os.Value.Name;
-		//			aktServerid = os.Value.Id;
-		//			PDebug.Write("Try to Connect Server {0}", aktServername);
-		//			if (os.Value.Active) {
-		//				os.Value.GetStatus(out ss);
-		//				if (ss == null || ss.eServerState != OPCSERVERSTATE.OPC_STATUS_RUNNING) {
-		//					wpEventLog.Write(String.Format("{0}: connection lost???", os.Value.Name));
-		//				}
-		//			} else {
-		//				PDebug.Write("Server {0} deactivated", aktServername);
-		//			}
-		//		}
-		//	} catch (Exception) {
-		//		wpEventLog.Write(EventLogEntryType.Warning,
-		//			String.Format("OPC Server '{0}': lost Connection\r\nRetry to connect evry {1} Seconds",
-		//			aktServername,
-		//			trytorestart));
-		//		reconnect(aktServerid);
-		//	}
-		//}
-		//private void reconnect(int aktServerid) {
-		//	try {
-		//		string TheLog = "";
-		//		PTaster.RemoveTaster(aktServerid);
-		//		PTrend.removeTrend(aktServerid);
-		//		foreach (KeyValuePair<int, OpcGroup> opcgroup in TheGroup[aktServerid]) {
-		//			try {
-		//				removeEvents(opcgroup.Value, aktServerid, opcgroup.Key);
-		//				//opcgroup.Value.RemoveItems(Hsrv[aktServerid][opcgroup.Key].ToArray(), out aErr);
-		//				//opcgroup.Value.Remove(true);
-		//				TheLog += String.Format("Group '{0}' Removed from '{1}'\r\n",
-		//					opcgroup.Value.Name, TheServer[aktServerid].Name);
-		//			} catch (Exception ex) {
-		//				wpEventLog.Write(EventLogEntryType.Warning,
-		//					String.Format("OPC Server ERROR: \n{0}", ex.Message));
-		//			}
-		//		}
-		//		if (TheLog != "") wpEventLog.Write(TheLog);
-		//		try {
-		//			TheServer[aktServerid].ShutdownRequested -=
-		//				new ShutdownRequestEventHandler(TheServer_ShutdownRequested);
-		//			// TheServer[aktServerid].Disconnect();
-
-		//			wpEventLog.Write(String.Format("OPC Server '{0}' disconnect", TheServer[aktServerid].Name));
-		//		} catch (Exception ex) {
-		//			wpEventLog.WriteError(ex);
-		//		} finally {
-		//			TheServer[aktServerid].Dispose();
-		//			TheServer[aktServerid] = null;
-		//		}
-		//		TheServer.Remove(aktServerid);
-		//		TheGroup.Remove(aktServerid);
-		//		Hsrv.Remove(aktServerid);
-		//		using (PSQL SQL = new PSQL("Remove OPC Server")) {
-		//			string[][] DBDatapoints = SQL.wpQuery(@"
-		//					SELECT [d].[id_opcdatapoint] FROM [opcdatapoint] [d]
-		//					INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
-		//					INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
-		//					WHERE [s].[id_opcserver] = {0}",
-		//				aktServerid);
-		//			List<int> toDelete = new List<int>();
-		//			int intout;
-		//			for (int i = 0; i < DBDatapoints.Length; i++) {
-		//				if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
-		//			}
-		//			Program.MainProg.DeleteItems(toDelete.ToArray());
-		//		}
-		//	} catch (Exception ex) {
-		//		wpEventLog.WriteError(ex);
-		//	}
-
-		//	// reconnect
-
-		//	try {
-		//		int idgroup;
-		//		int duration;
-		//		int idpoint;
-
-		//		using (PSQL SQL = new PSQL("Add OPC Server after shutdown")) {
-		//			string[][] DBserver = SQL.wpQuery(@"
-		//					SELECT TOP 1 [id_opcserver], [progid], [clsid], [name], [server], [active]
-		//					FROM [opcserver] WHERE [id_opcserver] = {0}",
-		//				aktServerid);
-		//			TheServerAdd(aktServerid, DBserver[0][1], DBserver[0][2], DBserver[0][3],
-		//				DBserver[0][4], DBserver[0][5] == "True");
-		//		}
-		//		using (PSQL SQL = new PSQL("Add OPC Groups")) {
-		//			string tempLog, GroupLog = "";
-		//			string tempErr, GroupErr = "";
-		//			string[][] DBGroup = SQL.wpQuery(@"
-		//						SELECT [g].[id_opcgroup], [g].[name], [g].[duration], [g].[active]
-		//						FROM [opcgroup] [g]
-		//						INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
-		//						WHERE [s].[id_opcserver] = {0}",
-		//					aktServerid);
-		//			for (int igroup = 0; igroup < DBGroup.Length; igroup++) {
-		//				if (Int32.TryParse(DBGroup[igroup][0], out idgroup) &&
-		//					Int32.TryParse(DBGroup[igroup][2], out duration)) {
-		//					TheGroupAdd(aktServerid, idgroup, DBGroup[igroup][1], duration,
-		//						DBGroup[igroup][3] == "True", out tempLog, out tempErr);
-		//					GroupLog += tempLog;
-		//					GroupErr += tempErr;
-		//				}
-		//			}
-		//			wpEventLog.Write(GroupLog);
-		//			if (GroupErr.Length > 0) wpEventLog.Write(EventLogEntryType.Warning, GroupErr);
-		//		}
-		//		using (PSQL SQL = new PSQL("Add OPC Items")) {
-		//			string[][] DBDatapoints = SQL.wpQuery(@"
-		//						SELECT [g].[id_opcgroup], [d].[id_opcdatapoint], [d].[opcname], [d].[active]
-		//						FROM [opcdatapoint] [d]
-		//						INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
-		//						INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
-		//						WHERE [s].[id_opcserver] = {0}",
-		//					aktServerid);
-
-
-		//			for (int idatapoint = 0; idatapoint < DBDatapoints.Length; idatapoint++) {
-		//				if (Int32.TryParse(DBDatapoints[idatapoint][0], out idgroup) &&
-		//					Int32.TryParse(DBDatapoints[idatapoint][1], out idpoint)) {
-		//					TheItemAdd(aktServerid, idgroup, idpoint, DBDatapoints[idatapoint][2],
-		//						DBDatapoints[idatapoint][3] == "True");
-		//				}
-		//			}
-		//		}
-		//		PAlarm.AddAlarms(aktServerid);
-		//		PTrend.AddTrends(aktServerid);
-		//		PSchedule.AddSchedules(aktServerid);
-		//		PTaster.AddTaster(aktServerid);
-		//		PWriteLevel.AddWriteLevel(aktServerid);
-		//		PRouter.AddRouter();
-		//		activate(aktServerid);
-		//	} catch (Exception ex) {
-		//		wpEventLog.WriteError(ex);
-		//	}
-		//}
 		/// <summary>
 		/// 
 		/// </summary>
@@ -2114,7 +1960,7 @@ namespace WebAutomation.Helper {
 				_maxCounter = 600;
 			}
 			public void doWork(object ServerList) {
-				Dictionary<int, PGAOPCServer> TheServer = (Dictionary<int, PGAOPCServer>)ServerList;
+				Dictionary<int, wpOPCServer> TheServer = (Dictionary<int, wpOPCServer>)ServerList;
 				while (!_doStop) {
 					if (++_counter > _maxCounter) {
 						CheckServer(TheServer);
@@ -2127,14 +1973,14 @@ namespace WebAutomation.Helper {
 			public void doStop() {
 				_doStop = true;
 			}
-			private void CheckServer(Dictionary<int, PGAOPCServer> TheServer) {
+			private void CheckServer(Dictionary<int, wpOPCServer> TheServer) {
 				string aktServername = "";
 				int aktServerid = 0;
 				Stopwatch watch = new Stopwatch();
 				watch.Start();
 				try {
 					SERVERSTATUS ss;
-					foreach (KeyValuePair<int, PGAOPCServer> os in TheServer) {
+					foreach (KeyValuePair<int, wpOPCServer> os in TheServer) {
 						aktServername = os.Value.Name;
 						aktServerid = os.Value.Id;
 						wpDebug.Write("Try to Connect Server {0}", aktServername);

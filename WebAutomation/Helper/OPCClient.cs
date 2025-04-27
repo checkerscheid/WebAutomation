@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 203                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 188 2025-02-17 00:57:33Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 203 2025-04-27 15:09:36Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -970,7 +970,7 @@ namespace WebAutomation.Helper {
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		public void TheServer_ShutdownRequested(object sender, ShutdownRequestEventArgs e) {
-			PGAOPCServer Server = (PGAOPCServer)sender;
+			wpOPCServer Server = (wpOPCServer)sender;
 			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "OPC Server '{0}' Shutdown: {1}",
 				Server.Name,
 				e.shutdownReason);

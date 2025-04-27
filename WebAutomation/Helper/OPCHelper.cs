@@ -78,7 +78,7 @@ namespace WebAutomation.Helper {
 			Name = name;
 		}
 
-		~PGAOPCServer() {
+		~wpOPCServer() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA SRV '{0}' - Finalize", Name);
 			Disconnect();
 			Dispose();

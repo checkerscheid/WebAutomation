@@ -111,10 +111,6 @@ namespace WebAutomation.Helper {
 			}
 			string MailToInMail = IniFile.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
-			string HelpdeskLinkInMail = IniFile.get("Email", "HelpdeskLinkInMail");
-			string HelpdeskNameInMail = IniFile.get("Email", "HelpdeskNameInMail");
-			if(HelpdeskNameInMail == "") HelpdeskNameInMail = HelpdeskLinkInMail;
-			if(HelpdeskLinkInMail != "") HelpdeskLinkInMail = @"24 h PGA Helpdesk Portal: <a href='https://" + HelpdeskLinkInMail + "'>" + HelpdeskNameInMail + @"</a><br />";
 			string LinkToInMail = IniFile.get("Email", "LinkToInMail");
 			string LinkNameInMail = IniFile.get("Email", "LinkNameInMail");
 			if(LinkNameInMail == "") LinkNameInMail = LinkToInMail;

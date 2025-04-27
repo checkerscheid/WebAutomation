@@ -22,6 +22,7 @@ using FreakaZone.Libraries.wpSQL.Table;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -927,7 +928,7 @@ namespace WebAutomation.Helper {
 				Dictionary<int, string> toWrite = new Dictionary<int, string>();
 				for(int i = 1; i < param.Length; i = i + 2) {
 					if (Int32.TryParse(param[i], out outint)) {
-						OPCItem TheItem = OpcDatapoints.getItem(outint);
+						Datapoint dp = Datapoints.Get(outint);
 						string korrekt = param[i + 1];
 						toWrite.Add(outint, korrekt);
 					} else {
@@ -935,10 +936,11 @@ namespace WebAutomation.Helper {
 						returns.message += $"ID: {param[i]} DOSNT EXISTS<br />";
 					}
 				}
-				returns.message += Program.MainProg.wpOPCClient.setValues(IDsToWrite.ToArray(), ValuesToWrite.ToArray(),
-					TransferId.TransferNormalOP);
+				Datapoints.writeValues(toWrite);
 			} catch (Exception ex) {
-				returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace };
+				returns.erg = ret.ERROR;
+				returns.message = ex.Message;
+				returns.trace = ex.StackTrace;
 			}
 			return returns.ToString();
 		}
@@ -962,22 +964,19 @@ namespace WebAutomation.Helper {
 				string sqlLog = "";
 				Dictionary<int, string> d = Scene.getScene(idscene);
 				foreach (KeyValuePair<int, string> kvp in d) {
-					p = OpcDatapoints.getItem(kvp.Key);
-					if (p != null /*&& p.WriteLevel <= level*/) {
-						ids.Add(kvp.Key);
-						values.Add(kvp.Value);
-						log += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.OpcItemName, DateTime.Now, p.Value, kvp.Value);
+					p = Datapoints.Get(kvp.Key);
+					if (p != null && p.WriteLevel <= level) {
+						p.writeValue(kvp.Value);
+						returns.message += $"\r\n\tWrite DP Ok:\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
+						sqlLog += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.Name, DateTime.Now, p.Value, kvp.Value);
 					} else {
-						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "keine Berechtigung zum schreiben");
+						returns.erg = ret.ERROR;
+						returns.message += $"\r\n\tkeine Berechtigung zum schreiben\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
 					}
 				}
-				if (ids.Count > 0) {
-					returns = Program.MainProg.wpOPCClient.setValues(ids.ToArray(),
-						values.ToArray(), TransferId.TransferScene);
-				}
-				if (log.Length > 0) {
+				if (sqlLog.Length > 0) {
 					using (Database Sql = new Database("write Scene log")) {
-						Sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", log.Substring(0, log.Length - 1));
+						Sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", sqlLog.Substring(0, sqlLog.Length - 1));
 					}
 				}
 				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, returns.message);
@@ -1273,9 +1272,12 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			set { _trace = value; }
 		}
 		public override string ToString() {
-			string msg = (_message != string.Empty) ? $",\"message\":\"{_message}\"" : "";
-			string trc = (_trace != string.Empty) ? $",\"trace\":\"{_trace}\"" : "";
+			string msg = (_message != string.Empty) ? $",\"message\":\"{jsonEscape(_message)}\"" : "";
+			string trc = (_trace != string.Empty) ? $",\"trace\":\"{jsonEscape(_trace)}\"" : "";
 			return $"{{\"erg\":\"{erg}\"{msg}{trc}}}";
+		}
+		private string jsonEscape(string str) {
+			return str.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t");
 		}
 	}
 }

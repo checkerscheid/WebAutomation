@@ -8,17 +8,21 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Watchdog.cs 120 2024-07-04 15:08:20Z                     $ #
+//# File-ID      : $Id:: Watchdog.cs 188 2025-02-17 00:57:33Z                     $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpCommen;
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.Helper {
 	public class Watchdog {
@@ -27,29 +31,29 @@ namespace WebAutomation.Helper {
 		private int watchdogByte;
 		private int maxWatchdogByte;
 		public Watchdog() {
-			eventLog = new Logger(wpEventLog.PlugInWatchdog);
-			wpDebug.Write("Watchdog init");
+			eventLog = new Logger(Logger.ESource.PlugInWatchdog);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog init");
 			int watchdogVerz;
-			if (Int32.TryParse(Ini.get("Watchdog", "Verz"), out watchdogVerz)) {
+			if (Int32.TryParse(IniFile.get("Watchdog", "Verz"), out watchdogVerz)) {
 				if (watchdogVerz <= 0) watchdogVerz = 1;
 				watchdogTimer = new System.Timers.Timer(1000 * 60 * watchdogVerz);
 				watchdogTimer.Elapsed += watchdog_Tick;
 				watchdogTimer.AutoReset = true;
 				watchdogTimer.Enabled = true;
-				if (!Int32.TryParse(Ini.get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
+				if (!Int32.TryParse(IniFile.get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
 					maxWatchdogByte = 255;
 				}
 				if (maxWatchdogByte < 2) maxWatchdogByte = 2;
 				watchdogByte = maxWatchdogByte - 1;
-				eventLog.Write("PlugIn Watchdog initialisiert");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), "PlugIn Watchdog initialisiert");
 				// We are faster!!!
-				System.Threading.Thread.Sleep(1000);
+				Thread.Sleep(1000);
 				setWDB();
 				// We are faster!!!
-				System.Threading.Thread.Sleep(1000);
+				Thread.Sleep(1000);
 				setWDB();
 			}
-			eventLog.Write("Watchdog gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Watchdog gestartet");
 		}
 		public void finished() {
 			if (watchdogTimer != null) {
@@ -67,13 +71,13 @@ namespace WebAutomation.Helper {
 			if (watchdogByte > maxWatchdogByte || watchdogByte < 1) watchdogByte = 1;
 
 			int watchdogId;
-			if (Int32.TryParse(Ini.get("Watchdog", "DpId"), out watchdogId)) {
+			if (Int32.TryParse(IniFile.get("Watchdog", "DpId"), out watchdogId)) {
 				Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 					TransferId.TransferWatchdog);
-				if(wpDebug.debugTransferID)
-					wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
+				if(Debug.debugTransferID)
+					Debug.Write(MethodInfo.GetCurrentMethod(), "write WatchdogByte: {0}", watchdogByte);
 			} else {
-				string[] ids = Ini.get("Watchdog", "DpId").Split(',');
+				string[] ids = IniFile.get("Watchdog", "DpId").Split(',');
 
 				if (ids.Length > 0) {
 					List<int> idstowrite = new List<int>();
@@ -81,8 +85,8 @@ namespace WebAutomation.Helper {
 						if (Int32.TryParse(id.Trim(), out watchdogId)) {
 							Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
 								TransferId.TransferWatchdog);
-							if(wpDebug.debugWatchdog)
-								wpDebug.Write("write WatchdogByte: {0}", watchdogByte);
+							if(Debug.debugWatchdog)
+								Debug.Write(MethodInfo.GetCurrentMethod(), "write WatchdogByte: {0}", watchdogByte);
 						}
 					}
 				}
@@ -101,11 +105,11 @@ namespace WebAutomation.Helper {
 				if (_serviceStatus != value) {
 					_serviceStatus = value;
 					if (_serviceStatus == ServiceControllerStatus.Stopped) {
-						if (wpHelp.isAdmin()) {
+						if (Common.isAdmin()) {
 							try {
 								serviceStart.Change(2000, Timeout.Infinite);
 							} catch (Exception ex) {
-								eventLog.WriteError(ex);
+								eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 							}
 						}
 					}
@@ -116,16 +120,16 @@ namespace WebAutomation.Helper {
 		}
 		public delegate void ServiceStatusChangedEventHandler(ServiceStatusChangedEventArgs e);
 		public wpServiceStatus(string servicename) {
-			eventLog = new Logger(wpEventLog.PlugInServiceStatus);
+			eventLog = new Logger(Logger.ESource.PlugInServiceStatus);
 			this._serviceName = servicename;
 			if (_serviceName != "" && checkServiceInstalled()) {
 				serviceTimer = new Timer(Timer_Tick, _serviceName, 0, 500);
-				if (wpHelp.isAdmin()) {
-					wpDebug.Write("Autostart Services activated.");
+				if (Common.isAdmin()) {
+					Debug.Write(MethodInfo.GetCurrentMethod(), "Autostart Services activated.");
 					serviceStart = new Timer(new TimerCallback(Start_Tick));
 				}
 			}
-			eventLog.Write("PlugIn ServiceStatus initialisiert");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "PlugIn ServiceStatus initialisiert");
 		}
 		private void Timer_Tick(object stateInfo) {
 			string _servicename = (string)stateInfo;
@@ -134,17 +138,17 @@ namespace WebAutomation.Helper {
 		}
 		private void Start_Tick(object sn) {
 			ServiceController _service = new ServiceController(_serviceName);
-			eventLog.Write("Service '{0}' send start", _serviceName);
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Service '{0}' send start", _serviceName);
 			_service.Start();
 		}
 		private bool checkServiceInstalled() {
 			foreach (ServiceController sc in ServiceController.GetServices()) {
 				if (sc.ServiceName == _serviceName) {
-					eventLog.Write("Service '{0}' exists - start monitoring", _serviceName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "Service '{0}' exists - start monitoring", _serviceName);
 					return true;
 				}
 			}
-			eventLog.Write(EventLogEntryType.Warning, "Service '{0}' did not exists - monitoring faild", _serviceName);
+			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Service '{0}' did not exists - monitoring faild", _serviceName);
 			return false;
 		}
 		public class ServiceStatusChangedEventArgs : EventArgs {
@@ -170,8 +174,8 @@ namespace WebAutomation.Helper {
 
 		DriveInfo[] Drives = DriveInfo.GetDrives();
 
-		PerformanceCounter cpuCounter;
-		PerformanceCounter ramCounter;
+		System.Diagnostics.PerformanceCounter cpuCounter;
+		System.Diagnostics.PerformanceCounter ramCounter;
 
 		public delegate void MemoryStatusChangedEventHandler(SystemStatusChangedEventArgs e);
 		public delegate void ProzessorStatusChangedEventHandler(SystemStatusChangedEventArgs e);
@@ -191,14 +195,14 @@ namespace WebAutomation.Helper {
 		}
 
 		public wpSystemStatus() {
-			eventLog = new Logger(wpEventLog.PlugInServiceStatus);
-			ramCounter = new PerformanceCounter("Memory", "Available MBytes");
-			cpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName);
+			eventLog = new Logger(Logger.ESource.PlugInServiceStatus);
+			ramCounter = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes");
+			cpuCounter = new System.Diagnostics.PerformanceCounter("Process", "% Processor Time", System.Diagnostics.Process.GetCurrentProcess().ProcessName);
 
 			memoryTimer = new Timer(memoryTimer_Tick, null, 100, 500);
 			prozessorTimer = new Timer(prozessorTimer_Tick, null, 100, 500);
 
-			eventLog.Write("PlugIn ServiceStatus initialisiert");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "PlugIn ServiceStatus initialisiert");
 
 		}
 		private void memoryTimer_Tick(object stateInfo) {

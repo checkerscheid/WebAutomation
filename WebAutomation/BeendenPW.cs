@@ -8,17 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 65                                                      $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: BeendenPW.cs 65 2023-12-21 22:58:05Z                     $ #
+//# File-ID      : $Id:: BeendenPW.cs 188 2025-02-17 00:57:33Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace WebAutomation {

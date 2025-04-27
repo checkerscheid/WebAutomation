@@ -13,14 +13,17 @@
 //# File-ID      : $Id:: Email.cs 203 2025-04-27 15:09:36Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using WebAutomation.PlugIns;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -51,23 +54,23 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			wpDebug.Write("EMail Client init");
-			eventLog = new Logger(wpEventLog.Mail);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "EMail Client init");
+			eventLog = new Logger(Logger.ESource.Mail);
 			mailMessage = new MailMessage();
 			reset();
-			string useSSL = Ini.get("Email", "useSSL");
-			mailMessage.From = new MailAddress(Ini.get("Email", "Sender"), Ini.get("Email", "Name"));
+			string useSSL = IniFile.get("Email", "useSSL");
+			mailMessage.From = new MailAddress(IniFile.get("Email", "Sender"), IniFile.get("Email", "Name"));
 			mailMessage.IsBodyHtml = true;
 			mailMessage.BodyEncoding = Encoding.UTF8;
-			MailClient = new SmtpClient(Ini.get("Email", "Server"), Ini.getInt("Email", "Port"));
+			MailClient = new SmtpClient(IniFile.get("Email", "Server"), IniFile.getInt("Email", "Port"));
 			if (useSSL.ToLower() == "true") MailClient.EnableSsl = true;
-			eventLog.Write("EMail Client gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestartet");
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		public void Dispose() {
-			eventLog.Write("EMail Client gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestoppt");
 			GC.SuppressFinalize(this);
 		}
 		/// <summary>
@@ -99,14 +102,14 @@ namespace WebAutomation.Helper {
 			mailMessage.Subject = "";
 			mailMessage.Body = "";
 
-			if (Ini.get("Email", "ProjectNumberInSubject") == "true") {
+			if (IniFile.get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
-					Ini.get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
+					IniFile.get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
 			} else {
 				setSubject(String.Format("{0} - {1} Neue Alarm Aktionen",
 					ServiceName, EmailAlarms.getTotalCount(r)));
 			}
-			string MailToInMail = Ini.get("Email", "MailToInMail");
+			string MailToInMail = IniFile.get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
 			string HelpdeskLinkInMail = IniFile.get("Email", "HelpdeskLinkInMail");
 			string HelpdeskNameInMail = IniFile.get("Email", "HelpdeskNameInMail");
@@ -121,8 +124,8 @@ namespace WebAutomation.Helper {
 			<p>In Ihrer Anlage stehen die folgenden Alarme an:</p>
 			<p>" + EmailAlarms.getText(r) + @"</p>
 			<br />" + String.Format("<p>Projekt: {0} - {1}</p>",
-				Ini.get("Projekt", "Nummer"),
-				Ini.get("Projekt", "Name")) + @"
+				IniFile.get("Projekt", "Nummer"),
+				IniFile.get("Projekt", "Name")) + @"
 			<p style='font-weight:bold; color:#29166f;'>Ihr " + ServiceName + @" Alarm Service</p>
 			<p style='font-size:8pt; color:#888;'>
 				<span style='font-weight:bold;'>
@@ -176,7 +179,7 @@ namespace WebAutomation.Helper {
 				(Alarms.UseAlarmGroup5 ? " - " + Alarms.GetReadableGroup(Alarms.ALARMGROUP5, TheAlarm.Alarmgroups5) : "") +
 				" ");
 			EmailAlarms.countup(TheAlarm.IdAlarm, 0);
-			wpDebug.Write("Alarm to Mail: {0}", TheAlarm.Alarmtext);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarm to Mail: {0}", TheAlarm.Alarmtext);
 		}
 		/// <summary>
 		/// 
@@ -241,9 +244,9 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		public void send() {
-			if (Ini.get("Email", "UseUserPassword") == "true") {
-				MailClient.Credentials = new NetworkCredential(Ini.get("Email", "User"),
-					Ini.get("Email", "Password"));
+			if (IniFile.get("Email", "UseUserPassword") == "true") {
+				MailClient.Credentials = new NetworkCredential(IniFile.get("Email", "User"),
+					IniFile.get("Email", "Password"));
 			}
 			MailClient.Send(mailMessage);
 			string to = "\r\n";
@@ -251,7 +254,7 @@ namespace WebAutomation.Helper {
 				to += sender.Address + "\r\n";
 			}
 			mailMessage.To.Clear();
-			eventLog.Write(String.Format("Alarm EMail geschrieben an:{0}", to));
+			eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("Alarm EMail geschrieben an:{0}", to));
 		}
 		/// <summary>
 		/// 
@@ -266,7 +269,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -282,7 +285,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -298,7 +301,7 @@ namespace WebAutomation.Helper {
 					entered = true;
 				} else {
 					if (++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
 						Thread.Sleep(10);
@@ -394,7 +397,7 @@ namespace WebAutomation.Helper {
 						}
 					} else {
 						if (++notEntered >= 10) {
-							wpDebug.Write(
+							Debug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.Add nicht möglich",
 									idalarm));
 						} else {
@@ -423,7 +426,7 @@ namespace WebAutomation.Helper {
 						}
 					} else {
 						if (++notEntered >= 10) {
-							wpDebug.Write(
+							Debug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.AddSMS nicht möglich",
 									idalarm));
 						} else {
@@ -445,7 +448,7 @@ namespace WebAutomation.Helper {
 							html += Alarmtext[kvp.Key][kvp.Value];
 						}
 					} else {
-						wpDebug.Write("User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
+						Debug.Write(MethodInfo.GetCurrentMethod(), "User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
 					}
 				}
 				return html;
@@ -459,7 +462,7 @@ namespace WebAutomation.Helper {
 								html.Add(Alarmsms[kvp.Key][kvp.Value]);
 						}
 					} else {
-						wpDebug.Write("User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
+						Debug.Write(MethodInfo.GetCurrentMethod(), "User inaktiv {0}, Alarm: {1}", r.Address, kvp.Key);
 					}
 				}
 				return html;

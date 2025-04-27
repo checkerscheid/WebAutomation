@@ -8,22 +8,36 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 122                                                     $ #
+//# Revision     : $Rev:: 199                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 122 2024-07-07 20:05:28Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 199 2025-04-16 01:10:09Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Messaging;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WatsonWebsocket;
+using static WebAutomation.Helper.ShellyServer;
 
 namespace WebAutomation.Helper {
 	public class WebSockets {
+
+		#region Server
+		private const string cAddDatapoints = "addDatapoints";
+		private const string cGetRegistered = "getRegistered";
+		#endregion
+		#region D1Mini
+		private const string cGetD1MiniJson = "getD1MiniJson";
+		private const string cStartD1MiniSearch = "startD1MiniSearch";
+		#endregion
+
 		/// <summary></summary>
 		private Logger eventLog;
 
@@ -35,11 +49,11 @@ namespace WebAutomation.Helper {
 			init();
 		}
 		private void init() {
-			wpDebug.Write("WebSockets Server Init");
-			string name = Ini.get("Websockets", "Name");
-			int port = Ini.getInt("Websockets", "Port");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebSockets Server Init");
+			string name = IniFile.get("Websockets", "Name");
+			int port = IniFile.getInt("Websockets", "Port");
 			try {
-				eventLog = new Logger(wpEventLog.WebSockets);
+				eventLog = new Logger(Logger.ESource.WebSockets);
 
 				WatsonClients = new Dictionary<Guid, wpTcpClient>();
 				ws = new WatsonWsServer(name, port, false);
@@ -47,64 +61,130 @@ namespace WebAutomation.Helper {
 				ws.ClientDisconnected += Ws_ClientDisconnected;
 				ws.MessageReceived += Ws_MessageReceived;
 				ws.Start();
-				eventLog.Write($"WebSockets Server '{name}' gestartet, auf Port {port} gemappt");
+				eventLog.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server '{name}' gestartet, auf Port {port} gemappt");
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex);
+				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public void finished() {
-			if(ws.IsListening)
+			if(ws != null && ws.IsListening)
 				ws.Stop();
 		}
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {
-			string s = Encoding.UTF8.GetString(e.Data.Array);
+			string s = Encoding.UTF8.GetString(e.Data.Array).Replace("\0", string.Empty);
 			if(Regex.IsMatch(s, "^PING", RegexOptions.IgnoreCase)) {
 				ws.SendAsync(e.Client.Guid, "PONG");
 			} else {
-				dynamic stuff = JsonConvert.DeserializeObject(s);
-				executeCommand(WatsonClients[e.Client.Guid], stuff);
+				try {
+					dynamic stuff = JsonConvert.DeserializeObject(s);
+					if(WatsonClients.ContainsKey(e.Client.Guid))
+						executeCommand(WatsonClients[e.Client.Guid], stuff);
+				} catch(Exception ex) {
+					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, s);
+				}
 			}
-			if(wpDebug.debugWebSockets)
-				wpDebug.Write($"WebSockets Server Message received from {e.Client} : {s}");
+			if(Debug.debugWebSockets)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Message received from {e.Client} : {s}");
 		}
 
 		private void Ws_ClientConnected(object sender, ConnectionEventArgs e) {
 			WatsonClients.Add(e.Client.Guid, new wpTcpClient(e.Client.Guid));
-			wpDebug.Write($"WebSockets Server Client connected: {e.Client.Guid}");
+			Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client connected: {e.Client.Guid}");
 		}
 
 		private void Ws_ClientDisconnected(object sender, DisconnectionEventArgs e) {
 			WatsonClients.Remove(e.Client.Guid);
-			wpDebug.Write($"WebSockets Server Client disconnected: {e.Client.Guid}");
+			Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client disconnected: {e.Client.Guid}");
 		}
+
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
-			switch(cmd.command.ToString()) {
-				case "addDatapoints":
-					addDatapoints(client, cmd.data);
-					wpDebug.Write($"WebSockets Server command: addDatapoints");
-					if(wpDebug.debugWebSockets)
-						wpDebug.Write("data: {0}", cmd.data);
-					break;
-				case "getRegistered":
-					getRegistered(client);
-					wpDebug.Write($"WebSockets Server question: getRegistered");
-					if(wpDebug.debugWebSockets)
-						wpDebug.Write("qst: {0}", cmd);
-					break;
-				case "getD1MiniJson":
-					ws.SendAsync(client.id,
-						"{\"response\":\"getD1MiniJson\"," +
-						"\"data\":{" +
-							$"\"ip\":\"{cmd.data}\"," +
-							"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data) +
-						"}}");
-					break;
-				case "startD1MiniSearch":
-					D1MiniServer.startSearch(client.id);
-					break;
-				default:
-					wpDebug.Write($"WebSockets Server Type not found");
-					break;
+			if(cmd.src != null) {
+				Shelly shelly = ShellyServer.getShellyFromWsId(cmd.src.ToString());
+				if(shelly != null) {
+					//if(shelly.IdOnOff > 0) {
+					//	Datapoint dp = Datapoints.Get(shelly.IdOnOff);
+					//	if(dp != null &&
+					//		cmd["params"] != null &&
+					//		cmd["params"]["switch:0"] != null &&
+					//		cmd["params"]["switch:0"]["output"] != null
+					//		) {
+					//		dp.setValue((string)cmd["params"]["switch:0"]["output"]);
+					//	}
+					//}
+					if(shelly.IdVoltage > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdVoltage);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["voltage"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["voltage"]);
+						}
+					}
+					if(shelly.IdCurrent > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdCurrent);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["current"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["current"]);
+						}
+					}
+					if(shelly.IdPower > 0) {
+						Datapoint dp = Datapoints.Get(shelly.IdPower);
+						if(dp != null &&
+							cmd["params"] != null &&
+							cmd["params"]["switch:0"] != null &&
+							cmd["params"]["switch:0"]["apower"] != null
+							) {
+							dp.setValue((string)cmd["params"]["switch:0"]["apower"]);
+						}
+					}
+					if(Debug.debugWebSockets)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly: {shelly.ToString()}");
+				} else {
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Websocket Shelly unknown: {cmd.src.ToString()}");
+				}
+			}
+			if(cmd.command != null) {
+				switch(cmd.command?.ToString()) {
+					case cAddDatapoints:
+						addDatapoints(client, cmd.data);
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server command: {cAddDatapoints}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "data: {0}", cmd.data);
+						break;
+					case cGetRegistered:
+						getRegistered(client);
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetRegistered}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "qst: {0}", cmd);
+						break;
+					case cGetD1MiniJson:
+						ws.SendAsync(client.id,
+							"{\"response\":\"getD1MiniJson\"," +
+							"\"data\":{" +
+								$"\"ip\":\"{cmd.data}\"," +
+								"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
+							"}}");
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetD1MiniJson}");
+						break;
+					case cStartD1MiniSearch:
+						D1MiniServer.startSearch(client.id);
+						if(Debug.debugWebSockets)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cStartD1MiniSearch}");
+						break;
+					default:
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Type not found");
+						break;
+				}
+			}
+		}
+		public void sendAll(string msg) {
+			foreach(KeyValuePair<Guid, wpTcpClient> entry in WatsonClients) {
+				ws.SendAsync(entry.Key, msg);
 			}
 		}
 		private void addDatapoints(wpTcpClient client, dynamic datapoints) {
@@ -131,30 +211,23 @@ namespace WebAutomation.Helper {
 							$"\"lastchange\":\"{datapoint.LastChange.ToString("s")}\"" +
 						"}";
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				} else {
-					wpDebug.Write($"Client {client.id}: Datapoint not found: {dp}");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Client {client.id}: Datapoint not found: {dp}");
 				}
 			}
 			ws.SendAsync(client.id, "{\"response\":\"addDatapoints\",\"data\":[" + msg + "]}");
-			if(wpDebug.debugWebSockets)
-				wpDebug.Write($"addDatapoints {client.id} message: {msg}");
+			if(Debug.debugWebSockets)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"addDatapoints {client.id} message: {msg}");
 		}
 		private void getRegistered(wpTcpClient client) {
 			ws.SendAsync(client.id, "{\"response\":\"getRegistered\",\"data\":[" + client.getDatapoints() + "]}");
 		}
 
-		public void sendText(wpTcpClient client, string text) {
-			try {
-				client.message += text;
-			} catch(Exception ex) {
-				eventLog.WriteError(ex);
-			}
-		}
-		public void sendText(Guid id, string response, string msg) {
+		public void sendText(wpTcpClient client, string response, string msg) {
 			string answer = $"{{\"response\":\"{response}\",\"data\":{msg}}}";
-			ws.SendAsync(id, answer);
+			ws.SendAsync(client.id, answer);
 		}
 		public void sendDatapoint(string name) {
 			Datapoint datapoint = Datapoints.Get(name);
@@ -180,15 +253,15 @@ namespace WebAutomation.Helper {
 								}
 							}
 						} catch(Exception ex) {
-							wpDebug.WriteError(ex);
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					}
 					Monitor.Exit(WatsonClients);
 				} else {
-					wpDebug.Write($"Angefordertes Item not Entered: WebSockets.Client, DP: '{DP.Name} ({DP.ID})'");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Angefordertes Item not Entered: WebSockets.Client, DP: '{DP.Name} ({DP.ID})'");
 				}
 			} catch(Exception ex) {
-				wpDebug.WriteError(ex);
+				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public class wpTcpClient {

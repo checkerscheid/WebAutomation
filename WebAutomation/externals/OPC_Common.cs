@@ -8,13 +8,12 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 62                                                      $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Common.cs 62 2023-12-19 18:28:44Z                    $ #
+//# File-ID      : $Id:: OPC_Common.cs 188 2025-02-17 00:57:33Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using System;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 /**
@@ -142,12 +141,12 @@ namespace OPC.Common {
 		public void Dispose() {
 			ifEnum = null;
 			if (!(EnumObj == null)) {
-				int rc = Marshal.ReleaseComObject(EnumObj);
+				int rc = Marshal.FinalReleaseComObject(EnumObj);
 				EnumObj = null;
 			}
 			ifList = null;
 			if (!(OPCListObj == null)) {
-				int rc = Marshal.ReleaseComObject(OPCListObj);
+				int rc = Marshal.FinalReleaseComObject(OPCListObj);
 				OPCListObj = null;
 			}
 		}

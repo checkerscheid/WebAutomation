@@ -8,12 +8,15 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 76                                                      $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WriteLevel.cs 76 2024-01-24 07:36:57Z                    $ #
+//# File-ID      : $Id:: WriteLevel.cs 188 2025-02-17 00:57:33Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
 using System;
+using System.Reflection;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -30,9 +33,9 @@ namespace WebAutomation.Helper {
 		/// </summary>
 		/// <param name="_Me"></param>
 		public static void AddWriteLevel() {
-			eventLog = new Logger(wpEventLog.PlugInWriteLevel);
-			using (SQL SQL = new SQL("Add Write Level")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			eventLog = new Logger(Logger.ESource.PlugInWriteLevel);
+			using (Database Sql = new Database("Add Write Level")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -43,7 +46,7 @@ namespace WebAutomation.Helper {
 				);
 				LevelToItem(DBWriteLevel);
 			}
-			eventLog.Write("Taster PlugIn geladen");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Taster PlugIn geladen");
 		}
 		/// <summary>
 		/// 
@@ -51,8 +54,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddWriteLevel(int idserver) {
-			using (SQL SQL = new SQL("Add Write Level for Server")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Server")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -72,8 +75,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddGroupWriteLevel(int idgroup) {
-			using (SQL SQL = new SQL("Add Write Level for Group")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Group")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]
@@ -93,8 +96,8 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddItemWriteLevel(int iditem) {
-			using (SQL SQL = new SQL("Add Write Level for Item")) {
-				string[][] DBWriteLevel = SQL.wpQuery(@"SELECT
+			using (Database Sql = new Database("Add Write Level for Item")) {
+				string[][] DBWriteLevel = Sql.wpQuery(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
 					AS [usergroupwrite]

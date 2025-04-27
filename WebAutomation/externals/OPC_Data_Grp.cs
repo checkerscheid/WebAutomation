@@ -8,20 +8,20 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 115                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPC_Data_Grp.cs 115 2024-07-04 00:02:57Z                 $ #
+//# File-ID      : $Id:: OPC_Data_Grp.cs 188 2025-02-17 00:57:33Z                 $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using OPC.Common;
 using OPC.Data.Interface;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
-using WebAutomation;
-using WebAutomation.Helper;
 /**
 * @addtogroup externals
 * @{
@@ -342,7 +342,7 @@ namespace OPC.Data {
 		/// <param name="setActive"></param>
 		/// <param name="requestedUpdateRate"></param>
 		internal OpcGroup(ref IOPCServer ifServerLink, bool isPublic, string groupName, bool setActive, int requestedUpdateRate) {
-			EventLog = new Logger(wpEventLog.OPCDataGroup);
+			EventLog = new Logger(Logger.ESource.OPCDataGroup);
 			ifServer = ifServerLink;
 
 			state.Name = groupName;
@@ -430,9 +430,9 @@ namespace OPC.Data {
 						callbackcookie = 0;
 					}
 				} catch(Exception ex) {
-					EventLog.WriteError(ex, myname);
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, myname);
 				} finally {
-					wpDebug.Write("OPC Data Grp '{0}' - Marshal.ReleaseComObject shutdowncpoint", myname);
+					Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Grp '{0}' - Marshal.ReleaseComObject shutdowncpoint", myname);
 					int rc = Marshal.FinalReleaseComObject(callbackcpoint);
 					callbackcpoint = null;
 				}
@@ -446,7 +446,7 @@ namespace OPC.Data {
 			//if(wpDebug.debugOPC)
 			//	wpDebug.Write("OPC Data Grp '{0}' - ReleaseComObject", myname);
 			if(!(ifMgt == null)) {
-				wpDebug.Write("OPC Data Grp '{0}' - Marshal.ReleaseComObject ifMgt", myname);
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Grp '{0}' - Marshal.ReleaseComObject ifMgt", myname);
 				int rc = Marshal.FinalReleaseComObject(ifMgt);
 				ifMgt = null;
 			}
@@ -460,12 +460,12 @@ namespace OPC.Data {
 					try {
 						ifServer.RemoveGroup(state.HandleServer, bForce);
 					} catch (Exception ex) {
-						EventLog.WriteError(ex);
+						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 				ifServer = null;
 			}
-			wpDebug.Write("OPC DATA GRP '{0}' - RemovedGroup", myname);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC DATA GRP '{0}' - RemovedGroup", myname);
 
 			state.HandleServer = 0;
 		}
@@ -1043,8 +1043,8 @@ namespace OPC.Data {
 			arrErr = new int[count];
 			Marshal.Copy(ptrErr, arrErr, 0, count);
 			Marshal.FreeCoTaskMem(ptrErr);
-			if(wpDebug.debugTransferID)
-				wpDebug.Write("Async Read (TAID-{0})", transactionID);
+			if(Debug.debugTransferID)
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Async Read (TAID-{0})", transactionID);
 			return hresult == HRESULTS.S_OK;
 		}
 		/// <summary>
@@ -1072,8 +1072,8 @@ namespace OPC.Data {
 			arrErr = new int[count];
 			Marshal.Copy(ptrErr, arrErr, 0, count);
 			Marshal.FreeCoTaskMem(ptrErr);
-			if(wpDebug.debugTransferID)
-				wpDebug.Write("Async Write (TAID-{0})", transactionID);
+			if(Debug.debugTransferID)
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Async Write (TAID-{0})", transactionID);
 			return hresult == HRESULTS.S_OK;
 		}
 		/// <summary>
@@ -1122,8 +1122,8 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnDataChange(
 				int dwTransid, int hGroup, int hrMasterquality, int hrMastererror, int dwCount,
 				IntPtr phClientItems, IntPtr pvValues, IntPtr pwQualities, IntPtr pftTimeStamps, IntPtr ppErrors) {
-			if(wpDebug.debugOPC) {
-				wpDebug.Write("OpcGroup.OnDataChange");
+			if(Debug.debugOPC) {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnDataChange");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
@@ -1190,8 +1190,8 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnReadComplete(
 				int dwTransid, int hGroup, int hrMasterquality, int hrMastererror, int dwCount,
 				IntPtr phClientItems, IntPtr pvValues, IntPtr pwQualities, IntPtr pftTimeStamps, IntPtr ppErrors) {
-			if(wpDebug.debugOPC) {
-				wpDebug.Write("OpcGroup.OnReadComplete");
+			if(Debug.debugOPC) {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnReadComplete");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
@@ -1254,8 +1254,8 @@ namespace OPC.Data {
 		void IOPCDataCallback.OnWriteComplete(
 				int dwTransid, int hGroup, int hrMastererr, int dwCount,
 				IntPtr pClienthandles, IntPtr ppErrors) {
-			if(wpDebug.debugOPC) {
-				wpDebug.Write("OpcGroup.OnWriteComplete");
+			if(Debug.debugOPC) {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnWriteComplete");
 			}
 			if ((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
@@ -1285,8 +1285,8 @@ namespace OPC.Data {
 		}
 
 		void IOPCDataCallback.OnCancelComplete(int dwTransid, int hGroup) {
-			if(wpDebug.debugOPC) {
-				wpDebug.Write("OpcGroup.OnCancelComplete");
+			if(Debug.debugOPC) {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnCancelComplete");
 			}
 			if (hGroup != state.HandleClient)
 				return;
@@ -1380,7 +1380,7 @@ namespace OPC.Data {
 		/// </summary>
 		public void Dispose() {
 			if (!(ifEnum == null)) {
-				int rc = Marshal.ReleaseComObject(ifEnum);
+				int rc = Marshal.FinalReleaseComObject(ifEnum);
 				ifEnum = null;
 			}
 		}

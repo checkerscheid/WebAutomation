@@ -8,21 +8,23 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 109                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: TransferId.cs 109 2024-06-16 15:59:41Z                   $ #
+//# File-ID      : $Id:: TransferId.cs 188 2025-02-17 00:57:33Z                   $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.Helper {
 	class TransferId {
 		/// <summary>WebAutomationServer Event Log</summary>
-		private static Logger eventLog = new Logger(wpEventLog.TransferId);
+		private static Logger eventLog = new Logger(Logger.ESource.TransferId);
 		/// <summary>Transfer Grund: OpcRouter</summary>
 		public const int TransferOpcRouter = 1;
 		/// <summary>Transfer Grund: Watchdog</summary>
@@ -74,14 +76,14 @@ namespace WebAutomation.Helper {
 								_dtid.Add(mytid, new transferID(mytid, forWhat));
 							}
 						} catch(Exception ex) {
-							eventLog.WriteError(ex);
+							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						} finally {
 							Monitor.Exit(_dtid);
 							entered = true;
 						}
 					} else {
 						if(++notEntered >= 10) {
-							eventLog.Write(EventLogEntryType.Error,
+							eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 								String.Format("Angeforderte Transfer Id konnte nicht angefügt werden: {0}", mytid));
 						} else {
 							Thread.Sleep(10);
@@ -89,7 +91,7 @@ namespace WebAutomation.Helper {
 					}
 				}
 			} else {
-				eventLog.Write(EventLogEntryType.Error,
+				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 					String.Format("Deadlockopfer ☺: Mutextimeout für Transfer Id abgelaufen"));
 			}
 			return mytid;
@@ -111,17 +113,17 @@ namespace WebAutomation.Helper {
 							_dtid[id].Stop();
 							_dtid.Remove(id);
 						} else {
-							wpDebug.Write("Tranaction ID nicht gefunden: {0}", id);
+							Debug.Write(MethodInfo.GetCurrentMethod(), "Tranaction ID nicht gefunden: {0}", id);
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(_dtid);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							String.Format("Transfer Id konnte nicht gelöscht werden: {0}", id));
 					} else {
 						Thread.Sleep(10);
@@ -143,14 +145,14 @@ namespace WebAutomation.Helper {
 					try {
 						if(_dtid.ContainsKey(id)) returns = _dtid[id].ForWhat;
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(_dtid);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							String.Format("Angeforderte Transfer Id nicht verfügbar: {0}", id));
 					} else {
 						Thread.Sleep(10);
@@ -168,14 +170,14 @@ namespace WebAutomation.Helper {
 					try {
 						returns = _dtid.Count;
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(_dtid);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error, "Transfer Liste nicht verfügbar");
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Transfer Liste nicht verfügbar");
 					} else {
 						Thread.Sleep(10);
 					}
@@ -198,33 +200,33 @@ namespace WebAutomation.Helper {
 				_forWhat = forWhat;
 				if(!WebAutomationServer.isInit) {
 					if(Program.MainProg.wpBigProject) {
-						if(wpDebug.debugTransferID)
-							wpDebug.Write("TA intervall (init): 240 s (TAID-{0})", id);
+						if(Debug.debugTransferID)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "TA intervall (init): 240 s (TAID-{0})", id);
 						this.Interval = 240 * 1000;
 					} else {
-						if(wpDebug.debugTransferID)
-							wpDebug.Write("TA intervall (init): 60 s (TAID-{0})", id);
+						if(Debug.debugTransferID)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "TA intervall (init): 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					}
 				} else {
 					if(forWhat == TransferForceRead) {
-						if(wpDebug.debugTransferID)
-							wpDebug.Write("TA intervall: 60 s (TAID-{0})", id);
+						if(Debug.debugTransferID)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "TA intervall: 60 s (TAID-{0})", id);
 						this.Interval = 60 * 1000;
 					} else if(Program.MainProg.wpBigProject) {
-						if(wpDebug.debugTransferID)
-							wpDebug.Write("TA intervall: 30 s (TAID-{0})", id);
+						if(Debug.debugTransferID)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "TA intervall: 30 s (TAID-{0})", id);
 						this.Interval = 30 * 1000;
 					} else {
-						if(wpDebug.debugTransferID)
-							wpDebug.Write("TA intervall: 10 s (TAID-{0})", id);
+						if(Debug.debugTransferID)
+							Debug.Write(MethodInfo.GetCurrentMethod(), "TA intervall: 10 s (TAID-{0})", id);
 						this.Interval = 10 * 1000;
 					}
 				}
 				this.AutoReset = false;
 				this.Elapsed += new System.Timers.ElapsedEventHandler(ttaid_Elapsed);
 				this.Enabled = true;
-				eventLog = new Logger(wpEventLog.TransferId);
+				eventLog = new Logger(Logger.ESource.TransferId);
 			}
 			private void ttaid_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 				string reason = "unbekannt";
@@ -260,7 +262,7 @@ namespace WebAutomation.Helper {
 						reason = "Normale Operation";
 						break;
 				}
-				eventLog.Write(EventLogEntryType.Warning,
+				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 					String.Format("Server Antwortet nicht auf Anfrage. Transfer Id: {0}, Transfergrund: {1}, Zeit: {2} s",
 						_id, reason, (this.Interval / 1000)));
 				remove(_id);

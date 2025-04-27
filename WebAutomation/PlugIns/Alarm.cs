@@ -8,16 +8,18 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 120                                                     $ #
+//# Revision     : $Rev:: 188                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 120 2024-07-04 15:08:20Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 188 2025-02-17 00:57:33Z                        $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.Timers;
-using WebAutomation.Helper;
 
 namespace WebAutomation.PlugIns {
 	/// <summary>
@@ -263,7 +265,7 @@ namespace WebAutomation.PlugIns {
 		/// <param name="dpname"></param>
 		/// <param name="sec"></param>
 		public Alarm(int idalarm, int dpid, string dpname, int sec) {
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			init(idalarm, dpid, dpname, sec);
 		}
 		/// <summary>
@@ -304,7 +306,7 @@ namespace WebAutomation.PlugIns {
 		private void Delay_Tick(object sender, ElapsedEventArgs e) {
 			if (_nodelaycome) {
 				SetCome(DateTime.Now);
-				_eventLog.Write("{0} ({1}) - Alarmdelay finished - real come",
+				_eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} ({1}) - Alarmdelay finished - real come",
 					this._alarmtext, this._dpname);
 			}
 			_delay.Stop();
@@ -318,7 +320,7 @@ namespace WebAutomation.PlugIns {
 				_delay.Stop();
 				_delay.Start();
 				_timerstarted = true;
-				_eventLog.Write("{0} ({1}) - Alarm come with delay - start",
+				_eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} ({1}) - Alarm come with delay - start",
 					this._alarmtext, this._dpname);
 			}
 		}
@@ -338,155 +340,164 @@ namespace WebAutomation.PlugIns {
 		/// <param name="value"></param>
 		/// <param name="Now"></param>
 		public void setAlarmValue() {
-			string v = Datapoints.Get(_iddp).Value;
-			DateTime Now = DateTime.Now;
-			string issep;
-			string mustsep;
-			string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-			if(sep == ".") {
-				issep = ",";
-				mustsep = ".";
-			} else {
-				issep = ".";
-				mustsep = ",";
-			}
-			decimal ivaluedec;
-			decimal param1dec;
 			try {
-				switch(_condition) {
-					case "=":
-						if(v == _min) {
-							_nodelaycome = true;
-							if(!_inalarm) {
-								if(_hasDelay) {
-									if(!_timerstarted)
-										TimerStart();
-								} else {
-									SetCome(Now);
-								}
-							}
+				Datapoint dp = Datapoints.Get(_iddp);
+				if(dp != null) {
+					string v = dp.Value;
+					if(v != null || v != "") {
+						DateTime Now = DateTime.Now;
+						string issep;
+						string mustsep;
+						string sep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+						if(sep == ".") {
+							issep = ",";
+							mustsep = ".";
+						} else {
+							issep = ".";
+							mustsep = ",";
 						}
-						if(v != _min) {
-							_nodelaycome = false;
-							TimerStop();
-							if(_inalarm)
-								SetGone(Now);
-						}
-						break;
-					case "<>":
-						if(v != _min) {
-							_nodelaycome = true;
-							if(!_inalarm) {
-								if(_hasDelay) {
-									if(!_timerstarted)
-										TimerStart();
-								} else {
-									SetCome(Now);
-								}
-							}
-						}
-						if(v == _min) {
-							_nodelaycome = false;
-							TimerStop();
-							if(_inalarm)
-								SetGone(Now);
-						}
-						break;
-					case ">":
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if(ivaluedec > param1dec) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+						decimal ivaluedec;
+						decimal param1dec;
+						try {
+							switch(_condition) {
+								case "=":
+									if(v == _min) {
+										_nodelaycome = true;
+										if(!_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
 									}
-								}
-							}
-							if(ivaluedec <= param1dec) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case "<":
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if(ivaluedec < param1dec) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+									if(v != _min) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
 									}
-								}
-							}
-							if(ivaluedec >= param1dec) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case ">x<":
-						// min max
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if((ivaluedec < param1dec || ivaluedec > _max)) {
-								_nodelaycome = true;
-								if(!_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+									break;
+								case "<>":
+									if(v != _min) {
+										_nodelaycome = true;
+										if(!_inalarm) {
+											if(_hasDelay) {
+												if(!_timerstarted)
+													TimerStart();
+											} else {
+												SetCome(Now);
+											}
+										}
 									}
-								}
-							}
-							if(ivaluedec >= param1dec && ivaluedec <= _max) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
-						}
-						break;
-					case "<x>":
-						// zwischen
-						if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
-							Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
-							if((ivaluedec >= param1dec && ivaluedec <= _max)) {
-								_nodelaycome = true;
-								if(_inalarm) {
-									if(_hasDelay) {
-										if(!_timerstarted)
-											TimerStart();
-									} else {
-										SetCome(Now);
+									if(v == _min) {
+										_nodelaycome = false;
+										TimerStop();
+										if(_inalarm)
+											SetGone(Now);
 									}
-								}
+									break;
+								case ">":
+									if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+										Decimal.TryParse(v?.Replace(issep, mustsep), out ivaluedec)) {
+										if(ivaluedec > param1dec) {
+											_nodelaycome = true;
+											if(!_inalarm) {
+												if(_hasDelay) {
+													if(!_timerstarted)
+														TimerStart();
+												} else {
+													SetCome(Now);
+												}
+											}
+										}
+										if(ivaluedec <= param1dec) {
+											_nodelaycome = false;
+											TimerStop();
+											if(_inalarm)
+												SetGone(Now);
+										}
+									}
+									break;
+								case "<":
+									if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+										Decimal.TryParse(v?.Replace(issep, mustsep), out ivaluedec)) {
+										if(ivaluedec < param1dec) {
+											_nodelaycome = true;
+											if(!_inalarm) {
+												if(_hasDelay) {
+													if(!_timerstarted)
+														TimerStart();
+												} else {
+													SetCome(Now);
+												}
+											}
+										}
+										if(ivaluedec >= param1dec) {
+											_nodelaycome = false;
+											TimerStop();
+											if(_inalarm)
+												SetGone(Now);
+										}
+									}
+									break;
+								case ">x<":
+									// min max
+									if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+										Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+										if((ivaluedec < param1dec || ivaluedec > _max)) {
+											_nodelaycome = true;
+											if(!_inalarm) {
+												if(_hasDelay) {
+													if(!_timerstarted)
+														TimerStart();
+												} else {
+													SetCome(Now);
+												}
+											}
+										}
+										if(ivaluedec >= param1dec && ivaluedec <= _max) {
+											_nodelaycome = false;
+											TimerStop();
+											if(_inalarm)
+												SetGone(Now);
+										}
+									}
+									break;
+								case "<x>":
+									// zwischen
+									if(Decimal.TryParse(_min.Replace(issep, mustsep), out param1dec) &&
+										Decimal.TryParse(v.Replace(issep, mustsep), out ivaluedec)) {
+										if((ivaluedec >= param1dec && ivaluedec <= _max)) {
+											_nodelaycome = true;
+											if(_inalarm) {
+												if(_hasDelay) {
+													if(!_timerstarted)
+														TimerStart();
+												} else {
+													SetCome(Now);
+												}
+											}
+										}
+										if(ivaluedec < param1dec || ivaluedec > _max) {
+											_nodelaycome = false;
+											TimerStop();
+											if(_inalarm)
+												SetGone(Now);
+										}
+									}
+									break;
+								default:
+									break;
 							}
-							if(ivaluedec < param1dec || ivaluedec > _max) {
-								_nodelaycome = false;
-								TimerStop();
-								if(_inalarm)
-									SetGone(Now);
-							}
+						} catch(Exception ex) {
+							_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, "id dp: " + _iddp, "id alarm: " + _idalarm, "v: " + v);
 						}
-						break;
-					default:
-						break;
+					}
 				}
 			} catch(Exception ex) {
-				_eventLog.WriteError(ex);
+				_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"id dp: {_iddp}, id alarm: {_idalarm}");
 			}
 		}
 		/// <summary>
@@ -504,21 +515,21 @@ namespace WebAutomation.PlugIns {
 				_quit = Now;
 				_needquit = true;
 				sqlautoquit = String.Format("'{0}'",
-					Now.ToString(SQL.DateTimeFormat));
+					Now.ToString(Database.DateTimeFormat));
 				sqlautoquitfrom = "'wpSystem'";
 			} else {
 				_needquit = false;
 				_quit = Alarm.Default;
 			}
-			using (SQL SQL = new SQL("Alarm Come in Historic")) {
-				SQL.wpNonResponse(
+			using (Database Sql = new Database("Alarm Come in Historic")) {
+				Sql.wpNonResponse(
 					"INSERT INTO [alarmhistoric] ([id_alarm], [come], [quit], [quitfrom], [text]) " +
 					"VALUES ({0}, '{1}', {2}, {3}, '{4}')",
 					_idalarm,
-					Now.ToString(SQL.DateTimeFormat),
+					Now.ToString(Database.DateTimeFormat),
 					sqlautoquit, sqlautoquitfrom, this.Alarmtext);
 			}
-			wpDebug.Write("Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarm Come: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 			Program.MainProg.AlarmToMail(this);
 		}
 		/// <summary>
@@ -529,13 +540,13 @@ namespace WebAutomation.PlugIns {
 			_alarmupdate = Now;
 			_gone = Now;
 			_inalarm = false;
-			using (SQL SQL = new SQL("Alarm Gone in Historic")) {
-				SQL.wpNonResponse(
+			using (Database Sql = new Database("Alarm Gone in Historic")) {
+				Sql.wpNonResponse(
 					"UPDATE [alarmhistoric] SET [gone] = '{0}'  WHERE [id_alarm] = {1} AND [gone] IS NULL",
-					Now.ToString(SQL.DateTimeFormat),
+					Now.ToString(Database.DateTimeFormat),
 					_idalarm);
 			}
-			wpDebug.Write("Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarm Gone: {0} - {2} ({1})", this.Alarmtext, this.IdDp, this.DpName);
 		}
 		public void UpdateDelay(int sec) {
 			TimerStop();
@@ -558,7 +569,7 @@ namespace WebAutomation.PlugIns {
 		/// Key: id_alarm<br />
 		/// Value: Alarm
 		/// </summary>
-		private static Dictionary<int, Alarm> _alarmList = new Dictionary<int, Alarm>();
+		private static List<Alarm> _alarmList = new List<Alarm>();
 		/// <summary></summary>
 		private static Logger _eventLog;
 
@@ -578,15 +589,21 @@ namespace WebAutomation.PlugIns {
 		public static bool UseAlarmGroup3;
 		public static bool UseAlarmGroup4;
 		public static bool UseAlarmGroup5;
+
+		private static Dictionary<int, string> _alarmgroups1member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups2member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups3member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups4member = new Dictionary<int, string>();
+		private static Dictionary<int, string> _alarmgroups5member = new Dictionary<int, string>();
 		/// <summary>
 		/// 
 		/// </summary>
 		public static void Init() {
-			wpDebug.Write("Alarms Init");
-			_eventLog = new Logger(wpEventLog.PlugInAlarm);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
+			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			FillAlarmGroups();
-			using (SQL SQL = new SQL("Init Alarms")) {
-				string[][] DBAlarms = SQL.wpQuery(@"
+			using (Database Sql = new Database("Init Alarms")) {
+				string[][] DBAlarms = Sql.wpQuery(@"
 				SELECT
 					[a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
@@ -624,8 +641,8 @@ namespace WebAutomation.PlugIns {
 					} else {
 						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], 0);
 					}
-					int? emailCounter = SQL.convertNumeric(DBAlarms[ialarms][12]);
-					int? emailMinutes = SQL.convertNumeric(DBAlarms[ialarms][13]);
+					int? emailCounter = Database.convertNumeric(DBAlarms[ialarms][12]);
+					int? emailMinutes = Database.convertNumeric(DBAlarms[ialarms][13]);
 					TheAlarm.Alarmtext = DBAlarms[ialarms][1];
 					TheAlarm.Alarmlink = DBAlarms[ialarms][2];
 					TheAlarm.Alarmtype = DBAlarms[ialarms][3];
@@ -645,69 +662,79 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmnames5 = DBAlarms[ialarms][23];
 					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
-					_alarmList.Add(idAlarm, TheAlarm);
+					_alarmList.Add(TheAlarm);
 					Datapoints.Get(idDp).idAlarm = idAlarm;
 				}
 			}
 
-			using (SQL SQL = new SQL("Add Aktive Alarms")) {
-				string[][] DBActiveAlarms = SQL.wpQuery(@"
-SELECT 
-	[t].[id_alarm], [t].[id_dp], [t].[come], [t].[gone], [t].[quit]
-FROM (
-	SELECT
-		ROW_NUMBER() OVER (PARTITION BY [ah].[id_alarm] ORDER BY [ah].[come] DESC) AS [ranking],
-		[ah].[id_alarm], [a].[id_dp], [ah].[come], [ah].[gone], [ah].[quit]
-	FROM [alarmhistoric] [ah]
-	INNER JOIN [alarm] [a] ON [a].[id_alarm] = [ah].[id_alarm]
-	WHERE ([ah].[gone] IS NULL OR [ah].[quit] IS NULL)
-) [t] WHERE [t].[ranking] = 1");
-				for (int ialarms = 0; ialarms < DBActiveAlarms.Length; ialarms++) {
+			using(Database Sql = new Database("Add Aktive Alarms")) {
+				string[][] DBActiveAlarms = Sql.wpQuery(@"
+			SELECT 
+				[t].[id_alarm], [t].[id_dp], [t].[come], [t].[gone], [t].[quit]
+			FROM (
+				SELECT
+					ROW_NUMBER() OVER (PARTITION BY [ah].[id_alarm] ORDER BY [ah].[come] DESC) AS [ranking],
+					[ah].[id_alarm], [a].[id_dp], [ah].[come], [ah].[gone], [ah].[quit]
+				FROM [alarmhistoric] [ah]
+				INNER JOIN [alarm] [a] ON [a].[id_alarm] = [ah].[id_alarm]
+				WHERE ([ah].[gone] IS NULL OR [ah].[quit] IS NULL)
+			) [t] WHERE [t].[ranking] = 1");
+				for(int ialarms = 0; ialarms < DBActiveAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBActiveAlarms[ialarms][0]);
 					int idDp = Int32.Parse(DBActiveAlarms[ialarms][1]);
-					Alarm TheAlarm = _alarmList[idAlarm];
-					if (TheAlarm != null) {
-						TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
-						TheAlarm.Gone = Alarm.Default;
-						TheAlarm.InAlarm = true;
-						TheAlarm.Quit = Alarm.Default;
-						TheAlarm.NeedQuit = false;
-						if (DBActiveAlarms[ialarms][3] != "") {
-							TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
-							TheAlarm.InAlarm = false;
-						}
-						if (DBActiveAlarms[ialarms][4] != "") {
-							TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
-							TheAlarm.NeedQuit = true;
+					if(_alarmList.Exists(t => t.IdAlarm == idAlarm)) {
+						Alarm TheAlarm = _alarmList.Find(t => t.IdAlarm == idAlarm);
+						try {
+							TheAlarm.Come = DateTime.Parse(DBActiveAlarms[ialarms][2]);
+							TheAlarm.Gone = Alarm.Default;
+							TheAlarm.InAlarm = true;
+							TheAlarm.Quit = Alarm.Default;
+							TheAlarm.NeedQuit = false;
+							if(DBActiveAlarms[ialarms][3] != "") {
+								TheAlarm.Gone = DateTime.Parse(DBActiveAlarms[ialarms][3]);
+								TheAlarm.InAlarm = false;
+							}
+							if(DBActiveAlarms[ialarms][4] != "") {
+								TheAlarm.Quit = DateTime.Parse(DBActiveAlarms[ialarms][4]);
+								TheAlarm.NeedQuit = true;
+							}
+						} catch(Exception ex) {
+							_eventLog.WriteError(MethodBase.GetCurrentMethod(), ex, $"idAlarm: {idAlarm}");
 						}
 					}
 				}
 			}
-			_eventLog.Write("Alarms gestartet");
+			_eventLog.Write(MethodInfo.GetCurrentMethod(), "Alarms gestartet");
 		}
-		public static Dictionary<int, Alarm> getActiveAlarms() {
-			Dictionary<int, Alarm> returns = new Dictionary<int, Alarm>();
-			foreach(KeyValuePair<int, Alarm> kvp in _alarmList) {
-				kvp.Value.setAlarmValue();
-				if (kvp.Value.InAlarm || !kvp.Value.NeedQuit) {
-					returns.Add(kvp.Key, kvp.Value);
+		public static List<Alarm> getActiveAlarms() {
+			List<Alarm> returns = new List<Alarm>();
+			try {
+				foreach(Alarm a in _alarmList) {
+					if(a != null) {
+						a.setAlarmValue();
+						if(a.InAlarm || !a.NeedQuit) {
+							returns.Add(a);
+						}
+					}
 				}
+			} catch(Exception ex) {
+				_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, "Alarms gestartet");
 			}
 			return returns;
 		}
 		public static Alarm Get(int? idAlarm) {
 			if(idAlarm == null) return null;
-			return _alarmList[(int)idAlarm];
+			return _alarmList.Find(t => t.IdAlarm == idAlarm);
 		}
 		public static void RemoveAlarm(int? idAlarm) {
 			if(idAlarm != null) {
-				_alarmList[(int)idAlarm].Stop();
-				_alarmList.Remove((int)idAlarm);
+				_alarmList.Find(t => t.IdAlarm == idAlarm).Stop();
+				_alarmList.Remove(_alarmList.Find(t => t.IdAlarm == idAlarm));
 			}
 		}
 		public static string FillAlarmGroups() {
-			using(SQL SQL = new SQL("Fill AlarmGroups")) {
-				string[][] DBAlarmGroups = SQL.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
+			using(Database Sql = new Database("Fill AlarmGroups")) {
+				string[][] DBAlarmGroups = Sql.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
 					[key] = 'usealarmgroup1' OR
 					[key] = 'usealarmgroup2' OR
 					[key] = 'usealarmgroup3' OR
@@ -732,25 +759,70 @@ FROM (
 					UseAlarmGroup5 = DBAlarmGroups[9][1] == "True";
 				}
 			}
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm1Member = Sql.wpQuery(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
+				for(int ialarms = 0; ialarms < DBAlarm1Member.Length; ialarms++) {
+					if(!_alarmgroups1member.ContainsKey(Int32.Parse(DBAlarm1Member[ialarms][0]))) {
+						_alarmgroups1member.Add(Int32.Parse(DBAlarm1Member[ialarms][0]), DBAlarm1Member[ialarms][1]);
+					}
+				}
+			}
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm2Member = Sql.wpQuery(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
+				for(int ialarms = 0; ialarms < DBAlarm2Member.Length; ialarms++) {
+					if(!_alarmgroups2member.ContainsKey(Int32.Parse(DBAlarm2Member[ialarms][0]))) {
+						_alarmgroups2member.Add(Int32.Parse(DBAlarm2Member[ialarms][0]), DBAlarm2Member[ialarms][1]);
+					}
+				}
+			}
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm3Member = Sql.wpQuery(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
+				for(int ialarms = 0; ialarms < DBAlarm3Member.Length; ialarms++) {
+					if(!_alarmgroups3member.ContainsKey(Int32.Parse(DBAlarm3Member[ialarms][0]))) {
+						_alarmgroups3member.Add(Int32.Parse(DBAlarm3Member[ialarms][0]), DBAlarm3Member[ialarms][1]);
+					}
+				}
+			}
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm4Member = Sql.wpQuery(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
+				for(int ialarms = 0; ialarms < DBAlarm4Member.Length; ialarms++) {
+					if(!_alarmgroups4member.ContainsKey(Int32.Parse(DBAlarm4Member[ialarms][0]))) {
+						_alarmgroups4member.Add(Int32.Parse(DBAlarm4Member[ialarms][0]), DBAlarm4Member[ialarms][1]);
+					}
+				}
+			}
+			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
+				string[][] DBAlarm5Member = Sql.wpQuery(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
+				for(int ialarms = 0; ialarms < DBAlarm5Member.Length; ialarms++) {
+					if(!_alarmgroups5member.ContainsKey(Int32.Parse(DBAlarm5Member[ialarms][0]))) {
+						_alarmgroups5member.Add(Int32.Parse(DBAlarm5Member[ialarms][0]), DBAlarm5Member[ialarms][1]);
+					}
+				}
+			}
 			return "S_OK";
 		}
 		public static string GetReadableGroup(int GroupNo, int IdGroup) {
-			string returns = "";
+			string returns = IdGroup.ToString();
 			switch(GroupNo) {
 				case ALARMGROUP1:
-					returns = NameAlarmGroup1 == "" ? "-" : NameAlarmGroup1;
+					if(_alarmgroups1member.ContainsKey(IdGroup))
+						returns = _alarmgroups1member[IdGroup];
 					break;
 				case ALARMGROUP2:
-					returns = NameAlarmGroup2 == "" ? "-" : NameAlarmGroup2;
+					if(_alarmgroups2member.ContainsKey(IdGroup))
+						returns = _alarmgroups2member[IdGroup];
 					break;
 				case ALARMGROUP3:
-					returns = NameAlarmGroup3 == "" ? "-" : NameAlarmGroup3;
+					if(_alarmgroups3member.ContainsKey(IdGroup))
+						returns = _alarmgroups3member[IdGroup];
 					break;
 				case ALARMGROUP4:
-					returns = NameAlarmGroup4 == "" ? "-" : NameAlarmGroup4;
+					if(_alarmgroups4member.ContainsKey(IdGroup))
+						returns = _alarmgroups4member[IdGroup];
 					break;
 				case ALARMGROUP5:
-					returns = NameAlarmGroup5 == "" ? "-" : NameAlarmGroup5;
+					if(_alarmgroups5member.ContainsKey(IdGroup))
+						returns = _alarmgroups5member[IdGroup];
 					break;
 				default:
 					returns = "-";

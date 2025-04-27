@@ -8,32 +8,33 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 125                                                     $ #
+//# Revision     : $Rev:: 196                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 125 2024-07-08 18:57:15Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 196 2025-03-30 13:06:32Z                 $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpSQL;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Xml.Schema;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 
 namespace WebAutomation {
-	public class DatapointsCollection {
-		private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
-		private static Dictionary<int, Datapoint> _items = new Dictionary<int, Datapoint>();
-	}
 	public class Datapoint {
+		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
 		private int _id;
 		public int ID { get { return _id; } }
 		private int _idGroup;
 		private int _idNamespace;
 		private int? _idOpc;
+		public int? IdOpc => _idOpc;
 		private int? _idMqtt;
 		private int? _idTrend;
 		public int? idTrend { get { return _idTrend; } set { _idTrend = value; } }
@@ -63,8 +64,8 @@ namespace WebAutomation {
 		private bool _active;
 		public Datapoint(int id) {
 			_id = id;
-			using(SQL sql = new SQL("create instance Datapoint")) {
-				string[][] erg = sql.wpQuery("SELECT " +
+			using(Database Sql = new Database("create instance Datapoint")) {
+				string[][] erg = Sql.wpQuery("SELECT " +
 					"[dp].[id_dpgroup], [dp].[id_opcdatapoint], [dp].[id_mqtttopic], [dp].[name], [dp].[description]," +
 					"ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([ns].[usergroupwrite], 100))) AS [usergroupwrite], " +
 					"[dp].[unit], [dp].[nks], [dp].[min], [dp].[max], [dp].[factor], [dp].[active], " +
@@ -90,7 +91,8 @@ namespace WebAutomation {
 					Int32.TryParse(erg[0][i++], out _idNamespace);
 				}
 			}
-			if(wpDebug.debugSystem) wpDebug.Write($"Datapoint Created {_name} ({_id})");
+			if(Debug.debugSystem)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Datapoint Created {_name} ({_id})");
 		}
 		public void setValue(string value) {
 			setValue(value, "'Dictionary'");
@@ -101,17 +103,29 @@ namespace WebAutomation {
 		public void setValue(string value, string from) {
 			DateTime Now = DateTime.Now;
 			if(_value != value) {
-				_value = value;
-				_lastChange = Now;
-				_valueString = parseValueString();
-				Program.MainProg.lastchange = $"[{from}] '{_name}': {_valueString} ({_value})\r\n";
-				Program.MainProg.wpWebSockets.sendDatapoint(this);
-				if(_idTrend != null && Trends.Get((int)_idTrend).Intervall == 0)
-					Trends.Get((int)_idTrend).SetTrendValue();
-				if(_idAlarm != null)
-					Alarms.Get((int)_idAlarm).setAlarmValue();
-				if(wpDebug.debugTransferID)
-					wpDebug.Write($"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
+				try {
+					_value = value;
+					_lastChange = Now;
+					_valueString = parseValueString();
+					Program.MainProg.lastchange = $"[{from}] '{_name}': {_valueString} ({_value})\r\n";
+					Program.MainProg.wpWebSockets.sendDatapoint(this);
+					if(_idTrend != null) {
+						Trend t = Trends.Get((int)_idTrend);
+						if(t != null && t.Intervall == 0) {
+							t.SetTrendValue();
+						}
+					}
+					if(_idAlarm != null) {
+						Alarm a = Alarms.Get((int)_idAlarm);
+						if(a != null) {
+							a.setAlarmValue();
+						}
+					}
+					if(Debug.debugTransferID)
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"Datenpunkt '{_name}' gesetzt von '{from}': {_valueString} ({_value})");
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, _name, _value);
+				}
 			}
 		}
 		public string parseValueString() {
@@ -157,11 +171,11 @@ namespace WebAutomation {
 					dValue = dValue / _factor;
 				}
 				if(dValue > _max) {
-					wpDebug.Write($"Schreibwert ({value}) > Maxwert ({_max})\r\n\t'{_name}'");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Schreibwert ({value}) > Maxwert ({_max})\r\n\t'{_name}'");
 					dValue = _max;
 				}
 				if(dValue < _min) {
-					wpDebug.Write($"Schreibwert ({value}) < Minwert ({_min})\r\n\t'{_name}'");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Schreibwert ({value}) < Minwert ({_min})\r\n\t'{_name}'");
 					dValue = _min;
 				}
 				value = dValue.ToString();
@@ -187,70 +201,66 @@ namespace WebAutomation {
 	}
 	
 	public static class Datapoints {
-		private static Dictionary<int, Datapoint> DP = new Dictionary<int, Datapoint>();
-		private static Dictionary<string, int> DPnames = new Dictionary<string, int>();
-		private static Dictionary<int, int> OPCList = new Dictionary<int, int>();
+		private static List<Datapoint> _dp = new List<Datapoint>();
 		public static void Init() {
-			wpDebug.Write("Datapoints Init");
-			using(SQL sql = new SQL("fill Datapoints")) {
-				string[][] erg = sql.wpQuery("SELECT [id_dp], [id_opcdatapoint] FROM [dp]");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Init");
+			using(Database Sql = new Database("fill Datapoints")) {
+				string[][] erg = Sql.wpQuery("SELECT [id_dp] FROM [dp]");
 				for(int idp = 0; idp < erg.Length; idp++) {
 					int iddp = Int32.Parse(erg[idp][0]);
 					try {
 						Add(iddp, new Datapoint(iddp));
-						if(erg[idp][1] != "") {
-							OPCList.Add(Int32.Parse(erg[idp][1]), iddp);
-						}
 					} catch(Exception ex) {
-						wpDebug.WriteError(ex, $"is verkehrt: {iddp}?");
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"is verkehrt: {iddp}?");
 					}
 				}
 			}
-			wpDebug.Write("Datapoints gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints gestartet");
 		}
 		public static void Start() {
 			Program.MainProg.wpMQTTClient.valueChanged += MQTTClient_valueChanged;
 			Program.MainProg.wpOPCClient.valueChanged += wpOPCClient_valueChanged;
 			ShellyServer.valueChanged += ShellyServer_valueChanged;
-			wpDebug.Write("Datapoints Start work");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Start work");
 		}
 
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpShellyServer");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpShellyServer");
 		}
 		private static void D1MiniServer_valueChanged(object sender, D1MiniServer.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpD1MiniServer");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpD1MiniServer");
 		}
 
 		private static void MQTTClient_valueChanged(object sender, MQTTClient.valueChangedEventArgs e) {
-			if(DP.ContainsKey(e.idDatapoint))
-				Get(e.idDatapoint).setValue(e.value, "wpMQTTClient");
+			if(_dp.Exists(t => t.ID == e.idDatapoint))
+				_dp.Find(t => t.ID == e.idDatapoint).setValue(e.value, "wpMQTTClient");
 		}
 		private static void wpOPCClient_valueChanged(object sender, OPCClient.valueChangedEventArgs e) {
-			if(OPCList.ContainsKey(e.idOPCPoint))
-				Get(OPCList[e.idOPCPoint]).setValue(e.value, "wpOPCClient");
+			if(_dp.Exists(t => t.IdOpc == e.idOPCPoint))
+				_dp.Find(t => t.IdOpc == e.idOPCPoint).setValue(e.value, "wpOPCClient");
 		}
 		public static void Add(int id, Datapoint dp) {
-			if(DP.ContainsKey(id))
-				DP[id] = dp;
-			else
-				DP.Add(id, dp);
-			if(DPnames.ContainsKey(dp.Name))
-				DPnames[dp.Name] = id;
-			else
-				DPnames.Add(dp.Name, id);
+			if(_dp.Exists(t => t.ID == id)) {
+				int i = _dp.FindIndex(t => t.ID == id);
+				_dp[i] = dp;
+			} else
+				_dp.Add(dp);
 		}
 		public static Datapoint Get(int id) {
-			if(DP.ContainsKey(id))
-				return DP[id];
+			if(_dp.Exists(t => t.ID == id))
+				return _dp.Find(t => t.ID == id);
+			return null;
+		}
+		public static Datapoint GetFromAlarmId(int id) {
+			if(_dp.Exists(t => t.idAlarm == id))
+				return _dp.Find(t => t.idAlarm == id);
 			return null;
 		}
 		public static Datapoint Get(string name) {
-			if(DPnames.ContainsKey(name))
-				if(DP.ContainsKey(DPnames[name]))
-					return DP[DPnames[name]];
+			if(_dp.Exists(t => t.Name == name))
+				return _dp.Find(t => t.Name == name);
 			return null;
 		}
 		public static void writeValues(List<int> DpIds, string value) {
@@ -264,84 +274,84 @@ namespace WebAutomation {
 			}
 		}
 	}
-	public class Server {
-		/// <summary></summary>
-		public class Dictionaries {
-			/// <summary>WebAutomationServer Event Log</summary>
-			private static Logger EventLog = new Logger(wpEventLog.WebAutomation);
-			private static Dictionary<int, OPCItem> _items = new Dictionary<int, OPCItem>();
-			public static Dictionary<int, OPCItem> Items {
-				get { return _items; }
-				set { _items = value; }
-			}
-			//private static List<int> OPCItemsError;
-			public static void addItem(int id, OPCItem value) {
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) Items[id] = value;
-						else Items.Add(id, value);
-					} catch(Exception ex) {
-						EventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Items);
-					}
-				} else {
-					wpDebug.Write("Angefordertes Item not Entered (addItem:{1})", id);
+	public class OpcDatapoints {
+		/// <summary>WebAutomationServer Event Log</summary>
+		private static Logger EventLog = new Logger(Logger.ESource.WebAutomation);
+		private static List<OPCItem> _items = new List<OPCItem>();
+		public static List<OPCItem> Items {
+			get { return _items; }
+			set { _items = value; }
+		}
+		//private static List<int> OPCItemsError;
+		public static void addItem(OPCItem value) {
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == value.Hclt)) {
+						int i = Items.FindIndex(t => t.Hclt == value.Hclt);
+						Items[i] = value;
+					} else
+						Items.Add(value);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (addItem:{1})", value.Hclt);
 			}
-			public static OPCItem getItem(int id) {
-				OPCItem returns = null;
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) {
-							returns = Items[id];
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Items);
+		}
+		public static OPCItem getItem(int id) {
+			OPCItem returns = null;
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
+						returns = Items.Find(t => t.Hclt == id);
 					}
-				} else {
-					wpDebug.Write("Angefordertes Item not Entered (getItem:{0})", id);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
-				return returns;
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 			}
-			public static bool checkItem(int id) {
-				bool returns = false;
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(id)) {
+			return returns;
+		}
+		public static bool checkItem(int id) {
+			bool returns = false;
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
 							returns = true;
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Items);
 					}
-				} else {
-					wpDebug.Write("Angefordertes Item not Entered (getItem:{0})", id);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
-				return returns;
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (getItem:{0})", id);
 			}
-			public static void deleteItem(int Datapoints) {
-				if(Monitor.TryEnter(Items, 5000)) {
-					try {
-						if(Items.ContainsKey(Datapoints)) {
-							Items[Datapoints] = null;
-							Items.Remove(Datapoints);
-						}
-					} catch(Exception ex) {
-						EventLog.WriteError(ex);
-					} finally {
-						Monitor.Exit(Items);
+			return returns;
+		}
+		public static void deleteItem(int id) {
+			if(Monitor.TryEnter(Items, 5000)) {
+				try {
+					if(Items.Exists(t => t.Hclt == id)) {
+						Items[Items.FindIndex(t => t.Hclt == id)] = null;
+						Items.Remove(Items.Find(t => t.Hclt == id));
 					}
-				} else {
-					wpDebug.Write("Angefordertes Item not Entered (deleteItem:{1})", Datapoints);
+				} catch(Exception ex) {
+					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				} finally {
+					Monitor.Exit(Items);
 				}
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Angefordertes Item not Entered (deleteItem:{1})", id);
 			}
-			public static void deleteItems(int[] Datapoints) {
-				for(int i = 0; i < Datapoints.Length; i++) deleteItem(Datapoints[i]);
-			}
+		}
+		public static void deleteItems(int[] Datapoints) {
+			for(int i = 0; i < Datapoints.Length; i++) deleteItem(Datapoints[i]);
 		}
 	}
 }

@@ -13,17 +13,23 @@
 //# File-ID      : $Id:: WebAutomationServer.cs 203 2025-04-27 15:09:36Z          $ #
 //#                                                                                 #
 //###################################################################################
+using FreakaZone.Libraries.wpCommen;
+using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
+using FreakaZone.Libraries.wpSQL;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
+using static FreakaZone.Libraries.wpEventLog.Logger;
 using static WebAutomation.Helper.Email;
 using static WebAutomation.Helper.wpServiceStatus;
 using static WebAutomation.Helper.wpSystemStatus;
@@ -121,24 +127,25 @@ namespace WebAutomation {
 				if (StringChanged != null) StringChanged(new StringChangedEventArgs($"{DateTime.Now.ToString()} {value}"));
 			}
 		}
-		public string Message {
-			set {
-				try {
-					if(lbl_msg.InvokeRequired) {
-						lbl_msg.Invoke(new MethodInvoker(() => Message = value));
-					} else {
-						string[] oldMessage = lbl_msg.Lines;
-						List<string> newMessage = new List<string>();
-						newMessage.Add(value);
-						for(int i = 0; i < 100; i++) {
-							if(oldMessage.Length >= i + 1)
-								newMessage.Add(oldMessage[i]);
-						}
-						lbl_msg.Lines = newMessage.ToArray();
-					}
-				} catch(Exception) { };
-			}
-		}
+		//public string Message {
+		//	set {
+		//		try {
+		//			if(lbl_msg.InvokeRequired) {
+		//				lbl_msg.Invoke(new MethodInvoker(() => Message = value));
+		//			} else {
+		//				string[] oldMessage = lbl_msg.Lines;
+		//				List<string> newMessage = new List<string>();
+		//				newMessage.Add(value);
+		//				for(int i = 0; i < 100; i++) {
+		//					if(oldMessage.Length >= i + 1)
+		//						newMessage.Add(oldMessage[i]);
+		//				}
+		//				lbl_msg.Lines = newMessage.ToArray();
+		//			}
+		//		} catch(Exception) { };
+		//	}
+		//	get {  return lbl_msg.Text; }
+		//}
 		/// <summary></summary>
 		private System.Windows.Forms.Timer SystemTimer;
 		/// <summary></summary>
@@ -158,22 +165,24 @@ namespace WebAutomation {
 		/// 
 		/// </summary>
 		public WebAutomationServer(string[] args) {
+			List<string> argList = args.ToList().ConvertAll(x => x.ToLower());
 			InitializeComponent();
-			wpHelp.Epsilon = wpHelp.getEpsilon();
-			wpEventLog.fill();
+			Debug.SetRefString(lbl_msg);
+			Common.Epsilon = Common.getEpsilon();
+			Logger.fill();
 			string[] pVersion = Application.ProductVersion.Split('.');
 			this.toolStripStatusLabel1.Text = String.Format("{0} V {1}.{2} Build {3}, © {4}",
 				Application.ProductName,
 				pVersion[0], pVersion[1],
 				Program.subversion,
 				Application.CompanyName);
-			this.Text += " - " + Ini.get("Projekt", "Nummer");
-			this.SystemIcon.Text = Application.ProductName + " - " + Ini.get("Projekt", "Nummer");
+			this.Text += " - " + IniFile.get("Projekt", "Nummer");
+			this.SystemIcon.Text = Application.ProductName + " - " + IniFile.get("Projekt", "Nummer");
 #if DEBUG
 			this.Text += " [Debug]";
 #endif
 			_isInit = false;
-			eventLog = new Logger(wpEventLog.WebAutomation);
+			eventLog = new Logger(Logger.ESource.WebAutomation);
 
 			_wpWartung = false;
 			_wpStartMinimized = false;
@@ -181,45 +190,44 @@ namespace WebAutomation {
 			_wpBigProject = false;
 			_wpForceRead = false;
 			_wpPSOPC = false;
-			if (args.Length > 0) {
-				for (int i = 0; i < args.Length; i++) args[i] = args[i].ToLower();
-				wpDebug.setDebugs(args);
-				if (Arrays.inArray("wpWartung".ToLower(), args)) {
+			if (argList.Count > 0) {
+				Debug.setDebug(argList, Application.ProductName);
+				if (argList.Contains("wpWartung".ToLower())) {
 					_wpWartung = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Wartungsmodus' gestartet", Application.ProductName);
 				}
-				if (Arrays.inArray("wpMinStart".ToLower(), args)) {
+				if (argList.Contains("wpMinStart".ToLower())) {
 					_wpStartMinimized = true;
-					eventLog.Write(EventLogEntryType.Information,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Information,
 						"{0} Server im 'minimiertem Modus' gestartet", Application.ProductName);
 				}
-				if (Arrays.inArray("wpAllowCloseBrowser".ToLower(), args)) {
+				if (argList.Contains("wpAllowCloseBrowser".ToLower())) {
 					_wpAllowCloseBrowser = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server darf den lokalen Browser schließen", Application.ProductName);
 				}
-				if(Arrays.inArray("wpBigProject".ToLower(), args)) {
+				if(argList.Contains("wpBigProject".ToLower())) {
 					_wpBigProject = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Big Project Modus' gestartet", Application.ProductName);
 				}
-				if (Arrays.inArray("wpForceRead".ToLower(), args)) {
+				if (argList.Contains("wpForceRead".ToLower())) {
 					_wpForceRead = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Force Read Modus' gestartet", Application.ProductName);
 				}
-				if (Arrays.inArray("wpPSOPC".ToLower(), args)) {
+				if (argList.Contains("wpPSOPC".ToLower())) {
 					_wpPSOPC = true;
-					eventLog.Write(EventLogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'PSOPC (Analphabet) Modus' gestartet", Application.ProductName);
 				}
 			}
-			Helper.wpDebug.Write("CultureInfo: {0}", CultureInfo.CurrentUICulture.Name);
-			Helper.wpDebug.Write("System NumberDecimalSeparator: {0}", NumberFormatInfo.InvariantInfo.NumberDecimalSeparator);
-			Helper.wpDebug.Write("UI NumberDecimalSeparator: {0}", CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator);
-			this.lbl_db.Text = Ini.get("SQL", "Database");
-			Helper.wpDebug.Write("Connected Database: " + Ini.get("SQL", "Database"));
+			Debug.Write(MethodInfo.GetCurrentMethod(), "CultureInfo: {0}", CultureInfo.CurrentUICulture.Name);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "System NumberDecimalSeparator: {0}", NumberFormatInfo.InvariantInfo.NumberDecimalSeparator);
+			Debug.Write(MethodInfo.GetCurrentMethod(), "UI NumberDecimalSeparator: {0}", CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator);
+			this.lbl_db.Text = IniFile.get("SQL", "Database");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Connected Database: " + IniFile.get("SQL", "Database"));
 		}
 		public async Task initAsync() {
 			await Task.Delay(100);
@@ -232,20 +240,22 @@ namespace WebAutomation {
 			checkTable("email", "sms", "bit", false, "0");
 			checkTable("email", "phone2", "varchar(150)");
 			checkTable("user", "startpage", "varchar(100)");
+			checkTable("rest", "id_analogout", "int");
 
 			checkTable("webpages", "id_parent_webpage", "int");
 			checkTable("webpages", "position", "int");
 			checkTable("webpages", "id_src", "varchar(200)");
 			checkTable("webpages", "inwork", "bit", false, "0");
 
-			using(SQL SQL = new SQL("startup")) {
-				string[][] Tables = SQL.wpQuery("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_NAME] = 'emailhistoric'");
+
+			using(Database Sql = new Database("startup")) {
+				string[][] Tables = Sql.wpQuery("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_NAME] = 'emailhistoric'");
 				if(Tables.Length == 0) {
-					SQL.wpNonResponse(@"CREATE TABLE [emailhistoric]
+					Sql.wpNonResponse(@"CREATE TABLE [emailhistoric]
 					([email][varchar](150) NOT NULL,[send][datetime] NOT NULL,[subject][text] NOT NULL,[message][text] NOT NULL,[error][text] NULL)");
-					Helper.wpDebug.Write("Tabelle emailhistoric wurde erstellt");
+					Debug.Write(MethodInfo.GetCurrentMethod(), "Tabelle emailhistoric wurde erstellt");
 				}
-				SQL.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = NULL, [startupquality] = NULL");
+				Sql.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = NULL, [startupquality] = NULL");
 			}
 			TheMail = new Email();
 			wpWebCom = new WebCom();
@@ -269,7 +279,7 @@ namespace WebAutomation {
 			lastState = this.WindowState;
 			isFinished = false;
 			_isInit = true;
-			eventLog.Write("{0} Server initialisiert", Application.ProductName);
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} Server initialisiert", Application.ProductName);
 
 			ThreadEmailSender = new Thread(new ThreadStart(createEmail));
 			ThreadEmailSender.Name = "wpEmail Sender";
@@ -282,10 +292,10 @@ namespace WebAutomation {
 			getVolumeInfo();
 			SystemTimer.Enabled = true;
 
-			ApacheName = Ini.get("Watchdog", "ServiceNameApache");
+			ApacheName = IniFile.get("Watchdog", "ServiceNameApache");
 			ApacheService = new wpServiceStatus(ApacheName);
 			ApacheService.ServiceStatusChanged += ApacheService_ServiceStatusChanged;
-			MssqlName = Ini.get("Watchdog", "ServiceNameMssql");
+			MssqlName = IniFile.get("Watchdog", "ServiceNameMssql");
 			MssqlService = new wpServiceStatus(MssqlName);
 			MssqlService.ServiceStatusChanged += MssqlService_ServiceStatusChanged;
 			SystemStatus = new wpSystemStatus();
@@ -294,17 +304,17 @@ namespace WebAutomation {
 		}
 
 		private void checkTable(string table, string column, string type, bool canBeNull, string defaultValue) {
-			using (SQL SQL = new SQL("Check Database")) {
-				string[][] DB = SQL.wpQuery(@"SELECT [COLUMN_NAME] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND [COLUMN_NAME] = '{1}'", table, column);
+			using (Database Sql = new Database("Check Database")) {
+				string[][] DB = Sql.wpQuery(@"SELECT [COLUMN_NAME] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND [COLUMN_NAME] = '{1}'", table, column);
 				try {
 					if (DB.Length == 0 || DB[0].Length == 0 || DB[0][0] != column) {
-						SQL.wpNonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
+						Sql.wpNonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
 							table, column, type,
 							canBeNull ? "NULL" : "NOT NULL CONSTRAINT [DF_" + table + "_" + column + "] DEFAULT(" + defaultValue + ")");
-						Helper.wpDebug.Write("Add [{1}] to [{0}]", table, column);
+						Debug.Write(MethodInfo.GetCurrentMethod(), "Add [{1}] to [{0}]", table, column);
 					}
 				} catch (Exception ex) {
-					eventLog.WriteError(ex);
+					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
 		}
@@ -315,22 +325,22 @@ namespace WebAutomation {
 			checkTable(table, column, "VARCHAR(100)", true, "");
 		}
 		public bool TryConnectDatabase() {
-			SQL SQL;
+			Database Sql;
 			int SQLCounter = 0;
 			int SQLCounterMax;
 			int SQLCounterTime;
-			if (Int32.TryParse(Ini.get("SQL", "reconnect"), out SQLCounterMax) &&
-				Int32.TryParse(Ini.get("SQL", "reconnectTime"), out SQLCounterTime)) {
+			if (Int32.TryParse(IniFile.get("SQL", "reconnect"), out SQLCounterMax) &&
+				Int32.TryParse(IniFile.get("SQL", "reconnectTime"), out SQLCounterTime)) {
 				do {
-					using (SQL = new SQL("Test SQL Connection")) { }
-					if (!SQL.Available) {
-						eventLog.Write(EventLogEntryType.Error,
+					Sql = new Database("Test SQL Connection");
+					if (!Sql.Available) {
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"{0} Server kann Datenbank nicht erreichen.\r\n\tReconnect nach {1} Sekunden\r\n\tVerbleibende Versuche: {2}",
 							Application.ProductName, SQLCounterTime, SQLCounterMax - 1 - SQLCounter);
 						SQLCounter++;
 						Thread.Sleep(SQLCounterTime * 1000);
 					}
-				} while (SQL.Available == false && SQLCounter < SQLCounterMax);
+				} while (Sql.Available == false && SQLCounter < SQLCounterMax);
 				if (SQLCounter >= SQLCounterMax) {
 					MessageBox.Show("Keine Verbindung zur Datenbank!\r\nDas Programm wird beendet",
 						"Datenbankfehler",
@@ -347,35 +357,35 @@ namespace WebAutomation {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
 			switch (s) {
 				case ServiceControllerStatus.Running:
-					eventLog.Write("Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.Stopped:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'Stopped'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Error;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.StopPending:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StopPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				case ServiceControllerStatus.StartPending:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StartPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 				default:
 					SystemIcon.BalloonTipTitle = "Apache Webservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'unbekannt'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
 			}
 		}
@@ -390,35 +400,35 @@ namespace WebAutomation {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
 			switch (s) {
 				case ServiceControllerStatus.Running:
-					eventLog.Write("Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.Stopped:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'Stopped'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Error;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.StopPending:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StopPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				case ServiceControllerStatus.StartPending:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'StartPending'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 					SystemIcon.ShowBalloonTip(500);
-					eventLog.Write(EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 				default:
 					SystemIcon.BalloonTipTitle = "Mssql Databaseservice";
 					SystemIcon.BalloonTipText = "Dienststatus 'unbekannt'";
 					SystemIcon.BalloonTipIcon = ToolTipIcon.Warning;
 					SystemIcon.ShowBalloonTip(1000);
-					eventLog.Write(EventLogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
 			}
 		}
@@ -432,7 +442,7 @@ namespace WebAutomation {
 					control.Text = text;
 				}
 			} catch (Exception ex) {
-				Helper.wpDebug.Write(ex.ToString());
+				Debug.Write(MethodInfo.GetCurrentMethod(), ex.ToString());
 			}
 		}
 
@@ -455,14 +465,14 @@ namespace WebAutomation {
 					try {
 						TheMail.AddAlarm(newAlarm);
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 								AlarmToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
@@ -483,14 +493,14 @@ namespace WebAutomation {
 					try {
 						TheMail.AddQuit(newAlarm);
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 								QuitToMail nicht möglich", newAlarm.IdAlarm));
 					} else {
@@ -513,7 +523,7 @@ namespace WebAutomation {
 							TheMail.AddQuit(TheAlarm);
 						}
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
 						Monitor.Exit(TheMail);
 						entered = true;
@@ -521,7 +531,7 @@ namespace WebAutomation {
 				} else {
 					if(++notEntered >= 10) {
 						foreach(Alarm TheAlarm in newAlarm) {
-							eventLog.Write(EventLogEntryType.Error,
+							eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 								String.Format(@"Angeforderter Alarm blockiert: {0}.\r\n
 									QuitsToMail nicht möglich", TheAlarm.IdAlarm));
 						}
@@ -541,24 +551,18 @@ namespace WebAutomation {
 			bool entered = false;
 			int notEntered = 0;
 			while(!entered && notEntered < 10) {
-				if(Monitor.TryEnter(Server.Dictionaries.Items, 5000)) {
+				if(Monitor.TryEnter(OpcDatapoints.Items, 5000)) {
 					try {
-						foreach(KeyValuePair<int, OPCItem> TheItems in Server.Dictionaries.Items) {
-							//if (TheItems.Value.Alarm != null) {
-							//	if (TheItems.Value.Alarm.Idalarm == id) {
-							//		returns = TheItems.Value.Alarm;
-							//	}
-							//}
-						}
+						returns = Alarms.Get(id);
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
-						Monitor.Exit(Server.Dictionaries.Items);
+						Monitor.Exit(OpcDatapoints.Items);
 						entered = true;
 					}
 				} else {
 					if(++notEntered >= 10) {
-						eventLog.Write(EventLogEntryType.Error,
+						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							String.Format(@"Angefordertes Item blockiert: {0}.\r\n
 								getAlarmFromAlarmid nicht möglich", id));
 					} else {
@@ -588,7 +592,7 @@ namespace WebAutomation {
 										MailContent[1] = Application.ProductName;
 										foreach(string sms in TheMail.getSMSText(Alarmstosend.Value)) {
 											TheMail.setRecipient(Alarmstosend.Key);
-											string subject = Ini.get("Projekt", "Nummer") + " " + sms;
+											string subject = IniFile.get("Projekt", "Nummer") + " " + sms;
 											int max = 160 - TheMail.getFromLength() - 2;
 											if(subject.Length > max)
 												subject = subject.Substring(0, max);
@@ -596,16 +600,16 @@ namespace WebAutomation {
 											MailContent[0] = subject;
 											if(MailContent[0].Length > 0 && MailContent[1].Length > 0) {
 												TheMail.send();
-												using(SQL SQL = new SQL("Mail send")) {
-													SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+												using(Database Sql = new Database("Mail send")) {
+													Sql.wpNonResponse(@"INSERT INTO [emailhistoric]
 										([email], [send], [subject], [message]) VALUES
 										('{0}', '{1}', '{2}', '{3}')",
 													Alarmstosend.Value.Address,
-													DateTime.Now.ToString(SQL.DateTimeFormat),
+													DateTime.Now.ToString(Database.DateTimeFormat),
 													MailContent[0].Replace('\'', '"').Replace('\\', ' '),
 													MailContent[1].Replace('\'', '"').Replace('\\', ' '));
 												}
-												Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+												Debug.Write(MethodInfo.GetCurrentMethod(), "Send Mail to {0}", Alarmstosend.Key);
 											}
 										}
 									} else {
@@ -613,37 +617,37 @@ namespace WebAutomation {
 										MailContent = TheMail.setAlarmBody(Alarmstosend.Value);
 										if(MailContent[0].Length > 0 && MailContent[1].Length > 0) {
 											TheMail.send();
-											using(SQL SQL = new SQL("Mail send")) {
-												SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+											using(Database Sql = new Database("Mail send")) {
+												Sql.wpNonResponse(@"INSERT INTO [emailhistoric]
 										([email], [send], [subject], [message]) VALUES
 										('{0}', '{1}', '{2}', '{3}')",
 												Alarmstosend.Value.Address,
-												DateTime.Now.ToString(SQL.DateTimeFormat),
+												DateTime.Now.ToString(Database.DateTimeFormat),
 												MailContent[0].Replace('\'', '"').Replace('\\', ' '),
 												MailContent[1].Replace('\'', '"').Replace('\\', ' '));
 											}
-											Helper.wpDebug.Write("Send Mail to {0}", Alarmstosend.Key);
+											Debug.Write(MethodInfo.GetCurrentMethod(), "Send Mail to {0}", Alarmstosend.Key);
 										}
 									}
 								} catch(Exception ex) {
-									using(SQL SQL = new SQL("Mail send")) {
-										SQL.wpNonResponse(@"INSERT INTO [emailhistoric]
+									using(Database Sql = new Database("Mail send")) {
+										Sql.wpNonResponse(@"INSERT INTO [emailhistoric]
 										([email], [send], [subject], [message], [error]) VALUES
 										('{0}', '{1}', '{2}', '{3}', '{4}')",
 										Alarmstosend.Value.Address,
-										DateTime.Now.ToString(SQL.DateTimeFormat),
+										DateTime.Now.ToString(Database.DateTimeFormat),
 										MailContent[0].Replace('\'', '"').Replace('\\', ' '),
 										MailContent[1].Replace('\'', '"').Replace('\\', ' '),
 										ex.Message);
 									}
-									eventLog.Write(EventLogEntryType.Error,
+									eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 										String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 								}
 							}
 						}
 					}
 				} catch(Exception ex) {
-					eventLog.Write(EventLogEntryType.Error,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 						String.Format("SendMail Error: {0}\r\nTrace:\r\n{1}", ex.Message, ex.StackTrace));
 				} finally {
 					TheMail.reset();
@@ -659,14 +663,14 @@ namespace WebAutomation {
 		/// <returns></returns>
 		private Dictionary<string, PRecipient> renewRecipient(out bool required) {
 			Dictionary<string, PRecipient> recipient = new Dictionary<string, PRecipient>();
-			using(SQL SQL = new SQL("renew Recipient Table")) {
-				string[][] Query = SQL.wpQuery(@"SELECT
+			using(Database Sql = new Database("renew Recipient Table")) {
+				string[][] Query = Sql.wpQuery(@"SELECT
 					([name] + ' ' + [lastname] + ' <' + [address] + '>'),
 					[id_email], [sms], [ticketmail] FROM [email] WHERE [active] = 1");
 				for(int j = 0; j < Query.Length; j++) {
 					Dictionary<int, int> AlarmperUser = new Dictionary<int, int>();
-					using(SQL SQL2 = new SQL("renew Recipient Table - Alarm per User")) {
-						string[][] Alarme = SQL2.wpQuery(@"SELECT [id_alarm], [minutes]
+					using(Database Sql2 = new Database("renew Recipient Table - Alarm per User")) {
+						string[][] Alarme = Sql2.wpQuery(@"SELECT [id_alarm], [minutes]
 						FROM [alarmtoemail] WHERE [id_email] = {0}", Query[j][1]);
 						for(int k = 0; k < Alarme.Length; k++) {
 							int checker;
@@ -688,7 +692,7 @@ namespace WebAutomation {
 				}
 			}
 			required = false;
-			eventLog.Write("Recipient Table wurde erneuert.");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Recipient Table wurde erneuert.");
 			return recipient;
 		}
 		/// <summary>
@@ -727,7 +731,7 @@ namespace WebAutomation {
 						lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
 							d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
 					} catch(Exception ex) {
-						eventLog.WriteError(ex);
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 			}

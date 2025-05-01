@@ -102,6 +102,7 @@ namespace WebAutomation.Helper {
 			public const string cGetDebug = "wpGetDebug";
 			public const string cSetDebug = "wpSetDebug";
 			public const string cHistoryCleaner = "HistoryCleaner";
+			public const string cSetSummer = "SetSummer";
 			// SQL TEST
 			public const string cInsertDummy = "InsertDummy";
 			public const string cSelectScene = "SelectScene";
@@ -851,6 +852,10 @@ namespace WebAutomation.Helper {
 						}
 					});
 					returns = new ret { erg = ret.OK }.ToString();
+					break;
+				case wpBefehl.cSetSummer:
+					param = wpBefehl.getParam(s_befehl[1]);
+					returns = Program.MainProg.wpSun.SetSummer(param[0] == "0" ? false : true);
 					break;
 				default:
 					returns = new ret { erg = ret.ERROR, message = "undefined command" }.ToString();

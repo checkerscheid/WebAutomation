@@ -180,12 +180,15 @@ namespace WebAutomation {
 				}
 				value = dValue.ToString();
 			}
-			if(_idOpc != null) {
-				Program.MainProg.wpOPCClient.setValue((int)_idOpc, value);
-			} else if(_idMqtt != null) {
-				await Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
-				// Simulate MQTT Subscribe
-				setValue(value);
+			if(_idOpc != null || _idMqtt != null) {
+				if(_idOpc != null) {
+					Program.MainProg.wpOPCClient.setValue((int)_idOpc, value);
+				}
+				if(_idMqtt != null) {
+					await Program.MainProg.wpMQTTClient.setValue((int)_idMqtt, value);
+					// Simulate MQTT Subscribe
+					setValue(value);
+				}
 			} else {
 				setValue(value);
 			}

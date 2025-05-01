@@ -27,16 +27,19 @@ namespace WebAutomation.Helper {
 		private int SunShineId;
 		private int SunRiseId;
 		private int SunSetId;
+		private int SummerId;
 		private DateTime sunrise;
 		public DateTime Sunrise { get { return sunrise; } }
 		private DateTime sunset;
 		public DateTime Sunset { get { return sunset; } }
+		private bool summer;
+		public bool Summer { get { return summer; } set { summer = value; } }
 		private System.Timers.Timer setNewSunriseSunsetTimer;
 		private System.Timers.Timer SunriseTimer;
 		private System.Timers.Timer SunsetTimer;
 		public Sun() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
-			int testSunIsShining, testSunRising, testSunsetting;
+			int testSunIsShining, testSunRising, testSunsetting, testSummer;
 			if(Int32.TryParse(IniFile.get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
 			}
@@ -46,8 +49,25 @@ namespace WebAutomation.Helper {
 			if(Int32.TryParse(IniFile.get("Projekt", "SunSet"), out testSunsetting)) {
 				SunSetId = testSunsetting;
 			}
+			if(Int32.TryParse(IniFile.get("Projekt", "Summer"), out testSummer)) {
+				SummerId = testSummer;
+			}
 			_ = StartSunriseSunsetTimer();
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
+		}
+		public String SetSummer(bool summer) {
+			this.summer = summer;
+			using(Database Sql = new Database("Sun")) {
+				Sql.wpQuery("UPDATE [cfg] SET [value] = '" + (summer ? "1" : "0") + "' WHERE [key] = 'summer'");
+			}
+			Datapoints.Get(SummerId).writeValue(summer ? "1" : "0");
+			return new ret() { erg = ret.OK, message = $"Summer Set to {(summer ? "True" : "False")}" }.ToString();
+		}
+		public void InitSummer() {
+			using(Database Sql = new Database("Sun")) {
+				summer = Sql.wpQuery("SELECT TOP 1 [value] FROM [cfg] WHERE [key] = 'summer'")[0][0] == "1";
+			}
+			Datapoints.Get(SummerId).writeValue(summer ? "1" : "0");
 		}
 		private async Task StartSunriseSunsetTimer() {
 
@@ -95,12 +115,15 @@ namespace WebAutomation.Helper {
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("1");
+			InitSummer();
 		}
 		private void SunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).writeValue("0");
+			InitSummer();
 		}
 		private async Task GetSunsetSunrise() {
 			try {
+				InitSummer();
 				WebClient webClient = new WebClient();
 				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", IniFile.get("Projekt", "OpenWeatherCode"));
 				webClient.DownloadStringCompleted += (e, args) => {

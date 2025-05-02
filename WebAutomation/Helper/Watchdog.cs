@@ -22,6 +22,7 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
+using System.Threading.Tasks;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.Helper {
@@ -29,6 +30,7 @@ namespace WebAutomation.Helper {
 		private Logger eventLog;
 		private System.Timers.Timer watchdogTimer;
 		private int watchdogByte;
+		private int watchdogByteLast;
 		private int maxWatchdogByte;
 		public Watchdog() {
 			eventLog = new Logger(Logger.ESource.PlugInWatchdog);
@@ -67,29 +69,60 @@ namespace WebAutomation.Helper {
 			setWDB();
 		}
 		private void setWDB() {
+			watchdogByteLast = watchdogByte;
 			watchdogByte++;
 			if (watchdogByte > maxWatchdogByte || watchdogByte < 1) watchdogByte = 1;
 
-			int watchdogId;
-			if (Int32.TryParse(IniFile.get("Watchdog", "DpId"), out watchdogId)) {
-				Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
-					TransferId.TransferWatchdog);
-				if(Debug.debugTransferID)
-					Debug.Write(MethodInfo.GetCurrentMethod(), "write WatchdogByte: {0}", watchdogByte);
-			} else {
-				string[] ids = IniFile.get("Watchdog", "DpId").Split(',');
-
-				if (ids.Length > 0) {
-					List<int> idstowrite = new List<int>();
-					foreach (string id in ids) {
-						if (Int32.TryParse(id.Trim(), out watchdogId)) {
-							Program.MainProg.wpOPCClient.setValue(watchdogId, watchdogByte.ToString(),
-								TransferId.TransferWatchdog);
-							if(Debug.debugWatchdog)
-								Debug.Write(MethodInfo.GetCurrentMethod(), "write WatchdogByte: {0}", watchdogByte);
-						}
+			int watchdogId, MqttAlarm;
+			bool MqttAlarmValid = false;
+			List<int> OpcWatchdogs = new List<int>();
+			List<int> MqttWatchdogs = new List<int>();
+			string OpcWatchdog = IniFile.get("Watchdog", "DpIdOpc");
+			string MqttWatchdog = IniFile.get("Watchdog", "DpIdMqtt");
+			if(Int32.TryParse(IniFile.get("Watchdog", "DpIdMqttAlarm"), out MqttAlarm)) {
+				MqttAlarmValid = true;
+			}
+			if(OpcWatchdog.Contains(",")) {
+				string[] ids = OpcWatchdog.Split(',');
+				foreach(string id in ids) {
+					if(Int32.TryParse(id.Trim(), out watchdogId)) {
+						OpcWatchdogs.Add(watchdogId);
 					}
 				}
+			} else {
+				if(Int32.TryParse(OpcWatchdog.Trim(), out watchdogId)) {
+					OpcWatchdogs.Add(watchdogId);
+				}
+			}
+			if(MqttWatchdog.Contains(",")) {
+				string[] ids = MqttWatchdog.Split(',');
+				foreach(string id in ids) {
+					if(Int32.TryParse(id.Trim(), out watchdogId)) {
+						MqttWatchdogs.Add(watchdogId);
+					}
+				}
+			} else {
+				if(Int32.TryParse(MqttWatchdog.Trim(), out watchdogId)) {
+					MqttWatchdogs.Add(watchdogId);
+				}
+			}
+			foreach(int id in OpcWatchdogs) {
+				Program.MainProg.wpOPCClient.setValue(id, watchdogByte.ToString(), TransferId.TransferWatchdog);
+				if(Debug.debugTransferID)
+					Debug.Write(MethodInfo.GetCurrentMethod(), "write OPC WatchdogByte: {0}", watchdogByte);
+			}
+			foreach(int id in MqttWatchdogs) {
+				if(watchdogByte > 1 && !String.IsNullOrEmpty(Datapoints.Get(id).Value) && Datapoints.Get(id).Value != watchdogByteLast.ToString()) {
+					Debug.Write(MethodBase.GetCurrentMethod(), $"MQTT Broker Offline? DP: {Datapoints.Get(id).Value}, WD: {watchdogByteLast}");
+					if(MqttAlarmValid)
+						Datapoints.Get(MqttAlarm).writeValue("1");
+				} else {
+					if(MqttAlarmValid)
+						Datapoints.Get(MqttAlarm).writeValue("0");
+				}
+				Datapoints.Get(id).writeValue(watchdogByte.ToString());
+				if(Debug.debugTransferID)
+					Debug.Write(MethodInfo.GetCurrentMethod(), "write MQTT WatchdogByte: {0}", watchdogByte);
 			}
 		}
 	}

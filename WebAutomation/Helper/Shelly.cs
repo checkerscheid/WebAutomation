@@ -82,9 +82,6 @@ namespace WebAutomation.Helper {
 				foreach(TableShelly ts in lts) {
 					try {
 						Shelly s = new Shelly(ts);
-						s.getStatus(true);
-						s.getHttpShelly(true);
-						s.getMqttStatus();
 						_shellies.Add(s);
 						if(ShellyType.isGen2(s.Type) && s.MqttActive) {
 							addSubscribtions(s.getSubscribtions());
@@ -99,6 +96,9 @@ namespace WebAutomation.Helper {
 		}
 		public static void Start() {
 			foreach(Shelly s in _shellies) {
+				s.getStatus(true);
+				s.getHttpShelly(true);
+				s.getMqttStatus();
 				s.Start();
 			}
 			OnlineTogglerSendIntervall = IniFile.getInt("Shelly", "OnlineTogglerSendIntervall");
@@ -357,10 +357,10 @@ namespace WebAutomation.Helper {
 				get { return _type; }
 			}
 			private Timer _doCheckStatus;
-			private long _doCheckStatusIntervall = 30; // min
+			private long _doCheckStatusIntervall = 120; // min
 
 			private Timer _doCheckShelly;
-			private long _doCheckShellyIntervall = 30; // min
+			private long _doCheckShellyIntervall = 120; // min
 			public bool Online {
 				set {
 					if(value) {

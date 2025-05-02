@@ -304,6 +304,7 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		private async Task<byte[]> getAnswer(string text) {
 			string returns = new ret { erg = ret.ERROR, message = "undefined command" }.ToString();
+			ret r;
 			string[] s_befehl = wpBefehl.getBefehl(text);
 			string[] param;
 			int outint;
@@ -364,11 +365,12 @@ namespace WebAutomation.Helper {
 					returns = D1MiniMqttUpdate();
 					break;
 				case wpBefehl.cSetBrowseMqtt:
-					returns = await Program.MainProg.wpMQTTClient.setBrowseTopics();
+					r = await Program.MainProg.wpMQTTClient.setBrowseTopics();
+					returns = r.ToString();
 					break;
 				case wpBefehl.cUnsetBrowseMqtt:
-					_ = Program.MainProg.wpMQTTClient.unsetBrowseTopics();
-					returns = new ret { erg = ret.OK }.ToString();
+					r = await Program.MainProg.wpMQTTClient.unsetBrowseTopics();
+					returns = r.ToString();
 					break;
 				case wpBefehl.cGetBrowseMqtt:
 					returns = JsonConvert.SerializeObject(Program.MainProg.wpMQTTClient.ServerTopics);
@@ -1261,6 +1263,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 	public class ret {
 		public const string OK = "S_OK";
 		public const string ERROR = "S_ERROR";
+		public const string WARNING = "S_WARNING";
 		private string _erg = string.Empty;
 		public string erg {
 			get { return _erg; }

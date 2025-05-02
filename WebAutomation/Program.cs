@@ -32,7 +32,7 @@ namespace WebAutomation {
 		/// <summary></summary>
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "203";
+		public const string subversion = "204";
 		private static Debug debug;
 		/// <summary>
 		/// Der Haupteinstiegspunkt für die Anwendung.

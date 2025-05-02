@@ -321,27 +321,27 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			return Task.CompletedTask;
 		}
 
-		public async Task<string> setBrowseTopics() {
+		public async Task<ret> setBrowseTopics() {
 			try {
 				Program.MainProg.BrowseMqtt = true;
 				await _mqttClient.SubscribeAsync("#");
 				Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Subscribed #");
-				return "S_OK";
+				return new ret() { erg = ret.OK };
 			} catch(Exception ex) {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
-				return "S_ERROR";
+				return new ret() { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace };
 			}
 		}
-		public async Task<string> unsetBrowseTopics() {
+		public async Task<ret> unsetBrowseTopics() {
 			try {
 				Program.MainProg.BrowseMqtt = false;
 				await _mqttClient.UnsubscribeAsync("#");
 				Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Unsubscribed #");
 				await registerDatapoints();
-				return "S_OK";
+				return new ret() { erg = ret.OK };
 			} catch(Exception ex) {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
-				return "S_ERROR";
+				return new ret() { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace };
 			}
 		}
 
@@ -360,7 +360,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					if(Debug.debugMQTT)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: {msg.Topic} ({IdTopic}), value: {value}");
 				} catch(Exception ex) {
-					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
+					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"setValue: IdTopic: {IdTopic}, value: {value}");
 				}
 			} else {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: ID not found: {IdTopic}");
@@ -370,7 +370,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			return await setValue(topic, value, MqttQualityOfServiceLevel.AtMostOnce);
 		}
 		public async Task<string> setValue(string topic, string value, MqttQualityOfServiceLevel QoS) {
-			string returns = "{\"erg\":\"S_OK\"}";
+			ret returns = new ret() { erg = ret.OK };
 			if(topic != string.Empty) {
 				try {
 					MqttApplicationMessage msg = new MqttApplicationMessage {
@@ -382,8 +382,9 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					if(Debug.debugMQTT)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: {topic}, value: {value}");
 				} catch(Exception ex) {
-					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					returns = "{\"erg\":\"S_ERROR\", \"msg\":\"" + ex.Message + "\"}";
+					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"setValue: topic: {topic}, value: {value}");
+					returns.erg = ret.ERROR;
+					returns.message = ex.Message;
 				} finally {
 					if(!_mqttClient.IsConnected) {
 						Debug.Write(MethodInfo.GetCurrentMethod(), "Connection Lost, try to reconnect");
@@ -392,9 +393,10 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				}
 			} else {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: topic not set");
-				returns = "{\"erg\":\"S_WARNING\", \"msg\":\"topic is Empty\"}";
+				returns.erg = ret.WARNING;
+				returns.message = "topic is Empty";
 			}
-			return returns;
+			return returns.ToString();
 		}
 		private ArraySegment<byte> getFromString(string m) {
 			return new ArraySegment<byte>(Encoding.UTF8.GetBytes(m));

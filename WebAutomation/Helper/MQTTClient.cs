@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 183                                                     $ #
+//# Revision     : $Rev:: 205                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 183 2025-02-16 01:24:09Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 205 2025-05-03 00:07:31Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;

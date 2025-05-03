@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 196                                                     $ #
+//# Revision     : $Rev:: 205                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 196 2025-03-30 13:06:32Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 205 2025-05-03 00:07:31Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -585,12 +585,20 @@ namespace WebAutomation.Helper {
 									_lastContact = DateTime.Now;
 									status sds = JsonConvert.DeserializeObject<status>(args.Result);
 									if(this.IdOnOff > 0) {
-										if(ShellyType.isLight(this.Type) && !ShellyType.isGen2(this.Type))
-											Datapoints.Get(this.IdOnOff).writeValue(sds.lights[0].ison ? "True" : "False", "Shelly");
-										if(ShellyType.isRelay(this.Type) && !ShellyType.isGen2(this.Type))
-											Datapoints.Get(this.IdOnOff).writeValue(sds.relays[0].ison ? "True" : "False", "Shelly");
-										if(ShellyType.isGen2(this.Type))
-											Datapoints.Get(this.IdOnOff).writeValue(sds.output ? "True" : "False", "Shelly");
+										bool? ison = null;
+										if(ShellyType.isLight(this.Type) && !ShellyType.isGen2(this.Type)) {
+											ison = sds.lights[0].ison;
+										}
+										if(ShellyType.isRelay(this.Type) && !ShellyType.isGen2(this.Type)) {
+											ison = sds.relays[0].ison;
+										}
+										if(ShellyType.isGen2(this.Type)) {
+											ison = sds.output;
+										}
+										if(ison != null && (Datapoints.Get(this.IdOnOff).Value == "True") != ison) {
+											Datapoints.Get(this.IdOnOff).writeValue((bool)ison ? "True" : "False", "Shelly");
+											Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Status`: {this.Name}, {((bool)ison ? "True" : "False")}");
+										}
 									}
 									using(Database Sql = new Database("Update Shelly MQTT lastContact")) {
 										string sql = $"UPDATE [shelly] SET [lastcontact] = '{_lastContact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";

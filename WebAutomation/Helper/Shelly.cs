@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 205                                                     $ #
+//# Revision     : $Rev:: 209                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 205 2025-05-03 00:07:31Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 209 2025-05-10 12:14:48Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -119,7 +119,9 @@ namespace WebAutomation.Helper {
 			}
 		}
 		public static Shelly getShellyFromWsId(string wsId) {
-			return _shellies.Find(t => t.WsId == wsId);
+			if(_shellies.Exists(t => t.WsId == wsId))
+				return _shellies.Find(t => t.WsId == wsId);
+			return null;
 		}
 		public static string getAllStatus() {
 			foreach(Shelly s in _shellies) {

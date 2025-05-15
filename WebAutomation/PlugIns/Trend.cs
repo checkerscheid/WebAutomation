@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 196                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 196 2025-03-30 13:06:32Z                        $ #
+//# File-ID      : $Id:: Trend.cs 213 2025-05-15 14:50:57Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -127,7 +127,7 @@ namespace WebAutomation.PlugIns {
 		VALUES ([SOURCE].[id_trend], [SOURCE].[value], [SOURCE].[time]);";
 							//string sql = "INSERT INTO [trendvalue] ([id_trend], [value], [time]) VALUES " +
 							//	$"({_idtrend}, '{v}', '{DateTime.Now.ToString(SQL.DateTimeFormat)}')";
-							if(Sql.wpNonResponse(sql) == 0) {
+							if(Sql.NonResponse(sql) == 0) {
 								Debug.Write(MethodInfo.GetCurrentMethod(), $"setTrendValue: 0 Rows Inserted ({Datapoints.Get(_iddp).Name})");
 							}
 						}
@@ -257,9 +257,9 @@ namespace WebAutomation.PlugIns {
 			public TrendCleanDB() {
 				_doStop = false;
 				_counter = 0;
-				_folderBase = IniFile.get("Trend", "Pfad");
-				_projekt = IniFile.get("Projekt", "Nummer");
-				_projekt += (IniFile.get("Projekt", "Name") != "") ? (_projekt != "" ? " - " : "") + IniFile.get("Projekt", "Name") : "";
+				_folderBase = IniFile.Get("Trend", "Pfad");
+				_projekt = IniFile.Get("Projekt", "Nummer");
+				_projekt += (IniFile.Get("Projekt", "Name") != "") ? (_projekt != "" ? " - " : "") + IniFile.Get("Projekt", "Name") : "";
 
 				TrendArchivFolder();
 
@@ -330,7 +330,7 @@ namespace WebAutomation.PlugIns {
 					try {
 						if (t.MaxDays > 0 && t.MaxEntries > 0) {
 							using (Database Sql = new Database("Save into Archive")) {
-								erg = Sql.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
+								erg = Sql.Query(@$"SELECT TOP {_maxEntries} [time], [value]
 									FROM [trendvalue] WHERE [id_trend] = {t.IdTrend}
 									AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time]");
@@ -346,19 +346,19 @@ namespace WebAutomation.PlugIns {
 										saveToOld++;
 									}
 								}
-								deleteToOld = Sql.wpNonResponse(@$"WITH CTE AS (
+								deleteToOld = Sql.NonResponse(@$"WITH CTE AS (
 									SELECT TOP {_maxEntries} * FROM [trendvalue]
 									WHERE [id_trend] = {t.IdTrend} AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time])
 									DELETE FROM CTE");
 
-								erg = Sql.wpQuery(@$"SELECT [time] FROM [trendvalue]
+								erg = Sql.Query(@$"SELECT [time] FROM [trendvalue]
 									WHERE [id_trend] = {t.IdTrend} ORDER BY [time] DESC
 									OFFSET {t.MaxEntries} ROWS FETCH NEXT 1 ROWS ONLY");
 								DateTime latest;
 								if(erg.Length > 0 && DateTime.TryParse(erg[0][0], out latest)) {
 									string newLastDate = latest.ToString(Database.DateTimeFormat);
-									erg = Sql.wpQuery(@$"SELECT TOP {_maxEntries} [time], [value]
+									erg = Sql.Query(@$"SELECT TOP {_maxEntries} [time], [value]
 										FROM [trendvalue] WHERE [time] < '{newLastDate}'
 										AND [id_trend] = {t.IdTrend} ORDER BY [time]");
 									for(int i = 0; i < erg.Length; i++) {
@@ -373,7 +373,7 @@ namespace WebAutomation.PlugIns {
 											saveToMuch++;
 										}
 									}
-									deleteToMuch = Sql.wpNonResponse(@$"WITH CTE AS (
+									deleteToMuch = Sql.NonResponse(@$"WITH CTE AS (
 										SELECT TOP {_maxEntries} * FROM [trendvalue]
 										WHERE [time] < '{newLastDate}' AND [id_trend] = {t.IdTrend}
 										ORDER BY [time])

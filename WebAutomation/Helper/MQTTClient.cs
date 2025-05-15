@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 209                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 209 2025-05-10 12:14:48Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 213 2025-05-15 14:50:57Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -74,7 +74,7 @@ namespace WebAutomation.Helper {
 			string[][] DBBroker;
 			connectPending = false;
 			using(Database Sql = new Database("MQTT Server")) {
-				DBBroker = Sql.wpQuery(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
+				DBBroker = Sql.Query(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
 			};
 			_idBroker = Int32.Parse(DBBroker[0][0]);
 			_port = Int32.Parse(DBBroker[0][2]);
@@ -93,7 +93,7 @@ namespace WebAutomation.Helper {
 			_serverTopics = new List<string>();
 			_settings = new Dictionary<string, string>();
 			using(Database Sql = new Database("MQTT topic")) {
-				string[][] DBtopic = Sql.wpQuery(@$"
+				string[][] DBtopic = Sql.Query(@$"
 SELECT
 	[t].[id_mqtttopic], [t].[topic], [t].[json], [t].[readable], [t].[writeable], [dp].[id_dp]
 FROM [mqtttopic] [t]
@@ -165,7 +165,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			return "S_OK";
 		}
 		public async void registerNewD1MiniDatapoints() {
-			foreach(string d1m in D1MiniServer.getSubscribtions()) {
+			foreach(string d1m in D1MiniServer.GetSubscribtions()) {
 				if(!subscribed.Contains(d1m)) {
 					await _mqttClient.SubscribeAsync(d1m);
 					subscribed.Add(d1m);
@@ -176,7 +176,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			}
 		}
 		public async void registerNewShellyDatapoints() {
-			foreach(string shelly in ShellyServer.getSubscribtions()) {
+			foreach(string shelly in ShellyServer.GetSubscribtions()) {
 				if(!subscribed.Contains(shelly)) {
 					await _mqttClient.SubscribeAsync(shelly);
 					subscribed.Add(shelly);
@@ -309,13 +309,13 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 					}
 				}
 			}
-			if(D1MiniServer.getSubscribtions().Contains(e.ApplicationMessage.Topic)) {
+			if(D1MiniServer.GetSubscribtions().Contains(e.ApplicationMessage.Topic)) {
 				vcea.value = v;
 				if(d1MiniChanged != null) {
 					d1MiniChanged.Invoke(this, vcea);
 				}
 			}
-			if(ShellyServer.getSubscribtions().Contains(e.ApplicationMessage.Topic)) {
+			if(ShellyServer.GetSubscribtions().Contains(e.ApplicationMessage.Topic)) {
 				vcea.value = v;
 				if(shellyChanged != null) {
 					shellyChanged.Invoke(this, vcea);
@@ -400,8 +400,8 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		private void SetMqttAlarm(bool value = true) {
 			int DpIdMqttAlarm;
-			if(Int32.TryParse(IniFile.get("Watchdog", "DpIdMqttAlarm"), out DpIdMqttAlarm)) {
-				Datapoints.Get(DpIdMqttAlarm)?.setValue(value ? "1" : "0");
+			if(Int32.TryParse(IniFile.Get("Watchdog", "DpIdMqttAlarm"), out DpIdMqttAlarm)) {
+				Datapoints.Get(DpIdMqttAlarm)?.SetValue(value ? "1" : "0");
 			}
 		}
 		private ArraySegment<byte> getFromString(string m) {
@@ -468,13 +468,13 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			addSetting("ProductName", Application.ProductName);
 			addSetting("Version", $"{pVersion[0]}.{pVersion[1]} Build {Program.subversion}");
 			addSetting("CompanyName", Application.CompanyName);
-			addSetting("Projektnummr", IniFile.get("Projekt", "Nummer"));
+			addSetting("Projektnummr", IniFile.Get("Projekt", "Nummer"));
 			bool debug = false;
 #if DEBUG
 			debug = true;
 #endif
 			addSetting("Debugmode", debug ? "true" : "false");
-			addSetting("DebugModules", Debug.getDebugJson());
+			addSetting("DebugModules", Debug.GetDebugJson());
 			MqttApplicationMessage msg = new MqttApplicationMessage();
 			msg.Retain = true;
 			foreach(KeyValuePair<string, string> kvp in _settings) {

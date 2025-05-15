@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 10.09.2015                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 194                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Scene.cs 194 2025-02-27 14:23:52Z                        $ #
+//# File-ID      : $Id:: Scene.cs 213 2025-05-15 14:50:57Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpSQL;
@@ -37,7 +37,7 @@ namespace WebAutomation.PlugIns {
 			return returns;
 		}
 		public static void writeSceneDP(int idscene) {
-			Datapoints.writeValues(getScene(idscene));
+			Datapoints.WriteValues(getScene(idscene));
 		}
 	}
 }

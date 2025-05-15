@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 188 2025-02-17 00:57:33Z                     $ #
+//# File-ID      : $Id:: Calendar.cs 213 2025-05-15 14:50:57Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -57,7 +57,7 @@ namespace WebAutomation.PlugIns {
 			times.Clear();
 
 			using(Database Sql = new Database("Calendar active")) {
-				string[][] CalActive = Sql.wpQuery(@"SELECT [name], [active] FROM [calendar] WHERE [id_calendar] = {0}", calid);
+				string[][] CalActive = Sql.Query(@"SELECT [name], [active] FROM [calendar] WHERE [id_calendar] = {0}", calid);
 				bool a = CalActive[0][1] == "True";
 				if(a != active) {
 					active = a;
@@ -71,7 +71,7 @@ namespace WebAutomation.PlugIns {
 			}
 			if(active) {
 				using(Database Sql = new Database("Add Events")) {
-					string[][] DBEvents = Sql.wpQuery(@"SELECT
+					string[][] DBEvents = Sql.Query(@"SELECT
 					[ce].[id_calendarevent],
 					CONVERT(VARCHAR(150), [ce].[dtstart], 126) AS [sdtstart], [ce].[vstart], [ce].[sstart],
 					CONVERT(VARCHAR(150), [ce].[dtend], 126) AS [sdtend], [ce].[vend], [ce].[send],
@@ -95,7 +95,7 @@ namespace WebAutomation.PlugIns {
 								Dictionary<int, int> dtr = new Dictionary<int, int>();
 								Dictionary<int, string> vr = new Dictionary<int, string>();
 								Dictionary<int, int> sr = new Dictionary<int, int>();
-								string[][] DBreminder = Sql2.wpQuery(@"SELECT
+								string[][] DBreminder = Sql2.Query(@"SELECT
 									[id_calendareventreminder]
 									,[minutes]
 									,[vreminder]
@@ -129,7 +129,7 @@ namespace WebAutomation.PlugIns {
 					times.Add(ev.Key, new c_rrule(ev.Value));
 					if(ev.Value.IdrRule > 0) {
 						using(Database Sql = new Database("getExDates")) {
-							string[][] DBExdate = Sql.wpQuery(@"SELECT
+							string[][] DBExdate = Sql.Query(@"SELECT
 							CONVERT(VARCHAR(150), [DateTime], 126) AS [sDateTime]
 							FROM [calendarexdate] WHERE [id_calendarrrule] = {0}", ev.Value.IdrRule);
 							for(int iexdate = 0; iexdate < DBExdate.Length; iexdate++) {
@@ -220,7 +220,7 @@ namespace WebAutomation.PlugIns {
 				_dpId = Int32.Parse(dpid);
 				_calName = calname;
 
-				_dtStart = CalendarHelper.parse(dtstart);
+				_dtStart = CalendarHelper.Parse(dtstart);
 				_vStart = vstart;
 				if(sstart == "")
 					_sStart = 0;
@@ -240,7 +240,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 
-				_dtEnd = CalendarHelper.parse(dtend);
+				_dtEnd = CalendarHelper.Parse(dtend);
 				_vEnd = vend;
 				if(send == "")
 					_sEnd = 0;
@@ -264,7 +264,7 @@ namespace WebAutomation.PlugIns {
 				_dpId = _ev.IdDp;
 				_calName = _ev.CalName;
 
-				_dtStart = CalendarHelper.parse(_ev.DtStart);
+				_dtStart = CalendarHelper.Parse(_ev.DtStart);
 				_vStart = _ev.VStart;
 				_sStart = _ev.SStart;
 
@@ -281,7 +281,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 
-				_dtEnd = CalendarHelper.parse(_ev.DtEnd);
+				_dtEnd = CalendarHelper.Parse(_ev.DtEnd);
 				_vEnd = _ev.VEnd;
 				_sEnd = _ev.SEnd;
 
@@ -314,7 +314,7 @@ namespace WebAutomation.PlugIns {
 							if(_vReminder.ContainsKey(_nextReminderId) && _vReminder[_nextReminderId] != "") {
 								// Program.MainProg.wpOPCClient.setValue(opcid, vreminder[nextReminderId], TransferId.TransferSchedule);
 								// Datapoints.Get(_dpId).setValue(_vReminder[_nextReminderId]); do we need writevalue??
-								Datapoints.Get(_dpId).writeValue(_vReminder[_nextReminderId]);
+								Datapoints.Get(_dpId).WriteValue(_vReminder[_nextReminderId]);
 								_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: Reminder (DP: {_dpId}, {_vReminder[_nextReminderId]})");
 							}
 							if(_sReminder.ContainsKey(_nextReminderId) && _sReminder[_nextReminderId] > 0) {
@@ -327,7 +327,7 @@ namespace WebAutomation.PlugIns {
 						if(_vStart != "") {
 							// Program.MainProg.wpOPCClient.setValue(opcid, vstart, TransferId.TransferSchedule);
 							// Datapoints.Get(_dpId).setValue(_vStart); do we need writevalue??
-							Datapoints.Get(_dpId).writeValue(_vStart);
+							Datapoints.Get(_dpId).WriteValue(_vStart);
 							_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: Start (DP: {_dpId}, {_vStart})");
 						}
 						if(_sStart > 0) {
@@ -339,7 +339,7 @@ namespace WebAutomation.PlugIns {
 						if(_vEnd != "") {
 							// Program.MainProg.wpOPCClient.setValue(opcid, vend, TransferId.TransferSchedule);
 							// Datapoints.Get(_dpId).setValue(_vEnd); do we need writevalue??
-							Datapoints.Get(_dpId).writeValue(_vEnd);
+							Datapoints.Get(_dpId).WriteValue(_vEnd);
 							_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Timer ausgelöst, schalte: End (DP: {_dpId}, {_vEnd})");
 						}
 						if(_sEnd > 0) {
@@ -355,13 +355,13 @@ namespace WebAutomation.PlugIns {
 				getNextDate();
 			}
 			public void ExDate(string _date) {
-				DateTime toAdd = CalendarHelper.parse(_date);
+				DateTime toAdd = CalendarHelper.Parse(_date);
 				_exdate.Add(toAdd.Date);
 				_exdatetime.Add(toAdd);
 			}
 			public void ExDate(List<string> _dates) {
 				foreach(string _d in _dates) {
-					DateTime toAdd = CalendarHelper.parse(_d);
+					DateTime toAdd = CalendarHelper.Parse(_d);
 					_exdate.Add(toAdd.Date);
 					_exdatetime.Add(toAdd);
 				}
@@ -471,32 +471,32 @@ namespace WebAutomation.PlugIns {
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found count: {m.Groups[2].Value}");
 								break;
 							case "until":
-								_until = CalendarHelper.parse(m.Groups[2].Value);
+								_until = CalendarHelper.Parse(m.Groups[2].Value);
 								_until = _until.Add(new TimeSpan(1, 0, 0, 0));
 								_has_until = true;
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found until: {m.Groups[2].Value}");
 								break;
 							case "bymonth":
-								_bymonth = CalendarHelper.getIntArray(m.Groups[2].Value);
+								_bymonth = CalendarHelper.GetIntArray(m.Groups[2].Value);
 								_has_bymonth = true;
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found bymonth: {m.Groups[2].Value}");
 								break;
 							case "bymonthday":
-								_bymonthday = CalendarHelper.getIntArray(m.Groups[2].Value);
+								_bymonthday = CalendarHelper.GetIntArray(m.Groups[2].Value);
 								_has_bymonthday = true;
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found bymonthday: {m.Groups[2].Value}");
 								break;
 							case "byyearday":
-								_byyearday = CalendarHelper.getIntArray(m.Groups[2].Value);
+								_byyearday = CalendarHelper.GetIntArray(m.Groups[2].Value);
 								_has_byyearday = true;
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found byyearday: {m.Groups[2].Value}");
 								break;
 							case "byday":
-								_byday = CalendarHelper.getWeekDayArray(m.Groups[2].Value);
+								_byday = CalendarHelper.GetWeekDayArray(m.Groups[2].Value);
 								_has_byday = true;
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) Found byday: {m.Groups[2].Value}");
@@ -555,7 +555,7 @@ namespace WebAutomation.PlugIns {
 					for(int i = 0; i < _count; i++) {
 						for(int iday = wds; iday <= 7; iday++) {
 							if(Array.IndexOf(_byday, iday) >= 0) {
-								dts = CalendarHelper.getNextDay(dts, iday);
+								dts = CalendarHelper.GetNextDay(dts, iday);
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) ByDay Schedule found: {dts}");
 								if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
@@ -599,7 +599,7 @@ namespace WebAutomation.PlugIns {
 					do {
 						for(int iday = wds; iday <= 7; iday++) {
 							if(Array.IndexOf(_byday, iday) >= 0) {
-								dts = CalendarHelper.getNextDay(dts, iday);
+								dts = CalendarHelper.GetNextDay(dts, iday);
 								if(Debug.debugCalendar)
 									Debug.Write(MethodInfo.GetCurrentMethod(), $"Calendar '{_calName}' ({_calId}) ByDay Schedule found: {dts}");
 								if(_exdate.Contains(dts.Date) || _exdatetime.Contains(dts)) {
@@ -968,7 +968,7 @@ namespace WebAutomation.PlugIns {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Calendars init");
 			eventLog = new Logger(Logger.ESource.PlugInCalendar);
 			using(Database Sql = new Database("Calendars")) {
-				string[][] DBCalendar = Sql.wpQuery("SELECT [id_calendar], [id_dp], [name], [active] FROM [calendar]");
+				string[][] DBCalendar = Sql.Query("SELECT [id_calendar], [id_dp], [name], [active] FROM [calendar]");
 				int calint;
 				int opcint;
 				for(int iCalendar = 0; iCalendar < DBCalendar.Length; iCalendar++) {
@@ -991,7 +991,7 @@ namespace WebAutomation.PlugIns {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), "Add Calendar {0}", _id);
 				using(Database Sql = new Database("Calendar")) {
 					int opcint;
-					string[][] DBCalendar = Sql.wpQuery("SELECT [id_dp], [name], [active] FROM [calendar] WHERE [id_calendar] = {0}", _id);
+					string[][] DBCalendar = Sql.Query("SELECT [id_dp], [name], [active] FROM [calendar] WHERE [id_calendar] = {0}", _id);
 					for(int iCalendar = 0; iCalendar < DBCalendar.Length; iCalendar++) {
 						if(!Int32.TryParse(DBCalendar[iCalendar][0], out opcint)) {
 							opcint = 0;

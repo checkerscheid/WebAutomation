@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 194                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Router.cs 194 2025-02-27 14:23:52Z                       $ #
+//# File-ID      : $Id:: Router.cs 213 2025-05-15 14:50:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -51,7 +51,7 @@ namespace WebAutomation.PlugIns {
 		public static void UpdateRouter(int fromid) {
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
 			using (Database Sql = new Database("Update Router for Item")) {
-				string[][] DBRouter = Sql.wpQuery(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
+				string[][] DBRouter = Sql.Query(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
 				if (DBRouter.Length == 0) {
 					if(RouterItems.ContainsKey(fromid)) RouterItems.Remove(fromid);
 				} else {

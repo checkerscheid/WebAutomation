@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Rest.cs 188 2025-02-17 00:57:33Z                         $ #
+//# File-ID      : $Id:: Rest.cs 213 2025-05-15 14:50:57Z                         $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -36,7 +36,7 @@ namespace WebAutomation.Helper {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
 			_isFinished = false;
 			eventLog = new Logger(Logger.ESource.Rest);
-			RestServerListener = new TcpListener(IPAddress.Any, IniFile.getInt("RestServer", "Port"));
+			RestServerListener = new TcpListener(IPAddress.Any, IniFile.GetInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";
 			RestServerThread.Start();

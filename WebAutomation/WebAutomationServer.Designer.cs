@@ -8,23 +8,21 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 171                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.Designer.cs 171 2025-02-13 12:28:06Z#$ #
+//# File-ID      : $Id:: WebAutomationServer.Designer.cs 213 2025-05-15 14:50:57Z#$ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 using static FreakaZone.Libraries.wpEventLog.Logger;
-/**
-* @defgroup WEBAutomationWindow WEBAutomationWindow
-* @{
-*/
+
 namespace WebAutomation {
 	/// <summary>
 	/// 
@@ -269,17 +267,28 @@ namespace WebAutomation {
 #region UI
 
 		/// <summary>
-		/// 
+		/// Handles the load event for the WebAutomationServer form.
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
+		/// <remarks>This method initializes the server asynchronously, logs the startup event, sets the form's title
+		/// to the application name,  and subscribes to the <see cref="StringChanged"/> event.</remarks>
+		/// <param name="sender">The source of the event.</param>
+		/// <param name="e">An <see cref="EventArgs"/> instance containing the event data.</param>
 		private void WebAutomationServer_Load(object sender, EventArgs e) {
-			_ = initAsync();
+			Task.Run(async () => {
+				await InitAsync();
+			});
 			eventLog.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server gestartet");
 			this.Text = Application.ProductName;
 			this.StringChanged += new StringChangedEventHandler(WebAutomationServer_StringChanged);
 		}
 
+		/// <summary>
+		/// Handles the <see cref="Form.Shown"/> event for the Web Automation Server.
+		/// </summary>
+		/// <remarks>If the server is configured to start minimized, the form is minimized and hidden upon being
+		/// shown.</remarks>
+		/// <param name="sender">The source of the event, typically the form instance.</param>
+		/// <param name="e">An <see cref="EventArgs"/> object that contains the event data.</param>
 		private void WebAutomationServer_Shown(object sender, EventArgs e) {
 			if(_wpStartMinimized) {
 				this.WindowState = FormWindowState.Minimized;
@@ -288,16 +297,23 @@ namespace WebAutomation {
 			}
 		}
 
+		/// <summary>
+		/// Handles the event triggered when a string value changes in the WebAutomationServer.
+		/// </summary>
+		/// <param name="e">The event arguments containing the new string value.</param>
 		private void WebAutomationServer_StringChanged(WebAutomationServer.StringChangedEventArgs e) {
 			try {
 				lbl_lastchange.Invoke((MethodInvoker)(() => lbl_lastchange.Text = e.newValue));
 			} catch(Exception) { }
 		}
+
 		/// <summary>
-		/// 
+		/// Handles the mouse click event on the system tray icon to toggle the visibility of the application window.
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
+		/// <remarks>If the application window is minimized, this method restores it to its previous state and makes
+		/// it visible. Otherwise, it minimizes the window and hides it from view.</remarks>
+		/// <param name="sender">The source of the event, typically the system tray icon.</param>
+		/// <param name="e">The <see cref="MouseEventArgs"/> containing details about the mouse click event.</param>
 		private void SystemIcon_MouseClick(object sender, MouseEventArgs e) {
 			if(this.WindowState == FormWindowState.Minimized) {
 				this.Show();
@@ -307,15 +323,20 @@ namespace WebAutomation {
 				this.Hide();
 			}
 		}
+
 		/// <summary>
-		/// 
+		/// Handles the <see cref="Form.ClientSizeChanged"/> event for the application window.
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
+		/// <remarks>This method minimizes the application to the system tray when the window state changes to  <see
+		/// cref="FormWindowState.Minimized"/>. A notification balloon is displayed in the system tray  with the application
+		/// name and project number. When the window state changes to any other state,  the application window is restored and
+		/// made visible.</remarks>
+		/// <param name="sender">The source of the event, typically the application window.</param>
+		/// <param name="e">An <see cref="EventArgs"/> instance containing the event data.</param>
 		private void WebAutomationServer_ClientSizeChanged(object sender, EventArgs e) {
 			if(this.WindowState == FormWindowState.Minimized) {
 				this.Hide();
-				SystemIcon.BalloonTipTitle = Application.ProductName + " - " + IniFile.get("Projekt", "Nummer");
+				SystemIcon.BalloonTipTitle = Application.ProductName + " - " + IniFile.Get("Projekt", "Nummer");
 				SystemIcon.BalloonTipText = "wurde minimiert";
 				SystemIcon.BalloonTipIcon = ToolTipIcon.Info;
 				SystemIcon.ShowBalloonTip(1000);
@@ -324,6 +345,13 @@ namespace WebAutomation {
 				lastState = this.WindowState;
 			}
 		}
+
+		/// <summary>
+		/// Performs cleanup operations and stops all active services and components.
+		/// </summary>
+		/// <remarks>This method ensures that all associated services, threads, and resources are properly stopped and
+		/// released.  Event handlers are unsubscribed, threads are joined, and any remaining active components are finalized.
+		/// Call this method to safely shut down the application and prevent resource leaks.</remarks>
 		public void finish() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), Application.ProductName + " Server - Beginn stop");
 			isFinished = true;
@@ -356,12 +384,22 @@ namespace WebAutomation {
 			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, Application.ProductName + " Server gestoppt");
 		}
 
+		/// <summary>
+		/// Handles the <see cref="Form.FormClosing"/> event for the WebAutomationServer form.
+		/// </summary>
+		/// <remarks>This method prompts the user for a password if one is configured in the application settings. If
+		/// a password is required and the user provides an incorrect password or cancels the prompt, the form closing
+		/// operation is canceled. If no password is required or the correct password is provided, the form proceeds to
+		/// close.</remarks>
+		/// <param name="sender">The source of the event, typically the form being closed.</param>
+		/// <param name="e">A <see cref="FormClosingEventArgs"/> that contains the event data, including the ability to cancel the close
+		/// operation.</param>
 		private void WebAutomationServer_FormClosing(object sender, FormClosingEventArgs e) {
-			string pw = IniFile.get("Beenden", "PW");
+			string pw = IniFile.Get("Beenden", "PW");
 			if(pw.Length > 0) {
 				BeendenPW bpw = new BeendenPW();
 				if(bpw.ShowDialog() == DialogResult.OK) {
-					if(bpw.mtbpw.Text == pw) {
+					if(bpw.mtbPw.Text == pw) {
 						finish();
 					} else {
 						MessageBox.Show("Das Passwort war nicht korrekt.",
@@ -387,4 +425,3 @@ namespace WebAutomation {
 		private TextBox nonsens;
 	}
 }
-/** @} */

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 203                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 203 2025-04-27 15:09:36Z                        $ #
+//# File-ID      : $Id:: Email.cs 213 2025-05-15 14:50:57Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -58,11 +58,11 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(Logger.ESource.Mail);
 			mailMessage = new MailMessage();
 			reset();
-			string useSSL = IniFile.get("Email", "useSSL");
-			mailMessage.From = new MailAddress(IniFile.get("Email", "Sender"), IniFile.get("Email", "Name"));
+			string useSSL = IniFile.Get("Email", "useSSL");
+			mailMessage.From = new MailAddress(IniFile.Get("Email", "Sender"), IniFile.Get("Email", "Name"));
 			mailMessage.IsBodyHtml = true;
 			mailMessage.BodyEncoding = Encoding.UTF8;
-			MailClient = new SmtpClient(IniFile.get("Email", "Server"), IniFile.getInt("Email", "Port"));
+			MailClient = new SmtpClient(IniFile.Get("Email", "Server"), IniFile.GetInt("Email", "Port"));
 			if (useSSL.ToLower() == "true") MailClient.EnableSsl = true;
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestartet");
 		}
@@ -102,17 +102,17 @@ namespace WebAutomation.Helper {
 			mailMessage.Subject = "";
 			mailMessage.Body = "";
 
-			if (IniFile.get("Email", "ProjectNumberInSubject") == "true") {
+			if (IniFile.Get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
-					IniFile.get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
+					IniFile.Get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
 			} else {
 				setSubject(String.Format("{0} - {1} Neue Alarm Aktionen",
 					ServiceName, EmailAlarms.getTotalCount(r)));
 			}
-			string MailToInMail = IniFile.get("Email", "MailToInMail");
+			string MailToInMail = IniFile.Get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
-			string LinkToInMail = IniFile.get("Email", "LinkToInMail");
-			string LinkNameInMail = IniFile.get("Email", "LinkNameInMail");
+			string LinkToInMail = IniFile.Get("Email", "LinkToInMail");
+			string LinkNameInMail = IniFile.Get("Email", "LinkNameInMail");
 			if(LinkNameInMail == "") LinkNameInMail = LinkToInMail;
 			if(LinkToInMail != "") LinkToInMail = @"WEB: <a href='https://" + LinkToInMail + "'>" + LinkNameInMail + @"</a><br />";
 			mailMessage.Body = @"
@@ -120,8 +120,8 @@ namespace WebAutomation.Helper {
 			<p>In Ihrer Anlage stehen die folgenden Alarme an:</p>
 			<p>" + EmailAlarms.getText(r) + @"</p>
 			<br />" + String.Format("<p>Projekt: {0} - {1}</p>",
-				IniFile.get("Projekt", "Nummer"),
-				IniFile.get("Projekt", "Name")) + @"
+				IniFile.Get("Projekt", "Nummer"),
+				IniFile.Get("Projekt", "Name")) + @"
 			<p style='font-weight:bold; color:#29166f;'>Ihr " + ServiceName + @" Alarm Service</p>
 			<p style='font-size:8pt; color:#888;'>
 				<span style='font-weight:bold;'>
@@ -240,9 +240,9 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		public void send() {
-			if (IniFile.get("Email", "UseUserPassword") == "true") {
-				MailClient.Credentials = new NetworkCredential(IniFile.get("Email", "User"),
-					IniFile.get("Email", "Password"));
+			if (IniFile.Get("Email", "UseUserPassword") == "true") {
+				MailClient.Credentials = new NetworkCredential(IniFile.Get("Email", "User"),
+					IniFile.Get("Email", "Password"));
 			}
 			MailClient.Send(mailMessage);
 			string to = "\r\n";

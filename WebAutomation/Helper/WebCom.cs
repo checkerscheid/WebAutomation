@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 205                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 205 2025-05-03 00:07:31Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 213 2025-05-15 14:50:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -70,10 +70,10 @@ namespace WebAutomation.Helper {
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 			eventLog = new Logger(Logger.ESource.WEBcom);
-			WebComListener = new TcpListener(IPAddress.Any, IniFile.getInt("TCP", "Port"));
+			WebComListener = new TcpListener(IPAddress.Any, IniFile.GetInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
-			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", IniFile.getInt("TCP", "Port"));
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", IniFile.GetInt("TCP", "Port"));
 			WebComServer.Start();
 		}
 		/// <summary>
@@ -376,30 +376,30 @@ namespace WebAutomation.Helper {
 					returns = JsonConvert.SerializeObject(Program.MainProg.wpMQTTClient.ServerTopics);
 					break;
 				case wpBefehl.cGetAllD1MiniSettings:
-					returns = D1MiniServer.getJson();
+					returns = D1MiniServer.GetJson();
 					break;
 				case wpBefehl.cGetD1MiniStatus:
-					returns = D1MiniServer.getJsonStatus(s_befehl[1]);
+					returns = D1MiniServer.GetJsonStatus(s_befehl[1]);
 					break;
 				case wpBefehl.cGetAndSaveD1MiniStatus:
-					returns = D1MiniServer.getJsonStatus(s_befehl[1], true);
+					returns = D1MiniServer.GetJsonStatus(s_befehl[1], true);
 					break;
 				case wpBefehl.cGetD1MiniNeoPixelStatus:
-					returns = D1MiniServer.getJsonNeoPixel(s_befehl[1]);
+					returns = D1MiniServer.GetJsonNeoPixel(s_befehl[1]);
 					break;
 				case wpBefehl.cSetD1MiniCmd:
 					returns = new ret { erg = ret.ERROR }.ToString();
 					param = wpBefehl.getParam(s_befehl[1]);
-					d1md = D1MiniServer.get(param[0]);
+					d1md = D1MiniServer.Get(param[0]);
 					if(d1md != null) {
-						D1Mini.cmdList cL = new D1Mini.cmdList(param[1]);
-						if(d1md.sendCmd(cL))
+						D1Mini.CmdList cL = new D1Mini.CmdList(param[1]);
+						if(d1md.SendCmd(cL))
 							returns = new ret { erg = ret.OK }.ToString();
 					}
 					break;
 				case wpBefehl.cSetD1MiniUrlCmd:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = D1MiniServer.sendUrlCmd(param[0], param[1]);
+					returns = D1MiniServer.SendUrlCmd(param[0], param[1]);
 					break;
 				case wpBefehl.cStartD1MiniSearch:
 					//returns = D1MiniServer.startSearch();
@@ -408,41 +408,41 @@ namespace WebAutomation.Helper {
 					returns = new ret { erg = ret.ERROR }.ToString();
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
-						D1MiniServer.addD1Mini(outint);
+						D1MiniServer.AddD1Mini(outint);
 						returns = new ret { erg = ret.OK }.ToString();
 					}
 					break;
 				case wpBefehl.cRenewD1MiniActiveState:
-					D1MiniServer.renewActiveState();
+					D1MiniServer.RenewActiveState();
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cDeleteD1Mini:
 					param = wpBefehl.getParam(s_befehl[1]);
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
-							D1MiniServer.removeD1Mini(outint);
+							D1MiniServer.RemoveD1Mini(outint);
 						}
 					}
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cGetD1MiniServer:
-					returns = D1MiniServer.getServerSettings();
+					returns = D1MiniServer.GetServerSettings();
 					break;
 				case wpBefehl.cSetD1MiniServer:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = D1MiniServer.setServerSetting(param[0], param[1]);
+					returns = D1MiniServer.SetServerSetting(param[0], param[1]);
 					break;
 				case wpBefehl.cDeleteShelly:
 					param = wpBefehl.getParam(s_befehl[1]);
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
-							ShellyServer.removeShelly(outint);
+							ShellyServer.RemoveShelly(outint);
 						}
 					}
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cGetShellyStatus:
-					ShellyServer.getAllStatus();
+					ShellyServer.GetAllStatus();
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cRemoteControl:
@@ -452,8 +452,7 @@ namespace WebAutomation.Helper {
 					TVParams tvp = new TVParams(
 						einaus: param[1],
 						tvbutton: param[2],
-						dienst: param[3],
-						richtung: param[4]);
+						dienst: param[3]);
 					Debug.Write(MethodBase.GetCurrentMethod(), $"RemoteControl: {tvp.ToString()}");
 					returns = new ret { erg = ret.OK, message = tv.Set(tvp) }.ToString();
 					break;
@@ -641,7 +640,7 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					if (Int32.TryParse(param[0], out outint) &&
 						Int32.TryParse(param[1], out outint2)) {
-						OPCItem TheItem = OpcDatapoints.getItem(outint);
+						OPCItem TheItem = OpcDatapoints.GetItem(outint);
 						if(TheItem != null) {
 							returns = Program.MainProg.wpOPCClient.moveOPCItem(TheItem, outint2);
 						}
@@ -684,7 +683,7 @@ namespace WebAutomation.Helper {
 							if(AlarmWeg != null) {
 								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
 								AlarmWeg.idAlarm = null;
-								Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+								Sql.NonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 							}
 						}
 					}
@@ -699,7 +698,7 @@ namespace WebAutomation.Helper {
 								if(AlarmWeg != null) {
 									Alarms.RemoveAlarm(AlarmWeg.idAlarm);
 									AlarmWeg.idAlarm = null;
-									Sql.wpNonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
+									Sql.NonResponse("DELETE FROM [alarm] WHERE [id_alarm] = {0}", outint);
 								}
 							}
 						}
@@ -812,8 +811,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cReadEvent:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param != null) returns = Logger.readLog(param[0]);
-						else returns = Logger.readLog();
+						if (param != null) returns = Logger.ReadLog(param[0]);
+						else returns = Logger.ReadLog();
 					} catch (Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -822,7 +821,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cReloadSettings:
 					try {
-						IniFile.read();
+						IniFile.Read();
 						finished();
 						init();
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Reload Settings");
@@ -841,11 +840,11 @@ namespace WebAutomation.Helper {
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
 				case wpBefehl.cGetDebug:
-					returns = Debug.getDebugJson();
+					returns = Debug.GetDebugJson();
 					break;
 				case wpBefehl.cSetDebug:
 					param = wpBefehl.getParam(s_befehl[1]);
-					returns = Debug.changeDebug(param);
+					returns = Debug.ChangeDebug(param);
 					break;
 				case wpBefehl.cHistoryCleaner:
 					await Task.Run(() => {
@@ -884,7 +883,7 @@ namespace WebAutomation.Helper {
 					Datapoint DP = Datapoints.Get(idDp);
 					if(DP != null) {
 						if(Datapoints.Get(idDp).WriteLevel <= writeLevel) {
-							Datapoints.Get(idDp).writeValue(param[2]);
+							Datapoints.Get(idDp).WriteValue(param[2]);
 							returns.erg = ret.OK;
 						} else {
 							returns.erg = ret.ERROR;
@@ -943,7 +942,7 @@ namespace WebAutomation.Helper {
 						returns.message += $"ID: {param[i]} DOSNT EXISTS<br />";
 					}
 				}
-				Datapoints.writeValues(toWrite);
+				Datapoints.WriteValues(toWrite);
 			} catch (Exception ex) {
 				returns.erg = ret.ERROR;
 				returns.message = ex.Message;
@@ -957,7 +956,7 @@ namespace WebAutomation.Helper {
 			ret returns = new ret { erg = ret.OK, message = "" };
 			user = user.ToLower();
 			using (Database Sql = new Database("get User Level")) {
-				erg = Sql.wpQuery(@"SELECT TOP 1 [g].[order]
+				erg = Sql.Query(@"SELECT TOP 1 [g].[order]
 					FROM [user] [u]
 					INNER JOIN [usergroup] [g] ON [u].[id_usergroup] = [g].[id_usergroup]
 					WHERE [login] = '{0}'", user);
@@ -973,7 +972,7 @@ namespace WebAutomation.Helper {
 				foreach (KeyValuePair<int, string> kvp in d) {
 					p = Datapoints.Get(kvp.Key);
 					if (p != null && p.WriteLevel <= level) {
-						p.writeValue(kvp.Value);
+						p.WriteValue(kvp.Value);
 						returns.message += $"\r\n\tWrite DP Ok:\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
 						sqlLog += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.Name, DateTime.Now, p.Value, kvp.Value);
 					} else {
@@ -983,7 +982,7 @@ namespace WebAutomation.Helper {
 				}
 				if (sqlLog.Length > 0) {
 					using (Database Sql = new Database("write Scene log")) {
-						Sql.wpNonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", sqlLog.Substring(0, sqlLog.Length - 1));
+						Sql.NonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", sqlLog.Substring(0, sqlLog.Length - 1));
 					}
 				}
 				eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, returns.message);
@@ -1003,7 +1002,7 @@ namespace WebAutomation.Helper {
 				using(Database Sql = new Database("Update Alarm")) {
 					List<int> Hsrv = new List<int>();
 
-					string[][] DBAlarms = Sql.wpQuery(@"
+					string[][] DBAlarms = Sql.Query(@"
 						SELECT
 							[dp].[id_dp], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 							[g].[name], [dp].[name], [c].[condition], [a].[min], [a].[max], [a].[delay],
@@ -1123,14 +1122,14 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		/// <returns></returns>
 		private string quitAlarm(string user, int id, string quittext) {
 			DateTime DateTimeNow = DateTime.Now;
-			Alarm TheAlarm = Program.MainProg.getAlarmFromAlarmid(id);
+			Alarm TheAlarm = Program.MainProg.GetAlarmFromAlarmid(id);
 			TheAlarm.AlarmUpdate = DateTimeNow;
 			TheAlarm.Quit = DateTimeNow;
 			TheAlarm.QuitFrom = user;
 			TheAlarm.QuitText = quittext;
 			TheAlarm.NeedQuit = true;
 			using(Database Sql = new Database("Quit Alarm")) {
-				Sql.wpNonResponse(@"UPDATE [alarmhistoric]
+				Sql.NonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = ""{0}"", [quitfrom] = ""{1}"", [quittext] = ""{2}""
 					WHERE [id_alarm] = {3} AND [quit] IS NULL",
 					DateTimeNow.ToString(Database.DateTimeFormat),
@@ -1166,7 +1165,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 				}
 			}
 			using (Database Sql = new Database("Quit Alarm")) {
-				Sql.wpNonResponse(@"UPDATE [alarmhistoric]
+				Sql.NonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = '{0}', [quitfrom] = '{1}', [quittext] = '{2}'
 					WHERE ({3}) AND [quit] IS NULL",
 					DateTimeNow.ToString(Database.DateTimeFormat),

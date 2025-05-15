@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 203                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 203 2025-04-27 15:09:36Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 213 2025-05-15 14:50:57Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -101,7 +101,7 @@ namespace WebAutomation.Helper {
 			int idpoint;
 
 			using (Database Sql = new Database("Add OPC Server")) {
-				string[][] DBserver = Sql.wpQuery(@"SELECT
+				string[][] DBserver = Sql.Query(@"SELECT
 					[id_opcserver], [progid], [clsid], [name], [server], [active] FROM [opcserver]");
 				for(int iserver = 0; iserver < DBserver.Length; iserver++) {
 					try {
@@ -117,7 +117,7 @@ namespace WebAutomation.Helper {
 			using (Database Sql = new Database("Add OPC Groups")) {
 				string tempLog, GroupLog = "";
 				string tempErr, GroupErr = "";
-				string[][] DBGroup = Sql.wpQuery(@"
+				string[][] DBGroup = Sql.Query(@"
 					SELECT [s].[id_opcserver], [g].[id_opcgroup], [g].[name], [g].[duration], ([g].[active] & [s].[active]) AS [active]
 					FROM [opcgroup] [g]
 					INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]");
@@ -142,7 +142,7 @@ namespace WebAutomation.Helper {
 				if (GroupErr.Length > 0) eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, GroupErr);
 			}
 			using (Database Sql = new Database("Add OPC Items")) {
-				string[][] DBDatapoints = Sql.wpQuery(@"SELECT
+				string[][] DBDatapoints = Sql.Query(@"SELECT
 					[s].[id_opcserver], [g].[id_opcgroup],
 					[d].[id_opcdatapoint], [d].[opcname], [d].[name], [d].[forcetype], ([d].[active] & [g].[active] & [s].[active]) AS [active]
 					FROM [opcdatapoint] [d]
@@ -192,7 +192,7 @@ namespace WebAutomation.Helper {
 				int idpoint;
 
 				using (Database Sql = new Database("Add OPC Server after shutdown")) {
-					string[][] DBserver = Sql.wpQuery(@$"
+					string[][] DBserver = Sql.Query(@$"
 						SELECT TOP 1 [id_opcserver], [progid], [clsid], [name], [server], [active]
 						FROM [opcserver] WHERE [id_opcserver] = {aktServerid}");
 					TheServerAdd(aktServerid, DBserver[0][1], DBserver[0][2], DBserver[0][3],
@@ -201,7 +201,7 @@ namespace WebAutomation.Helper {
 				using (Database Sql = new Database("Add OPC Groups")) {
 					string tempLog, GroupLog = "";
 					string tempErr, GroupErr = "";
-					string[][] DBGroup = Sql.wpQuery(@$"
+					string[][] DBGroup = Sql.Query(@$"
 						SELECT [g].[id_opcgroup], [g].[name], [g].[duration], [g].[active]
 						FROM [opcgroup] [g]
 						INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
@@ -219,7 +219,7 @@ namespace WebAutomation.Helper {
 					if (GroupErr.Length > 0) eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, GroupErr);
 				}
 				using (Database Sql = new Database("Add OPC Items")) {
-					string[][] DBDatapoints = Sql.wpQuery(@$"
+					string[][] DBDatapoints = Sql.Query(@$"
 						SELECT [g].[id_opcgroup], [d].[id_opcdatapoint], [d].[opcname], [d].[name], [d].[active]
 						FROM [opcdatapoint] [d]
 						INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
@@ -273,7 +273,7 @@ namespace WebAutomation.Helper {
 				TheGroup.Remove(aktServerid);
 				Hsrv.Remove(aktServerid);
 				using (Database Sql = new Database("Remove OPC Server")) {
-					string[][] DBDatapoints = Sql.wpQuery(@$"
+					string[][] DBDatapoints = Sql.Query(@$"
 						SELECT [d].[id_opcdatapoint] FROM [opcdatapoint] [d]
 						INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
 						INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
@@ -283,7 +283,7 @@ namespace WebAutomation.Helper {
 					for (int i = 0; i < DBDatapoints.Length; i++) {
 						if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 					}
-					OpcDatapoints.deleteItems(toDelete.ToArray());
+					OpcDatapoints.DeleteItems(toDelete.ToArray());
 				}
 			} catch (Exception ex) {
 				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -443,9 +443,9 @@ namespace WebAutomation.Helper {
 		/// <param name="OPCPath"></param>
 		private void TheItemAdd(int ServerID, int GroupID, int PointID, string OPCPath, string PointName,
 			bool active, VarEnum OPCType) {
-			if (!OpcDatapoints.checkItem(PointID)) {
+			if (!OpcDatapoints.CheckItem(PointID)) {
 				// local add
-				OpcDatapoints.addItem(new OPCItem(PointID, OPCPath, PointName, GroupID, ServerID));
+				OpcDatapoints.AddItem(new OPCItem(PointID, OPCPath, PointName, GroupID, ServerID));
 				// opc add
 				if (active) TheItemConnect(ServerID, GroupID, PointID, OPCPath, OPCType);
 			}
@@ -466,8 +466,8 @@ namespace WebAutomation.Helper {
 			List<VarEnum> OPCTypes = new List<VarEnum>();
 			if (PointID.Length == OPCPath.Length && PointID.Length  == OPCType.Length) {
 				for (int i = 0; i <= PointID.Length; i++) {
-					if (OpcDatapoints.getItem(PointID[i]) == null) {
-						OpcDatapoints.addItem(new OPCItem(PointID[i], OPCPath[i], PointName[i], GroupID, ServerID));
+					if (OpcDatapoints.GetItem(PointID[i]) == null) {
+						OpcDatapoints.AddItem(new OPCItem(PointID[i], OPCPath[i], PointName[i], GroupID, ServerID));
 						if (active[i]) {
 							PointIDs.Add(PointID[i]);
 							OPCPaths.Add(OPCPath[i]);
@@ -499,7 +499,7 @@ namespace WebAutomation.Helper {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						String.Format("Gruppe '{0}' - Item nicht aktiv: '{1}'\r\n\t{2}",
 						TheGroup[ServerID][GroupID].Name,
-						OpcDatapoints.getItem(PointID).OpcItemName,
+						OpcDatapoints.GetItem(PointID).OpcItemName,
 						HRESULTS.getError(TestItem[0].Error)));
 					if (TestItem[0].HandleServer != 0) {
 						TheGroup[ServerID][GroupID].RemoveItems(new int[] { TestItem[0].HandleServer }, out arrErr);
@@ -511,8 +511,8 @@ namespace WebAutomation.Helper {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), "Item konnte nicht aktiviert werden: '{0}'", OPCPath);
 					}
 					// local store information from opc server
-					OpcDatapoints.getItem(PointID).Hsrv = TestItem[0].HandleServer;
-					OpcDatapoints.getItem(PointID).DBType = TestItem[0].CanonicalDataType;
+					OpcDatapoints.GetItem(PointID).Hsrv = TestItem[0].HandleServer;
+					OpcDatapoints.GetItem(PointID).DBType = TestItem[0].CanonicalDataType;
 					Hsrv[ServerID][GroupID].Add(TestItem[0].HandleServer);
 					TheGroup[ServerID][GroupID].wpActive = true;
 				}
@@ -543,12 +543,12 @@ namespace WebAutomation.Helper {
 							eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 								String.Format("Gruppe '{0}' - Item nicht aktiv: '{1}'\r\n\t{2}",
 								TheGroup[ServerID][GroupID].Name,
-								OpcDatapoints.getItem(PointID[i]).OpcItemName,
+								OpcDatapoints.GetItem(PointID[i]).OpcItemName,
 								HRESULTS.getError(TestItem[i].Error)));
 						} else {
 							// local store information from opc server
-							OpcDatapoints.getItem(PointID[i]).Hsrv = TestItem[i].HandleServer;
-							OpcDatapoints.getItem(PointID[i]).DBType = TestItem[i].CanonicalDataType;
+							OpcDatapoints.GetItem(PointID[i]).Hsrv = TestItem[i].HandleServer;
+							OpcDatapoints.GetItem(PointID[i]).DBType = TestItem[i].CanonicalDataType;
 							Hsrv[ServerID][GroupID].Add(TestItem[i].HandleServer);
 						}
 					}
@@ -647,7 +647,7 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		public string newOPCServer(int ServerID) {
 			using (Database Sql = new Database("Add OPC Server")) {
-				string[][] DBserver = Sql.wpQuery(@"SELECT [progid], [clsid], [name], [server], [active]
+				string[][] DBserver = Sql.Query(@"SELECT [progid], [clsid], [name], [server], [active]
 					FROM [opcserver] WHERE [id_opcserver] = {0}", ServerID);
 				TheServerAdd(ServerID, DBserver[0][0], DBserver[0][1], DBserver[0][2],
 					DBserver[0][3], DBserver[0][4] == "True");
@@ -687,7 +687,7 @@ namespace WebAutomation.Helper {
 				TheGroup.Remove(ServerID);
 				Hsrv.Remove(ServerID);
 				using(Database Sql = new Database("Remove OPC Server")) {
-					string[][] DBDatapoints = Sql.wpQuery(@"
+					string[][] DBDatapoints = Sql.Query(@"
 						SELECT [d].[id_opcdatapoint] FROM [opcdatapoint] [d]
 						INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
 						INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
@@ -697,8 +697,8 @@ namespace WebAutomation.Helper {
 					for(int i = 0; i < DBDatapoints.Length; i++) {
 						if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 					}
-					OpcDatapoints.deleteItems(toDelete.ToArray());
-					Sql.wpNonResponse("DELETE FROM [opcserver] WHERE [id_opcserver] = {0}", ServerID);
+					OpcDatapoints.DeleteItems(toDelete.ToArray());
+					Sql.NonResponse("DELETE FROM [opcserver] WHERE [id_opcserver] = {0}", ServerID);
 				}
 			} catch (Exception ex) {
 				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -716,7 +716,7 @@ namespace WebAutomation.Helper {
 			using (Database Sql = new Database("Add OPC Groups")) {
 				string tempLog, GroupLog = "";
 				string tempErr, GroupErr = "";
-				string[][] DBGroup = Sql.wpQuery(@"
+				string[][] DBGroup = Sql.Query(@"
 					SELECT [s].[id_opcserver], [g].[name], [g].[duration], [g].[active]
 					FROM [opcgroup] [g]
 					INNER JOIN [opcserver] [s] ON [g].[id_opcserver] = [s].[id_opcserver]
@@ -742,7 +742,7 @@ namespace WebAutomation.Helper {
 		public string removeOPCGroup(int GroupID) {
 			try {
 				using(Database Sql = new Database("Remove OPC Group")) {
-					string[][] OPCServerID = Sql.wpQuery(@"SELECT [id_opcserver]
+					string[][] OPCServerID = Sql.Query(@"SELECT [id_opcserver]
 						FROM [opcgroup] WHERE [id_opcgroup] = {0}", GroupID);
 					int ServerID;
 					if (Int32.TryParse(OPCServerID[0][0], out ServerID)) {
@@ -759,7 +759,7 @@ namespace WebAutomation.Helper {
 				
 						TheGroup[ServerID].Remove(GroupID);
 						Hsrv[ServerID].Remove(GroupID);
-						string[][] DBDatapoints = Sql.wpQuery(@"
+						string[][] DBDatapoints = Sql.Query(@"
 							SELECT [d].[id_opcdatapoint] FROM [opcdatapoint] [d]
 							INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
 							WHERE [g].[id_opcgroup] = " + GroupID);
@@ -768,8 +768,8 @@ namespace WebAutomation.Helper {
 						for (int i = 0; i < DBDatapoints.Length; i++) {
 							if (Int32.TryParse(DBDatapoints[i][0], out intout)) toDelete.Add(intout);
 						}
-						OpcDatapoints.deleteItems(toDelete.ToArray());
-						Sql.wpNonResponse("DELETE FROM [opcgroup] WHERE [id_opcgroup] = {0}", GroupID);
+						OpcDatapoints.DeleteItems(toDelete.ToArray());
+						Sql.NonResponse("DELETE FROM [opcgroup] WHERE [id_opcgroup] = {0}", GroupID);
 					}
 				}
 			} catch (Exception ex) {
@@ -787,7 +787,7 @@ namespace WebAutomation.Helper {
 			int idserver;
 			int idpoint;
 			using (Database Sql = new Database("Add OPC Items")) {
-				string[][] DBDatapoints = Sql.wpQuery(@"
+				string[][] DBDatapoints = Sql.Query(@"
 					SELECT [s].[id_opcserver], [d].[id_opcdatapoint], [d].[opcname], [d].[name]
 					FROM [opcdatapoint] [d]
 					INNER JOIN [opcgroup] [g] ON [d].[id_opcgroup] = [g].[id_opcgroup]
@@ -816,9 +816,9 @@ namespace WebAutomation.Helper {
 				where += String.Format("[id_opcdatapoint] = {0} OR ", PointID[i]);
 			}
 			using(Database Sql = new Database("Delete OPC Items")) {
-				Sql.wpNonResponse(where.Substring(0, where.Length - 4));
+				Sql.NonResponse(where.Substring(0, where.Length - 4));
 			}
-			OpcDatapoints.deleteItems(PointID);
+			OpcDatapoints.DeleteItems(PointID);
 			/// TODO: Gruppe entfernen, wenn keine Datenpunkte mehr vorhanden sind
 			return "S_OK";
 		}
@@ -890,7 +890,7 @@ namespace WebAutomation.Helper {
 		public void renameOPCGroup(int idgroup, string newname) {
 			int idserver;
 			using (Database Sql = new Database("Rename OPCGroup")) {
-				string[][] DBServer = Sql.wpQuery(@"
+				string[][] DBServer = Sql.Query(@"
 					SELECT TOP 1 [id_opcserver] FROM [opcgroup] WHERE [id_opcgroup] = {0}", idgroup);
 				Int32.TryParse(DBServer[0][0], out idserver);
 			}
@@ -995,7 +995,7 @@ namespace WebAutomation.Helper {
 			DateTime DateTimeNow = DateTime.Now;
 			string lastchange = "";
 			foreach (OPCItemState s in e.sts) {
-				OPCItem ItemChanged = OpcDatapoints.getItem(s.HandleClient);
+				OPCItem ItemChanged = OpcDatapoints.GetItem(s.HandleClient);
 				if (ItemChanged == null) {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "[ReadCompleted] Item momentan in Gebrauch id: '{0}'",
 						s.HandleClient);
@@ -1043,7 +1043,7 @@ namespace WebAutomation.Helper {
 			if (running) {
 				DateTime DateTimeNow = DateTime.Now;
 				foreach (OPCItemState s in e.sts) {
-					OPCItem ItemChanged = OpcDatapoints.getItem(s.HandleClient);
+					OPCItem ItemChanged = OpcDatapoints.GetItem(s.HandleClient);
 					if (ItemChanged == null) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 							"[DataChanged] Item momentan in Gebrauch id: '{0}'", s.HandleClient);
@@ -1094,7 +1094,7 @@ namespace WebAutomation.Helper {
 		public void TheGroup_WriteCompleted(object sender, WriteCompleteEventArgs e) {
 			string strevlog = "";
 			for(int i = 0; i < e.res.Length; i++) {
-				OPCItem TheItem = OpcDatapoints.getItem(e.res[i].HandleClient);
+				OPCItem TheItem = OpcDatapoints.GetItem(e.res[i].HandleClient);
 				if (TheItem != null) {
 					// Fuehrt zu einer Schleife!!!
 					// if (Program.MainProg.IsTaster(e.res[i].HandleClient))
@@ -1138,7 +1138,7 @@ namespace WebAutomation.Helper {
 		public string setValue(int opcid, string value, int transferreason) {
 			if (!running) return "";
 			try {
-				OPCItem Item = OpcDatapoints.getItem(opcid);
+				OPCItem Item = OpcDatapoints.GetItem(opcid);
 				if (Item != null) {
 					int[] aE = new int[] { 1 };
 					int cI;
@@ -1227,7 +1227,7 @@ namespace WebAutomation.Helper {
 				Dictionary<int, Dictionary<int, Dictionary<int, object>>> Items =
 					new Dictionary<int, Dictionary<int, Dictionary<int, object>>>();
 				for (int i = 0; i < opcid.Length; i++) {
-					OPCItem TheItem = OpcDatapoints.getItem(opcid[i]);
+					OPCItem TheItem = OpcDatapoints.GetItem(opcid[i]);
 					if (TheItem != null) {
 						if (Items.ContainsKey(TheItem.Server)) {
 							if (Items[TheItem.Server].ContainsKey(TheItem.Group)) {
@@ -1800,7 +1800,7 @@ namespace WebAutomation.Helper {
 		public string GetOPCGroupDetails(int idgroup) {
 			int outint;
 			using(Database Sql = new Database("OPC Group Details")) {
-				string[][] DBServer = Sql.wpQuery(@"SELECT TOP 1 [id_opcserver]
+				string[][] DBServer = Sql.Query(@"SELECT TOP 1 [id_opcserver]
 					FROM [opcgroup] WHERE [id_opcgroup] = {0}", idgroup);
 				Int32.TryParse(DBServer[0][0], out outint);
 			}
@@ -1827,7 +1827,7 @@ namespace WebAutomation.Helper {
 				if (TheItemStates.Value == HRESULTS.S_OK) {
 					iGood++;
 				} else {
-					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.getItem(TheItemStates.Key).OpcItemName,
+					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.GetItem(TheItemStates.Key).OpcItemName,
 						HRESULTS.getError(TheItemStates.Value));
 				}
 			}
@@ -1841,7 +1841,7 @@ namespace WebAutomation.Helper {
 				if (TheItemQuality.Value == (short)OPC_QUALITY_STATUS.OK) {
 					iGood++;
 				} else {
-					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.getItem(TheItemQuality.Key).OpcItemName,
+					sGood += String.Format("{{{0}={1}}}", OpcDatapoints.GetItem(TheItemQuality.Key).OpcItemName,
 						OpcGroup.QualityToString(TheItemQuality.Value));
 				}
 			}
@@ -1857,7 +1857,7 @@ namespace WebAutomation.Helper {
 		public string ChangeOPCGroupState(int idgroup) {
 			int outint;
 			using (Database Sql = new Database("OPC Group Details")) {
-				string[][] DBServer = Sql.wpQuery(@"SELECT TOP 1 [id_opcserver]
+				string[][] DBServer = Sql.Query(@"SELECT TOP 1 [id_opcserver]
 					FROM [opcgroup] WHERE [id_opcgroup] = {0}", idgroup);
 				Int32.TryParse(DBServer[0][0], out outint);
 			}
@@ -1876,7 +1876,7 @@ namespace WebAutomation.Helper {
 				TheGroup[idserver][idgroup].wpActive = false;
 				removeEvents(TheGroup[idserver][idgroup], idserver, idgroup);
 				using (Database Sql = new Database("OPC Group deactivate")) {
-					Sql.wpNonResponse("UPDATE [opcgroup] SET [active] = 0 WHERE [id_opcgroup] = {0}", idgroup);
+					Sql.NonResponse("UPDATE [opcgroup] SET [active] = 0 WHERE [id_opcgroup] = {0}", idgroup);
 				}
 				return "False";
 			} else {
@@ -1885,7 +1885,7 @@ namespace WebAutomation.Helper {
 				TheGroup[idserver][idgroup].wpActive = true;
 				addEvents(TheGroup[idserver][idgroup], idserver, idgroup);
 				using (Database Sql = new Database("OPC Group activate")) {
-					Sql.wpNonResponse("UPDATE [opcgroup] SET [active] = 1 WHERE [id_opcgroup] = {0}", idgroup);
+					Sql.NonResponse("UPDATE [opcgroup] SET [active] = 1 WHERE [id_opcgroup] = {0}", idgroup);
 				}
 
 				WriteLevel.AddGroupWriteLevel(idgroup);
@@ -1911,7 +1911,7 @@ namespace WebAutomation.Helper {
 		}
 
 		public int ChangeOPCItemType(int iditem, VarEnum newtype) {
-			OPCItem TheItem = OpcDatapoints.getItem(iditem);
+			OPCItem TheItem = OpcDatapoints.GetItem(iditem);
 			int[] arrErr;
 			int cI;
 			if (!TheGroup[TheItem.Server][TheItem.Group].SetDatatypes(
@@ -1919,9 +1919,9 @@ namespace WebAutomation.Helper {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), "Datentyp konnte nicht umbenannt werden");
 			}
 			using(Database Sql = new Database("Change DataType")) {
-				if (newtype == VarEnum.VT_EMPTY) Sql.wpNonResponse(@"UPDATE [opcdatapoint] SET
+				if (newtype == VarEnum.VT_EMPTY) Sql.NonResponse(@"UPDATE [opcdatapoint] SET
 					[forcetype] = NULL WHERE [id_opcdatapoint] = {0}", iditem);
-				else Sql.wpNonResponse(@"UPDATE [opcdatapoint] SET
+				else Sql.NonResponse(@"UPDATE [opcdatapoint] SET
 					[forcetype] = ""{0}"" WHERE [id_opcdatapoint] = {1}", PVTEnum.ToString(newtype), iditem);
 			}
 			if (!TheGroup[TheItem.Server][TheItem.Group].Read(new int[] { TheItem.Hsrv },
@@ -1932,7 +1932,7 @@ namespace WebAutomation.Helper {
 		}
 		public void ReadOPC(int iditem) {
 			if (!running) return;
-			OPCItem TheItem = OpcDatapoints.getItem(iditem);
+			OPCItem TheItem = OpcDatapoints.GetItem(iditem);
 			int[] arrErr;
 			int cI;
 			if (TheItem != null) {
@@ -1950,7 +1950,7 @@ namespace WebAutomation.Helper {
 			Hsrv[TheItem.Server][TheItem.Group].Remove(TheItem.Hclt);
 			TheItemConnect(TheItem.Server, idnewgroup, TheItem.Hclt, TheItem.OpcItemName, TheItem.DBType);
 			using(Database Sql = new Database("Move Item to Group")) {
-				Sql.wpNonResponse(@"UPDATE [opcdatapoint] SET
+				Sql.NonResponse(@"UPDATE [opcdatapoint] SET
 					[id_opcgroup] = {0} WHERE [id_opcdatapoint] = {1}", idnewgroup, TheItem.Hclt);
 			}
 			return "S_OK";

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 204                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 204 2025-05-01 20:19:13Z                          $ #
+//# File-ID      : $Id:: Sun.cs 213 2025-05-15 14:50:57Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -40,16 +40,16 @@ namespace WebAutomation.Helper {
 		public Sun() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
 			int testSunIsShining, testSunRising, testSunsetting, testSummer;
-			if(Int32.TryParse(IniFile.get("Projekt", "SunIsShining"), out testSunIsShining)) {
+			if(Int32.TryParse(IniFile.Get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
 			}
-			if(Int32.TryParse(IniFile.get("Projekt", "SunRise"), out testSunRising)) {
+			if(Int32.TryParse(IniFile.Get("Projekt", "SunRise"), out testSunRising)) {
 				SunRiseId = testSunRising;
 			}
-			if(Int32.TryParse(IniFile.get("Projekt", "SunSet"), out testSunsetting)) {
+			if(Int32.TryParse(IniFile.Get("Projekt", "SunSet"), out testSunsetting)) {
 				SunSetId = testSunsetting;
 			}
-			if(Int32.TryParse(IniFile.get("Projekt", "Summer"), out testSummer)) {
+			if(Int32.TryParse(IniFile.Get("Projekt", "Summer"), out testSummer)) {
 				SummerId = testSummer;
 			}
 			_ = StartSunriseSunsetTimer();
@@ -58,16 +58,16 @@ namespace WebAutomation.Helper {
 		public String SetSummer(bool summer) {
 			this.summer = summer;
 			using(Database Sql = new Database("Sun")) {
-				Sql.wpQuery("UPDATE [cfg] SET [value] = '" + (summer ? "1" : "0") + "' WHERE [key] = 'summer'");
+				Sql.Query("UPDATE [cfg] SET [value] = '" + (summer ? "1" : "0") + "' WHERE [key] = 'summer'");
 			}
-			Datapoints.Get(SummerId).writeValue(summer ? "1" : "0");
+			Datapoints.Get(SummerId).WriteValue(summer ? "1" : "0");
 			return new ret() { erg = ret.OK, message = $"Summer Set to {(summer ? "True" : "False")}" }.ToString();
 		}
 		public void InitSummer() {
 			using(Database Sql = new Database("Sun")) {
-				summer = Sql.wpQuery("SELECT TOP 1 [value] FROM [cfg] WHERE [key] = 'summer'")[0][0] == "1";
+				summer = Sql.Query("SELECT TOP 1 [value] FROM [cfg] WHERE [key] = 'summer'")[0][0] == "1";
 			}
-			Datapoints.Get(SummerId).writeValue(summer ? "1" : "0");
+			Datapoints.Get(SummerId).WriteValue(summer ? "1" : "0");
 		}
 		private async Task StartSunriseSunsetTimer() {
 
@@ -114,35 +114,35 @@ namespace WebAutomation.Helper {
 			});
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
-			Datapoints.Get(SunShineId).writeValue("1");
+			Datapoints.Get(SunShineId).WriteValue("1");
 			InitSummer();
 		}
 		private void SunsetTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
-			Datapoints.Get(SunShineId).writeValue("0");
+			Datapoints.Get(SunShineId).WriteValue("0");
 			InitSummer();
 		}
 		private async Task GetSunsetSunrise() {
 			try {
 				InitSummer();
 				WebClient webClient = new WebClient();
-				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", IniFile.get("Projekt", "OpenWeatherCode"));
+				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", IniFile.Get("Projekt", "OpenWeatherCode"));
 				webClient.DownloadStringCompleted += (e, args) => {
 					if(args.Error == null) {
 						try {
 							OpenWeather.weather SunsetSunrise = JsonConvert.DeserializeObject<OpenWeather.weather>(args.Result);
 							sunrise = UnixTimeStampToDateTime(SunsetSunrise.sys.sunrise);
 							sunset = UnixTimeStampToDateTime(SunsetSunrise.sys.sunset);
-							Datapoints.Get(SunRiseId).writeValue(sunrise.ToString(Database.DateTimeFormat));
-							Datapoints.Get(SunSetId).writeValue(sunset.ToString(Database.DateTimeFormat));
+							Datapoints.Get(SunRiseId).WriteValue(sunrise.ToString(Database.DateTimeFormat));
+							Datapoints.Get(SunSetId).WriteValue(sunset.ToString(Database.DateTimeFormat));
 							//PDebug.Write(result);
 							Debug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
 							DateTime Now = DateTime.Now;
 							if(Now < sunrise) {
-								Datapoints.Get(SunShineId).writeValue("0");
+								Datapoints.Get(SunShineId).WriteValue("0");
 							} else if(Now >= sunrise && Now < sunset) {
-								Datapoints.Get(SunShineId).writeValue("1");
+								Datapoints.Get(SunShineId).WriteValue("1");
 							} else if(Now > sunset) {
-								Datapoints.Get(SunShineId).writeValue("0");
+								Datapoints.Get(SunShineId).WriteValue("0");
 							}
 							TimeSpan toSunrise = sunrise - Now;
 							TimeSpan toSunset = sunset - Now;

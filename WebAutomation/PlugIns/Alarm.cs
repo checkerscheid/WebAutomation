@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 188                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 188 2025-02-17 00:57:33Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 213 2025-05-15 14:50:57Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -522,7 +522,7 @@ namespace WebAutomation.PlugIns {
 				_quit = Alarm.Default;
 			}
 			using (Database Sql = new Database("Alarm Come in Historic")) {
-				Sql.wpNonResponse(
+				Sql.NonResponse(
 					"INSERT INTO [alarmhistoric] ([id_alarm], [come], [quit], [quitfrom], [text]) " +
 					"VALUES ({0}, '{1}', {2}, {3}, '{4}')",
 					_idalarm,
@@ -541,7 +541,7 @@ namespace WebAutomation.PlugIns {
 			_gone = Now;
 			_inalarm = false;
 			using (Database Sql = new Database("Alarm Gone in Historic")) {
-				Sql.wpNonResponse(
+				Sql.NonResponse(
 					"UPDATE [alarmhistoric] SET [gone] = '{0}'  WHERE [id_alarm] = {1} AND [gone] IS NULL",
 					Now.ToString(Database.DateTimeFormat),
 					_idalarm);
@@ -603,7 +603,7 @@ namespace WebAutomation.PlugIns {
 			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			FillAlarmGroups();
 			using (Database Sql = new Database("Init Alarms")) {
-				string[][] DBAlarms = Sql.wpQuery(@"
+				string[][] DBAlarms = Sql.Query(@"
 				SELECT
 					[a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
 					[g].[name], [dp].[id_dp], [dp].[name], [c].[condition],
@@ -641,8 +641,8 @@ namespace WebAutomation.PlugIns {
 					} else {
 						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], 0);
 					}
-					int? emailCounter = Database.convertNumeric(DBAlarms[ialarms][12]);
-					int? emailMinutes = Database.convertNumeric(DBAlarms[ialarms][13]);
+					int? emailCounter = Database.ConvertNumeric(DBAlarms[ialarms][12]);
+					int? emailMinutes = Database.ConvertNumeric(DBAlarms[ialarms][13]);
 					TheAlarm.Alarmtext = DBAlarms[ialarms][1];
 					TheAlarm.Alarmlink = DBAlarms[ialarms][2];
 					TheAlarm.Alarmtype = DBAlarms[ialarms][3];
@@ -668,7 +668,7 @@ namespace WebAutomation.PlugIns {
 			}
 
 			using(Database Sql = new Database("Add Aktive Alarms")) {
-				string[][] DBActiveAlarms = Sql.wpQuery(@"
+				string[][] DBActiveAlarms = Sql.Query(@"
 			SELECT 
 				[t].[id_alarm], [t].[id_dp], [t].[come], [t].[gone], [t].[quit]
 			FROM (
@@ -734,7 +734,7 @@ namespace WebAutomation.PlugIns {
 		}
 		public static string FillAlarmGroups() {
 			using(Database Sql = new Database("Fill AlarmGroups")) {
-				string[][] DBAlarmGroups = Sql.wpQuery(@"SELECT [key], [value] FROM [cfg] WHERE
+				string[][] DBAlarmGroups = Sql.Query(@"SELECT [key], [value] FROM [cfg] WHERE
 					[key] = 'usealarmgroup1' OR
 					[key] = 'usealarmgroup2' OR
 					[key] = 'usealarmgroup3' OR
@@ -760,7 +760,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm1Member = Sql.wpQuery(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
+				string[][] DBAlarm1Member = Sql.Query(@"SELECT [id_alarmgroups1], [name] FROM [alarmgroups1]");
 				for(int ialarms = 0; ialarms < DBAlarm1Member.Length; ialarms++) {
 					if(!_alarmgroups1member.ContainsKey(Int32.Parse(DBAlarm1Member[ialarms][0]))) {
 						_alarmgroups1member.Add(Int32.Parse(DBAlarm1Member[ialarms][0]), DBAlarm1Member[ialarms][1]);
@@ -768,7 +768,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm2Member = Sql.wpQuery(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
+				string[][] DBAlarm2Member = Sql.Query(@"SELECT [id_alarmgroups2], [name] FROM [alarmgroups2]");
 				for(int ialarms = 0; ialarms < DBAlarm2Member.Length; ialarms++) {
 					if(!_alarmgroups2member.ContainsKey(Int32.Parse(DBAlarm2Member[ialarms][0]))) {
 						_alarmgroups2member.Add(Int32.Parse(DBAlarm2Member[ialarms][0]), DBAlarm2Member[ialarms][1]);
@@ -776,7 +776,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm3Member = Sql.wpQuery(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
+				string[][] DBAlarm3Member = Sql.Query(@"SELECT [id_alarmgroups3], [name] FROM [alarmgroups3]");
 				for(int ialarms = 0; ialarms < DBAlarm3Member.Length; ialarms++) {
 					if(!_alarmgroups3member.ContainsKey(Int32.Parse(DBAlarm3Member[ialarms][0]))) {
 						_alarmgroups3member.Add(Int32.Parse(DBAlarm3Member[ialarms][0]), DBAlarm3Member[ialarms][1]);
@@ -784,7 +784,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm4Member = Sql.wpQuery(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
+				string[][] DBAlarm4Member = Sql.Query(@"SELECT [id_alarmgroups4], [name] FROM [alarmgroups4]");
 				for(int ialarms = 0; ialarms < DBAlarm4Member.Length; ialarms++) {
 					if(!_alarmgroups4member.ContainsKey(Int32.Parse(DBAlarm4Member[ialarms][0]))) {
 						_alarmgroups4member.Add(Int32.Parse(DBAlarm4Member[ialarms][0]), DBAlarm4Member[ialarms][1]);
@@ -792,7 +792,7 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			using(Database Sql = new Database("FillAlarmGroups Alarmgroups Member")) {
-				string[][] DBAlarm5Member = Sql.wpQuery(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
+				string[][] DBAlarm5Member = Sql.Query(@"SELECT [id_alarmgroups5], [name] FROM [alarmgroups5]");
 				for(int ialarms = 0; ialarms < DBAlarm5Member.Length; ialarms++) {
 					if(!_alarmgroups5member.ContainsKey(Int32.Parse(DBAlarm5Member[ialarms][0]))) {
 						_alarmgroups5member.Add(Int32.Parse(DBAlarm5Member[ialarms][0]), DBAlarm5Member[ialarms][1]);

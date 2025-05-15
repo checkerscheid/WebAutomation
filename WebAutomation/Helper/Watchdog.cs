@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 205                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Watchdog.cs 205 2025-05-03 00:07:31Z                     $ #
+//# File-ID      : $Id:: Watchdog.cs 213 2025-05-15 14:50:57Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -36,13 +36,13 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(Logger.ESource.PlugInWatchdog);
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog init");
 			int watchdogVerz;
-			if (Int32.TryParse(IniFile.get("Watchdog", "Verz"), out watchdogVerz)) {
+			if (Int32.TryParse(IniFile.Get("Watchdog", "Verz"), out watchdogVerz)) {
 				if (watchdogVerz <= 0) watchdogVerz = 1;
 				watchdogTimer = new System.Timers.Timer(1000 * 60 * watchdogVerz);
 				watchdogTimer.Elapsed += watchdog_Tick;
 				watchdogTimer.AutoReset = true;
 				watchdogTimer.Enabled = true;
-				if (!Int32.TryParse(IniFile.get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
+				if (!Int32.TryParse(IniFile.Get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
 					maxWatchdogByte = 255;
 				}
 				if (maxWatchdogByte < 2) maxWatchdogByte = 2;
@@ -77,9 +77,9 @@ namespace WebAutomation.Helper {
 			bool MqttAlarmValid = false;
 			List<int> OpcWatchdogs = new List<int>();
 			List<int> MqttWatchdogs = new List<int>();
-			string OpcWatchdog = IniFile.get("Watchdog", "DpIdOpc");
-			string MqttWatchdog = IniFile.get("Watchdog", "DpIdMqtt");
-			if(Int32.TryParse(IniFile.get("Watchdog", "DpIdMqttAlarm"), out MqttAlarm)) {
+			string OpcWatchdog = IniFile.Get("Watchdog", "DpIdOpc");
+			string MqttWatchdog = IniFile.Get("Watchdog", "DpIdMqtt");
+			if(Int32.TryParse(IniFile.Get("Watchdog", "DpIdMqttAlarm"), out MqttAlarm)) {
 				MqttAlarmValid = true;
 			}
 			if(OpcWatchdog.Contains(",")) {
@@ -115,12 +115,12 @@ namespace WebAutomation.Helper {
 				if(watchdogByte > 1 && !String.IsNullOrEmpty(Datapoints.Get(id).Value) && Datapoints.Get(id).Value != watchdogByteLast.ToString()) {
 					Debug.Write(MethodBase.GetCurrentMethod(), $"MQTT Broker Offline? DP: {Datapoints.Get(id).Value}, WD: {watchdogByteLast}");
 					if(MqttAlarmValid)
-						Datapoints.Get(MqttAlarm).writeValue("1");
+						Datapoints.Get(MqttAlarm).WriteValue("1");
 				} else {
 					if(MqttAlarmValid)
-						Datapoints.Get(MqttAlarm).writeValue("0");
+						Datapoints.Get(MqttAlarm).WriteValue("0");
 				}
-				Datapoints.Get(id).writeValue(watchdogByte.ToString());
+				Datapoints.Get(id).WriteValue(watchdogByte.ToString());
 				if(Debug.debugTransferID)
 					Debug.Write(MethodInfo.GetCurrentMethod(), "write MQTT WatchdogByte: {0}", watchdogByte);
 			}
@@ -138,7 +138,7 @@ namespace WebAutomation.Helper {
 				if (_serviceStatus != value) {
 					_serviceStatus = value;
 					if (_serviceStatus == ServiceControllerStatus.Stopped) {
-						if (Common.isAdmin()) {
+						if (Common.IsAdmin()) {
 							try {
 								serviceStart.Change(2000, Timeout.Infinite);
 							} catch (Exception ex) {
@@ -157,7 +157,7 @@ namespace WebAutomation.Helper {
 			this._serviceName = servicename;
 			if (_serviceName != "" && checkServiceInstalled()) {
 				serviceTimer = new Timer(Timer_Tick, _serviceName, 0, 500);
-				if (Common.isAdmin()) {
+				if (Common.IsAdmin()) {
 					Debug.Write(MethodInfo.GetCurrentMethod(), "Autostart Services activated.");
 					serviceStart = new Timer(new TimerCallback(Start_Tick));
 				}

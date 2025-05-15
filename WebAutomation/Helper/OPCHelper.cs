@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 203                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCHelper.cs 203 2025-04-27 15:09:36Z                    $ #
+//# File-ID      : $Id:: OPCHelper.cs 213 2025-05-15 14:50:57Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -193,7 +193,7 @@ namespace WebAutomation.Helper {
 			set {
 				if (!hasFirstValue) {
 					using (Database Sql = new Database("startup for Datapoint")) {
-						Sql.wpNonResponse("UPDATE [opcdatapoint] SET [startuptype] = '{1}', [startupquality] = '{2}' WHERE [id_opcdatapoint] = {0}", _hclt, _dbtype, OPCQuality.get(_quality));
+						Sql.NonResponse("UPDATE [opcdatapoint] SET [startuptype] = '{1}', [startupquality] = '{2}' WHERE [id_opcdatapoint] = {0}", _hclt, _dbtype, OPCQuality.get(_quality));
 					}
 				}
 				_hasFirstValue = true;

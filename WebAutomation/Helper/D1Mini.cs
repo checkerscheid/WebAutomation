@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 196                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 196 2025-03-30 13:06:32Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 213 2025-05-15 14:50:57Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -83,25 +83,31 @@ namespace WebAutomation.Helper {
 					foreach(TableD1Mini td1m in ltd1m) {
 						D1Mini d1m = new D1Mini(td1m);
 						_d1Minis.Add(d1m);
-						addSubscribtions(d1m.getSubscribtions());
+						AddSubscribtions(d1m.GetSubscribtions());
 						//d1md.sendCmd("ForceMqttUpdate");
 					}
 				} catch(Exception ex) {
 					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
-			Program.MainProg.wpMQTTClient.d1MiniChanged += wpMQTTClient_d1MiniChanged;
+			Program.MainProg.wpMQTTClient.d1MiniChanged += MQTTClient_d1MiniChanged;
 			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server gestartet");
 		}
 		public static void Start() {
+			Task.Run(async () =>{
+				await StartAsync();
+			});
+		}
+		public async static Task StartAsync() {
 			foreach(D1Mini d1md in _d1Minis) {
 				d1md.Start();
+				await Task.Delay(100);
 			}
-			OnlineTogglerSendIntervall = IniFile.getInt("D1Mini", "OnlineTogglerSendIntervall");
-			OnlineTogglerWait = IniFile.getInt("D1Mini", "OnlineTogglerWait");
+			OnlineTogglerSendIntervall = IniFile.GetInt("D1Mini", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = IniFile.GetInt("D1Mini", "OnlineTogglerWait");
 		}
 		public static void Stop() {
-			stopSearch();
+			StopSearch();
 			if(_d1Minis != null) {
 				foreach(D1Mini d1md in _d1Minis) {
 					d1md.Stop();
@@ -110,24 +116,24 @@ namespace WebAutomation.Helper {
 		}
 		public static void ForceRenewValue() {
 			foreach(D1Mini d1md in _d1Minis) {
-				d1md.sendCmd(new D1Mini.cmdList(D1Mini.cmdList.ForceRenewValue));
+				d1md.SendCmd(new D1Mini.CmdList(D1Mini.CmdList.ForceRenewValue));
 			}
 		}
 		public static bool ForceMqttUpdate() {
 			bool returns = false;
 			foreach(D1Mini d1md in _d1Minis) {
-				if(!d1md.sendCmd(new D1Mini.cmdList(D1Mini.cmdList.ForceMqttUpdate)))
+				if(!d1md.SendCmd(new D1Mini.CmdList(D1Mini.CmdList.ForceMqttUpdate)))
 					returns = false;
 			}
 			return returns;
 		}
-		public static string getServerSettings() {
+		public static string GetServerSettings() {
 			return "{" + 
 				$"\"OnlineTogglerSendIntervall\":\"{OnlineTogglerSendIntervall}\"," +
 				$"\"OnlineTogglerWait\":\"{OnlineTogglerWait}\"" +
 				"}";
 		}
-		public static string setServerSetting(string setting, string value) {
+		public static string SetServerSetting(string setting, string value) {
 			int _v = 0;
 			int OnlineTogglerSendIntervallMin = 0;
 			int OnlineTogglerSendIntervallMax = 120;
@@ -166,24 +172,24 @@ namespace WebAutomation.Helper {
 					return $"{{\"erg\":\"S_ERROR\",\"msg\":\"unknown command\"}}";
 			}
 		}
-		public static void addD1Mini(int idd1mini) {
+		public static void AddD1Mini(int idd1mini) {
 			using(Database Sql = new Database("Select new D1Mini")) {
 				TableD1Mini td1m = Sql.Select<TableD1Mini>(idd1mini);
 				D1Mini d1md = new D1Mini(td1m);
 				if(!_d1Minis.Exists(t => t.Id == idd1mini))
 					_d1Minis.Add(d1md);
-				addSubscribtions(d1md.getSubscribtions());
+				AddSubscribtions(d1md.GetSubscribtions());
 			}
 			Program.MainProg.wpMQTTClient.registerNewD1MiniDatapoints();
 		}
-		public static void removeD1Mini(int idd1mini) {
+		public static void RemoveD1Mini(int idd1mini) {
 			using(Database Sql = new Database("Delete D1Mini")) {
 				if(_d1Minis.Exists(t => t.Id == idd1mini))
 					_d1Minis.Remove(_d1Minis.Find(t => t.Id == idd1mini));
 				Sql.Delete<TableD1Mini>(idd1mini);
 			}
 		}
-		private static void wpMQTTClient_d1MiniChanged(object sender, MQTTClient.valueChangedEventArgs e) {
+		private static void MQTTClient_d1MiniChanged(object sender, MQTTClient.valueChangedEventArgs e) {
 			int pos = e.topic.IndexOf("/");
 			string name = e.topic.Substring(0, pos);
 			string setting = e.topic.Substring(pos + 1);
@@ -207,7 +213,7 @@ namespace WebAutomation.Helper {
 					d1md.Online = e.value == "0" ? false : true;
 			}
 		}
-		public static void renewActiveState() {
+		public static void RenewActiveState() {
 			using(Database db = new Database("Get All D1Mini's")) {
 				List<TableD1Mini> table = db.Select<TableD1Mini>();
 				foreach(TableD1Mini d1mini in table) {
@@ -215,17 +221,17 @@ namespace WebAutomation.Helper {
 				}
 			}
 		}
-		public static void addSubscribtions(List<string> topic) {
+		public static void AddSubscribtions(List<string> topic) {
 			try {
 				Subscribtions.AddRange(topic);
 			} catch(Exception ex) {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
-		public static List<string> getSubscribtions() {
+		public static List<string> GetSubscribtions() {
 			return Subscribtions;
 		}
-		public static string getJson() {
+		public static string GetJson() {
 			if(Debug.debugD1Mini) Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini getJson Settings");
 			string returns = "{";
 			foreach(D1Mini d1md in _d1Minis) {
@@ -241,10 +247,10 @@ namespace WebAutomation.Helper {
 			}
 			return returns.Remove(returns.Length - 1) + "}";
 		}
-		public static string getJsonStatus(string ip) {
-			return getJsonStatus(ip, false);
+		public static string GetJsonStatus(string ip) {
+			return GetJsonStatus(ip, false);
 		}
-		public static string getJsonStatus(string ip, bool saveStatus) {
+		public static string GetJsonStatus(string ip, bool saveStatus) {
 			IPAddress _ip;
 			string returns = new ret { erg = ret.ERROR }.ToString();
 			if(IPAddress.TryParse(ip, out _ip)) {
@@ -258,7 +264,7 @@ namespace WebAutomation.Helper {
 						WebClient webClient = new WebClient();
 						returns = webClient.DownloadString(new Uri(url));
 						if(saveStatus)
-							saveJsonStatus(_ip, returns);
+							SaveJsonStatus(_ip, returns);
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 					}
@@ -268,40 +274,40 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		private static void saveJsonStatus(IPAddress ip, string status) {
+		private static void SaveJsonStatus(IPAddress ip, string status) {
 			using(Database Sql = new Database("save status")) {
-				string id = "NULL";
-				string[][] erg = Sql.wpQuery($"SELECT [id_d1mini] FROM [d1mini] WHERE [ip] = '{ip}'");
-				Debug.Write(MethodBase.GetCurrentMethod(), $"Anzahl: {erg.Length}, id: {erg[0][0]}");
-				if(erg.Length > 0) {
-					id = erg[0][0];
+				List<TableD1Mini> ltd1m = Sql.Select<TableD1Mini>($"[{nameof(TableD1Mini.ip)}] = '{ip}'");
+				//string[][] erg = Sql.Query($"SELECT [id_d1mini] FROM [d1mini] WHERE [ip] = '{ip}'");
+				if(ltd1m.Count != 1) {
+					Debug.Write(MethodBase.GetCurrentMethod(), $"Warnung: D1Mini mit {ip}: {ltd1m.Count}");
+				} else {
+					Sql.Query(@$"MERGE INTO [d1minicfg] AS [TARGET]
+USING (
+	VALUES (
+		{ltd1m[0].id_d1mini}, '{ip}', '{status}', GETDATE()
+	)
+) AS [SOURCE] (
+		[id_d1mini], [ip], [status], [datetime]
+) ON
+	[TARGET].[id_d1mini] = [SOURCE].[id_d1mini]
+WHEN MATCHED AND [TARGET].[status] != [SOURCE].[status] THEN
+	UPDATE SET
+		[TARGET].[ip] = [SOURCE].[ip],
+		[TARGET].[status2] = [TARGET].[status],
+		[TARGET].[datetime2] = [TARGET].[datetime],
+		[TARGET].[status] = [SOURCE].[status],
+		[TARGET].[datetime] = [SOURCE].[datetime]
+WHEN NOT MATCHED THEN
+	INSERT (
+		[id_d1mini], [ip], [status], [datetime]
+	)
+	VALUES (
+		[SOURCE].[id_d1mini], [SOURCE].[ip], [SOURCE].[status], [SOURCE].[datetime]
+	);");
 				}
-				Sql.wpQuery(@$"MERGE INTO [d1minicfg] AS [TARGET]
-	USING (
-		VALUES (
-			{id}, '{ip}', '{status}', GETDATE()
-		)
-	) AS [SOURCE] (
-			[id_d1mini], [ip], [status], [datetime]
-	) ON
-		[TARGET].[id_d1mini] = [SOURCE].[id_d1mini]
-	WHEN MATCHED AND [TARGET].[status] != [SOURCE].[status] THEN
-		UPDATE SET
-			[TARGET].[ip] = [SOURCE].[ip],
-			[TARGET].[status2] = [TARGET].[status],
-			[TARGET].[datetime2] = [TARGET].[datetime],
-			[TARGET].[status] = [SOURCE].[status],
-			[TARGET].[datetime] = [SOURCE].[datetime]
-	WHEN NOT MATCHED THEN
-		INSERT (
-			[id_d1mini], [ip], [status], [datetime]
-		)
-		VALUES (
-			[SOURCE].[id_d1mini], [SOURCE].[ip], [SOURCE].[status], [SOURCE].[datetime]
-		);");
 			}
 		}
-		public static string getJsonNeoPixel(string ip) {
+		public static string GetJsonNeoPixel(string ip) {
 			IPAddress _ip;
 			string returns = "S_ERROR";
 			if(IPAddress.TryParse(ip, out _ip)) {
@@ -323,16 +329,16 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		public static D1Mini get(int id) {
+		public static D1Mini Get(int id) {
 			if(!_d1Minis.Exists(t => t.Id == id)) return null;
 			return _d1Minis.Find(t => t.Id == id);
 		}
-		public static D1Mini get(string name) {
+		public static D1Mini Get(string name) {
 			if(!_d1Minis.Exists(t => t.Name == name))
 				return null;
 			return _d1Minis.Find(t => t.Name == name);
 		}
-		public static string sendUrlCmd(string ip, string cmd) {
+		public static string SendUrlCmd(string ip, string cmd) {
 			IPAddress _ip;
 			string returns = "{\"erg\":\"S_ERROR\"}";
 			if(IPAddress.TryParse(ip, out _ip)) {
@@ -349,7 +355,7 @@ namespace WebAutomation.Helper {
 			}
 			return returns;
 		}
-		public static string startSearch() {
+		public static string StartSearch() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Start FreakaZone search");
 			searchActive = true;
 			udpClient = new UdpClient();
@@ -387,14 +393,14 @@ namespace WebAutomation.Helper {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
-				stopSearch();
+				StopSearch();
 			});
-			sendSearch();
+			SendSearch();
 			task.Wait();
 			string returns = JsonConvert.SerializeObject(foundNewD1Mini);
 			return returns;
 		}
-		public static string startSearch(Guid id) {
+		public static string StartSearch(Guid id) {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Start WS - FreakaZone search");
 			searchActive = true;
 			udpClient = new UdpClient();
@@ -435,18 +441,18 @@ namespace WebAutomation.Helper {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
-				stopSearch();
+				StopSearch();
 			});
-			sendSearch();
+			SendSearch();
 			task.Wait();
 			string returns = "S_OK";
 			return returns;
 		}
-		private static void sendSearch() {
+		private static void SendSearch() {
 			var data = Encoding.UTF8.GetBytes("FreakaZone Member?");
 			udpClient.Send(data, data.Length, "255.255.255.255", udpPort);
 		}
-		private static void stopSearch() {
+		private static void StopSearch() {
 			try {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "Stop FreakaZone search");
 				searchActive = false;
@@ -458,7 +464,7 @@ namespace WebAutomation.Helper {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
-		private static void setValue(int idDp, string name, string value) {
+		private static void SetValue(int idDp, string name, string value) {
 			valueChangedEventArgs vcea = new valueChangedEventArgs();
 			vcea.idDatapoint = idDp;
 			vcea.name = name;
@@ -470,8 +476,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_onoff > 0) {
-					setValue(d1m.id_onoff, d1m.Name, state ? "True" : "False");
+				if(d1m.Id_onoff > 0) {
+					SetValue(d1m.Id_onoff, d1m.Name, state ? "True" : "False");
 					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, BM: {1}", d1m.Name, state);
 					if(Debug.debugD1Mini)
 						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
@@ -490,8 +496,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_temp > 0) {
-					setValue(d1m.id_temp, d1m.Name, temp.Replace(".", ","));
+				if(d1m.Id_temp > 0) {
+					SetValue(d1m.Id_temp, d1m.Name, temp.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
 					if(Debug.debugD1Mini)
@@ -511,8 +517,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_hum > 0) {
-					setValue(d1m.id_hum, d1m.Name, hum.Replace(".", ","));
+				if(d1m.Id_hum > 0) {
+					SetValue(d1m.Id_hum, d1m.Name, hum.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
 					if(Debug.debugD1Mini)
@@ -532,8 +538,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_ldr > 0) {
-					setValue(d1m.id_ldr, d1m.Name, ldr.Replace(".", ","));
+				if(d1m.Id_ldr > 0) {
+					SetValue(d1m.Id_ldr, d1m.Name, ldr.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: LDR: {0}, ", ldr);
 					if(Debug.debugD1Mini)
@@ -553,8 +559,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_light > 0) {
-					setValue(d1m.id_light, d1m.Name, light.Replace(".", ","));
+				if(d1m.Id_light > 0) {
+					SetValue(d1m.Id_light, d1m.Name, light.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Light: {0}, ", light);
 					if(Debug.debugD1Mini)
@@ -574,8 +580,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_relais > 0) {
-					setValue(d1m.id_relais, d1m.Name, state ? "True" : "False");
+				if(d1m.Id_relais > 0) {
+					SetValue(d1m.Id_relais, d1m.Name, state ? "True" : "False");
 					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Relais: {1}", d1m.Name, state);
 					if(Debug.debugD1Mini)
 						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
@@ -594,8 +600,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_rain > 0) {
-					setValue(d1m.id_rain, d1m.Name, rain.Replace(".", ","));
+				if(d1m.Id_rain > 0) {
+					SetValue(d1m.Id_rain, d1m.Name, rain.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Rain: {0}, ", rain);
 					if(Debug.debugD1Mini)
@@ -615,8 +621,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_moisture > 0) {
-					setValue(d1m.id_moisture, d1m.Name, moisture.Replace(".", ","));
+				if(d1m.Id_moisture > 0) {
+					SetValue(d1m.Id_moisture, d1m.Name, moisture.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Moisture: {0}, ", moisture);
 					if(Debug.debugD1Mini)
@@ -636,8 +642,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_vol > 0) {
-					setValue(d1m.id_vol, d1m.Name, volume.Replace(".", ","));
+				if(d1m.Id_vol > 0) {
+					SetValue(d1m.Id_vol, d1m.Name, volume.Replace(".", ","));
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: Volume: {0}, ", volume);
 					if(Debug.debugD1Mini)
@@ -657,8 +663,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_window > 0) {
-					setValue(d1m.id_window, d1m.Name, state ? "True" : "False");
+				if(d1m.Id_window > 0) {
+					SetValue(d1m.Id_window, d1m.Name, state ? "True" : "False");
 					string DebugNewValue = String.Format("Neuer Wert: D1Mini: {0}, Window: {1}", d1m.Name, state);
 					if(Debug.debugD1Mini)
 						eventLog.Write(MethodInfo.GetCurrentMethod(), DebugNewValue);
@@ -677,8 +683,8 @@ namespace WebAutomation.Helper {
 			bool returns = false;
 			if(_d1Minis.Exists(t => t.readMac == mac)) {
 				D1Mini d1m = _d1Minis.Find(t => t.readMac == mac);
-				if(d1m.id_analogout > 0) {
-					setValue(d1m.id_analogout, d1m.Name, analogout);
+				if(d1m.Id_analogout > 0) {
+					SetValue(d1m.Id_analogout, d1m.Name, analogout);
 					string DebugNewValue = String.Format("D1Mini: {0}", d1m.Name);
 					DebugNewValue += String.Format("\r\n\tNeuer Wert: AnalogOut: {0}, ", analogout);
 					if(Debug.debugD1Mini)
@@ -700,7 +706,7 @@ namespace WebAutomation.Helper {
 			string id = "NULL";
 			try {
 				using(Database Sql = new Database("get User RFID")) {
-					erg = Sql.wpQuery(@$"SELECT TOP(1) [u].[name], [u].[lastname], [r].[id_rfid], [r].[description]
+					erg = Sql.Query(@$"SELECT TOP(1) [u].[name], [u].[lastname], [r].[id_rfid], [r].[description]
 						FROM [user] [u]
 						INNER JOIN [rfid] [r] ON [u].[id_user] = [r].[id_user]
 						WHERE [r].[chipid] = '{RFID}'");
@@ -714,7 +720,7 @@ namespace WebAutomation.Helper {
 					returns = $"\"user\":{{\"name\":\"unknown\",\"RFID\":\"{RFID}\"}}";
 				}
 				using(Database Sql = new Database("save Historical RFID Data")) {
-					Sql.wpQuery($"INSERT INTO [rfidactivity] ([id_rfid], [chipid]) VALUES ({id}, {RFID})");
+					Sql.Query($"INSERT INTO [rfidactivity] ([id_rfid], [chipid]) VALUES ({id}, {RFID})");
 				}
 			} catch(Exception ex) {
 				Debug.WriteError(MethodBase.GetCurrentMethod(), ex);
@@ -723,15 +729,15 @@ namespace WebAutomation.Helper {
 		}
 	}
 	public class D1Mini {
-		private int _id;
+		private readonly int _id;
 		public int Id {
 			get { return _id; }
 		}
-		private string _name;
+		private readonly string _name;
 		public string Name {
 			get { return _name; }
 		}
-		private IPAddress _ipAddress;
+		private readonly IPAddress _ipAddress;
 		public IPAddress IpAddress {
 			get { return _ipAddress; }
 		}
@@ -756,57 +762,57 @@ namespace WebAutomation.Helper {
 		}
 
 		private int _id_onoff;
-		public int id_onoff {
+		public int Id_onoff {
 			get { return _id_onoff; }
 			set { _id_onoff = value; }
 		}
 		private int _id_temp;
-		public int id_temp {
+		public int Id_temp {
 			get { return _id_temp; }
 			set { _id_temp = value; }
 		}
 		private int _id_hum;
-		public int id_hum {
+		public int Id_hum {
 			get { return _id_hum; }
 			set { _id_hum = value; }
 		}
 		private int _id_ldr;
-		public int id_ldr {
+		public int Id_ldr {
 			get { return _id_ldr; }
 			set { _id_ldr = value; }
 		}
 		private int _id_light;
-		public int id_light {
+		public int Id_light {
 			get { return _id_light; }
 			set { _id_light = value; }
 		}
 		private int _id_relais;
-		public int id_relais {
+		public int Id_relais {
 			get { return _id_relais; }
 			set { _id_relais = value; }
 		}
 		private int _id_rain;
-		public int id_rain {
+		public int Id_rain {
 			get { return _id_rain; }
 			set { _id_rain = value; }
 		}
 		private int _id_moisture;
-		public int id_moisture {
+		public int Id_moisture {
 			get { return _id_moisture; }
 			set { _id_moisture = value; }
 		}
 		private int _id_vol;
-		public int id_vol {
+		public int Id_vol {
 			get { return _id_vol; }
 			set { _id_vol = value; }
 		}
 		private int _id_window;
-		public int id_window {
+		public int Id_window {
 			get { return _id_window; }
 			set { _id_window = value; }
 		}
 		private int _id_analogout;
-		public int id_analogout {
+		public int Id_analogout {
 			get { return _id_analogout; }
 			set { _id_analogout = value; }
 		}
@@ -815,7 +821,7 @@ namespace WebAutomation.Helper {
 				if(value) {
 					if(Debug.debugD1Mini)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 1");
-					setOnlineError(false);
+					SetOnlineError(false);
 					toreset.Stop();
 				} else {
 					if(Debug.debugD1Mini)
@@ -827,14 +833,14 @@ namespace WebAutomation.Helper {
 		private Timer t;
 		private Timer toreset;
 
-		public class cmdList {
+		public class CmdList {
 			public const string RestartDevice = "RestartDevice";
 			public const string ForceMqttUpdate = "ForceMqttUpdate";
 			public const string ForceRenewValue = "ForceRenewValue";
 			public const string UpdateFW = "UpdateFW";
 			public const string UnknownCmd = "UnknownCmd";
 			private string _choosenCmd;
-			public cmdList(string cmd) {
+			public CmdList(string cmd) {
 				switch(cmd) {
 					case RestartDevice:
 						_choosenCmd = RestartDevice;
@@ -853,18 +859,18 @@ namespace WebAutomation.Helper {
 						break;
 				}
 			}
-			public string cmd {
+			public string Cmd {
 				get { return _choosenCmd; }
 			}
-			public bool isValid {
+			public bool IsValid {
 				get { return !(_choosenCmd  == null || _choosenCmd == UnknownCmd); }
 			}
 		}
-		private readonly List<string> subscribeList = new List<string>() {
+		private readonly List<string> subscribeList = [
 			"info/DeviceName", "info/DeviceDescription",
 			"info/Version", "info/wpFreakaZone",
 			"info/WiFi/Ip", "info/WiFi/Mac", "info/WiFi/SSID",
-			"UpdateMode", "info/Online" };
+			"UpdateMode", "info/Online" ];
 		public D1Mini(int id, String name, IPAddress ip, String mac, String description) {
 			_id = id;
 			_name = name;
@@ -896,14 +902,14 @@ namespace WebAutomation.Helper {
 		}
 		public void Start() {
 			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
-			t.Elapsed += onlineCheck_Elapsed;
+			t.Elapsed += OnlineCheck_Elapsed;
 			if(D1MiniServer.OnlineTogglerSendIntervall > 0) {
 				t.Start();
-				sendOnlineQuestion();
+				SendOnlineQuestion();
 			}
 			toreset = new Timer(D1MiniServer.OnlineTogglerWait * 1000);
 			toreset.AutoReset = false;
-			toreset.Elapsed += toreset_Elapsed;
+			toreset.Elapsed += Toreset_Elapsed;
 		}
 
 		public void Stop() {
@@ -927,59 +933,59 @@ namespace WebAutomation.Helper {
 			toreset.Interval = D1MiniServer.OnlineTogglerWait * 1000;
 			toreset.Stop();
 		}
-		private void onlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
-			sendOnlineQuestion();
+		private void OnlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
+			SendOnlineQuestion();
 		}
-		private void toreset_Elapsed(object sender, ElapsedEventArgs e) {
+		private void Toreset_Elapsed(object sender, ElapsedEventArgs e) {
 			if(Debug.debugD1Mini)
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
 			if(_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
-				setOnlineError();
+				SetOnlineError();
 			} else {
-				setOnlineError(false);
+				SetOnlineError(false);
 				if(Debug.debugD1Mini)
 					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
 			}
 		}
 
-		public List<string> getSubscribtions() {
+		public List<string> GetSubscribtions() {
 			List<string> returns = new List<string>();
 			foreach(string topic in subscribeList) {
 				returns.Add(_name + "/" + topic);
 			}
 			return returns;
 		}
-		public bool sendCmd(cmdList cmd) {
+		public bool SendCmd(CmdList cmd) {
 			bool returns = false;
-			if(cmd.isValid) {
-				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.cmd, "1");
+			if(cmd.IsValid) {
+				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.Cmd, "1");
 				if(Debug.debugD1Mini)
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` success: {_name}, {cmd.cmd}");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` success: {_name}, {cmd.Cmd}");
 				returns = true;
 			} else {
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` ERROR: {_name}, {cmd.cmd}");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` ERROR: {_name}, {cmd.Cmd}");
 			}
 			return returns;
 		}
-		private void sendOnlineQuestion() {
+		private void SendOnlineQuestion() {
 			if(Debug.debugD1Mini)
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
 		}
-		private void setOnlineError(bool e) {
+		private void SetOnlineError(bool e) {
 			if(Debug.debugD1Mini)
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
 			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
-		private void setOnlineError() {
-			setOnlineError(true);
+		private void SetOnlineError() {
+			SetOnlineError(true);
 		}
 	}
 	class D1MiniBroadcast {
-		public cIam Iam { get; set; }
-		public class cIam {
+		public CIam Iam { get; set; }
+		public class CIam {
 			public string FreakaZoneClient { get; set; }
 			public string IP { get; set; }
 			public string MAC { get; set; }

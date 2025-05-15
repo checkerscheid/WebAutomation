@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 199                                                     $ #
+//# Revision     : $Rev:: 213                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 199 2025-04-16 01:10:09Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 213 2025-05-15 14:50:57Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -50,8 +50,8 @@ namespace WebAutomation.Helper {
 		}
 		private void init() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "WebSockets Server Init");
-			string name = IniFile.get("Websockets", "Name");
-			int port = IniFile.getInt("Websockets", "Port");
+			string name = IniFile.Get("Websockets", "Name");
+			int port = IniFile.GetInt("Websockets", "Port");
 			try {
 				eventLog = new Logger(Logger.ESource.WebSockets);
 
@@ -99,7 +99,7 @@ namespace WebAutomation.Helper {
 
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			if(cmd.src != null) {
-				Shelly shelly = ShellyServer.getShellyFromWsId(cmd.src.ToString());
+				Shelly shelly = ShellyServer.GetShellyFromWsId(cmd.src.ToString());
 				if(shelly != null) {
 					//if(shelly.IdOnOff > 0) {
 					//	Datapoint dp = Datapoints.Get(shelly.IdOnOff);
@@ -118,7 +118,7 @@ namespace WebAutomation.Helper {
 							cmd["params"]["switch:0"] != null &&
 							cmd["params"]["switch:0"]["voltage"] != null
 							) {
-							dp.setValue((string)cmd["params"]["switch:0"]["voltage"]);
+							dp.SetValue((string)cmd["params"]["switch:0"]["voltage"]);
 						}
 					}
 					if(shelly.IdCurrent > 0) {
@@ -128,7 +128,7 @@ namespace WebAutomation.Helper {
 							cmd["params"]["switch:0"] != null &&
 							cmd["params"]["switch:0"]["current"] != null
 							) {
-							dp.setValue((string)cmd["params"]["switch:0"]["current"]);
+							dp.SetValue((string)cmd["params"]["switch:0"]["current"]);
 						}
 					}
 					if(shelly.IdPower > 0) {
@@ -138,7 +138,7 @@ namespace WebAutomation.Helper {
 							cmd["params"]["switch:0"] != null &&
 							cmd["params"]["switch:0"]["apower"] != null
 							) {
-							dp.setValue((string)cmd["params"]["switch:0"]["apower"]);
+							dp.SetValue((string)cmd["params"]["switch:0"]["apower"]);
 						}
 					}
 					if(Debug.debugWebSockets)
@@ -166,13 +166,13 @@ namespace WebAutomation.Helper {
 							"{\"response\":\"getD1MiniJson\"," +
 							"\"data\":{" +
 								$"\"ip\":\"{cmd.data}\"," +
-								"\"D1Mini\":" + D1MiniServer.getJsonStatus(cmd.data.ToString()) +
+								"\"D1Mini\":" + D1MiniServer.GetJsonStatus(cmd.data.ToString()) +
 							"}}");
 						if(Debug.debugWebSockets)
 							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cGetD1MiniJson}");
 						break;
 					case cStartD1MiniSearch:
-						D1MiniServer.startSearch(client.id);
+						D1MiniServer.StartSearch(client.id);
 						if(Debug.debugWebSockets)
 							Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server question: {cStartD1MiniSearch}");
 						break;

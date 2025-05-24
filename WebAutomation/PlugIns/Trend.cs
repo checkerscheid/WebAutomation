@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 223                                                     $ #
+//# Revision     : $Rev:: 231                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 223 2025-05-24 15:41:01Z                        $ #
+//# File-ID      : $Id:: Trend.cs 231 2025-05-24 23:33:42Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -430,12 +430,12 @@ namespace WebAutomation.PlugIns {
 				}
 				watch.Stop();
 				if (ev_save != "") {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten archiviert ({saveTrendsToOld + saveTrendsToMuch}){ev_save}");
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten archiviert ({saveTrendsToOld + saveTrendsToMuch}){(Debug.debugTrend ? ev_save : "")}");
 				} else {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten archiviert");
 				}
 				if (ev_del != "") {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten gelöscht ({deleteTrendsToOld + deleteTrendsToMuch}){ev_del}");
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten gelöscht ({deleteTrendsToOld + deleteTrendsToMuch}){(Debug.debugTrend ? ev_del : "")}");
 				} else {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten gelöscht");
 				}

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 223                                                     $ #
+//# Revision     : $Rev:: 225                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 223 2025-05-24 15:41:01Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 225 2025-05-24 16:10:29Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -255,6 +255,8 @@ namespace WebAutomation.Helper {
 			string returns = new ret { erg = ret.ERROR }.ToString();
 			if(IPAddress.TryParse(ip, out _ip)) {
 				D1Mini d1md = _d1Minis.Find(t => t.IpAddress.ToString() == ip);
+				if(d1md == null)
+					return new ret { erg = ret.ERROR, message = "D1Mini not found" }.ToString();
 				if(d1md.Active) {
 					if(Debug.debugD1Mini)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");

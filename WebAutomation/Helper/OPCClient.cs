@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 213                                                     $ #
+//# Revision     : $Rev:: 231                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 213 2025-05-15 14:50:57Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 231 2025-05-24 23:33:42Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpSQL;
+using FreakaZone.Libraries.wpSQL.Table;
 using OPC.Common;
 using OPC.Data;
 using OPC.Data.Interface;
@@ -101,16 +102,13 @@ namespace WebAutomation.Helper {
 			int idpoint;
 
 			using (Database Sql = new Database("Add OPC Server")) {
-				string[][] DBserver = Sql.Query(@"SELECT
-					[id_opcserver], [progid], [clsid], [name], [server], [active] FROM [opcserver]");
-				for(int iserver = 0; iserver < DBserver.Length; iserver++) {
+				List<TableOpcServer> OpcServers = Sql.Select<TableOpcServer>();
+				foreach(TableOpcServer server in OpcServers) {
 					try {
-						if (Int32.TryParse(DBserver[iserver][0], out idserver)) {
-							TheServerAdd(idserver, DBserver[iserver][1], DBserver[iserver][2], DBserver[iserver][3],
-								DBserver[iserver][4], DBserver[iserver][5] == "True");
-						}
-					} catch(Exception ex) {
-						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, DBserver[iserver][3]);
+						TheServerAdd(server.id_opcserver, server.progid, server.clsid, server.name,
+							server.server, server.active);
+					} catch (Exception ex) {
+						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, server.name);
 					}
 				}
 			}
@@ -647,10 +645,9 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		public string newOPCServer(int ServerID) {
 			using (Database Sql = new Database("Add OPC Server")) {
-				string[][] DBserver = Sql.Query(@"SELECT [progid], [clsid], [name], [server], [active]
-					FROM [opcserver] WHERE [id_opcserver] = {0}", ServerID);
-				TheServerAdd(ServerID, DBserver[0][0], DBserver[0][1], DBserver[0][2],
-					DBserver[0][3], DBserver[0][4] == "True");
+				TableOpcServer DBserver = Sql.Select<TableOpcServer>(ServerID);
+				TheServerAdd(ServerID, DBserver.progid, DBserver.clsid, DBserver.name,
+					DBserver.server, DBserver.active);
 			}
 			return "S_OK";
 		}

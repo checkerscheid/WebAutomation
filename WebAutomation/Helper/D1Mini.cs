@@ -79,7 +79,7 @@ namespace WebAutomation.Helper {
 			_d1Minis = new List<D1Mini>();
 			using(Database Sql = new Database("Select D1Minis")) {
 				try {
-					List<TableD1Mini> ltd1m = Sql.SelectJoin<TableD1Mini, TableRest>();
+					List<TableD1Mini> ltd1m = Sql.Select<TableD1Mini, TableRest>();
 					foreach(TableD1Mini td1m in ltd1m) {
 						D1Mini d1m = new D1Mini(td1m);
 						_d1Minis.Add(d1m);
@@ -822,11 +822,11 @@ WHEN NOT MATCHED THEN
 					if(Debug.debugD1Mini)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 1");
 					SetOnlineError(false);
-					toreset.Stop();
+					toreset?.Stop();
 				} else {
 					if(Debug.debugD1Mini)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
-					toreset.Start();
+					toreset?.Start();
 				}
 			}
 		}

@@ -77,7 +77,7 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(Logger.ESource.PlugInShelly);
 			_shellies = new List<Shelly>();
 			using(Database Sql = new Database("Select Shellys")) {
-				List<TableShelly> lts = Sql.SelectJoin<TableShelly, TableRest>();
+				List<TableShelly> lts = Sql.Select<TableShelly, TableRest>();
 				foreach(TableShelly ts in lts) {
 					try {
 						Shelly s = new Shelly(ts);
@@ -112,13 +112,14 @@ namespace WebAutomation.Helper {
 		}
 		public static void RemoveShelly(int id) {
 			using(Database Sql = new Database("Delete Shelly")) {
-				if(_shellies.Exists(t => t.Id == id))
+				if(_shellies != null && _shellies.Exists(t => t.Id == id)) {
 					_shellies.Remove(_shellies.Find(t => t.Id == id));
-				Sql.Delete<TableShelly>(id);
+					Sql.Delete<TableShelly>(id);
+				}
 			}
 		}
 		public static Shelly GetShellyFromWsId(string wsId) {
-			if(_shellies.Exists(t => t.WsId == wsId))
+			if(_shellies != null && _shellies.Exists(t => t.WsId == wsId))
 				return _shellies.Find(t => t.WsId == wsId);
 			return null;
 		}

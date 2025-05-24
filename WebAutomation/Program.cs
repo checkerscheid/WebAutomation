@@ -31,7 +31,7 @@ namespace WebAutomation {
 	static class Program {
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "213";
+		public const string subversion = "217";
 		private static Debug debug;
 
 		/// <summary>
@@ -43,7 +43,7 @@ namespace WebAutomation {
 		/// <param name="args">An array of command-line arguments passed to the application.</param>
 		[STAThread]
 		static void Main(string[] args) {
-			if (!IniFile.Read()) {
+			if (!IniFile.Read(true)) {
 				Application.Exit();
 				return;
 			}
@@ -68,8 +68,9 @@ namespace WebAutomation {
 			if(createdNew) {
 				try {
 					debug = new Debug(Application.ProductName);
+					Debug.Write(MethodInfo.GetCurrentMethod(), "\r\n####################################################################");
 					Debug.Write(MethodInfo.GetCurrentMethod(), "START" +
-						"\r\n####################################################################\r\n\r\n");
+						"\r\n####################################################################\r\n");
 					MainProg = new WebAutomationServer(args);
 					if (lgA == IniFile.Get("License", "key")) {
 						MainProg.LicenseAlarming = true;

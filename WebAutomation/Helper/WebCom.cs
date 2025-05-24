@@ -106,6 +106,7 @@ namespace WebAutomation.Helper {
 			// SQL TEST
 			public const string cInsertDummy = "InsertDummy";
 			public const string cSelectScene = "SelectScene";
+			public const string cSelectJoinJoin = "SelectJoinJoin";
 			// SQL TEST END
 			#endregion
 
@@ -323,9 +324,14 @@ namespace WebAutomation.Helper {
 						returns = Sql.Insert<TableTv>(new TableTv("Dummy1", "12", 51, "h", "67", true)).ToString();
 					}
 					break;
+				case wpBefehl.cSelectJoinJoin:
+					using (Database Sql = new Database("Select Join Join")) {
+						returns = Sql.Select<TableDummynamespace, TableDummygroup, TableDummy>().ToString();
+					}
+					break;
 				case wpBefehl.cSelectScene:
 					using(Database Sql = new Database("Select Scene")) {
-						returns = Sql.SelectJoin<TableScene, TableSceneValue>().ToString();
+						returns = Sql.Select<TableScene, TableSceneValue>().ToString();
 					}
 					break;
 				case wpBefehl.cActiveDP:
@@ -821,7 +827,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cReloadSettings:
 					try {
-						IniFile.Read();
+						IniFile.Read(true);
 						finished();
 						init();
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Reload Settings");

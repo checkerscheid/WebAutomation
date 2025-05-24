@@ -304,12 +304,14 @@ namespace WebAutomation.PlugIns {
 				}
 			}
 			private void DBcleaner() {
-				int deleteToOld = 0;
-				int deleteToMuch = 0;
-				int saveToOld = 0;
-				int saveToMuch = 0;
-				int trendsToOld = 0;
-				int trendsToMuch = 0;
+				int deleteDataToOld = 0;
+				int deleteDataToMuch = 0;
+				int saveDataToOld = 0;
+				int saveDataToMuch = 0;
+				int deleteTrendsToOld = 0;
+				int deleteTrendsToMuch = 0;
+				int saveTrendsToOld = 0;
+				int saveTrendsToMuch = 0;
 				string ev_del = "";
 				string ev_save = "";
 				string[][] erg;
@@ -321,10 +323,10 @@ namespace WebAutomation.PlugIns {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
 				foreach (Trend t in _trendList) {
 					if (_doStop) break;
-					deleteToOld = 0;
-					deleteToMuch = 0;
-					saveToOld = 0;
-					saveToMuch = 0;
+					deleteDataToOld = 0;
+					deleteDataToMuch = 0;
+					saveDataToOld = 0;
+					saveDataToMuch = 0;
 					DataforExport = new Dictionary<DateTime, string>();
 					watchTrend.Restart();
 					try {
@@ -343,10 +345,10 @@ namespace WebAutomation.PlugIns {
 											DataforExport[parsed.Date] +=
 												erg[i][0] + ";" + erg[i][1] + ";\r\n";
 										}
-										saveToOld++;
+										saveDataToOld++;
 									}
 								}
-								deleteToOld = Sql.NonResponse(@$"WITH CTE AS (
+								deleteDataToOld = Sql.NonResponse(@$"WITH CTE AS (
 									SELECT TOP {_maxEntries} * FROM [trendvalue]
 									WHERE [id_trend] = {t.IdTrend} AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time])
@@ -370,10 +372,10 @@ namespace WebAutomation.PlugIns {
 												DataforExport[parsed.Date] +=
 													erg[i][0] + ";" + erg[i][1] + ";\r\n";
 											}
-											saveToMuch++;
+											saveDataToMuch++;
 										}
 									}
-									deleteToMuch = Sql.NonResponse(@$"WITH CTE AS (
+									deleteDataToMuch = Sql.NonResponse(@$"WITH CTE AS (
 										SELECT TOP {_maxEntries} * FROM [trendvalue]
 										WHERE [time] < '{newLastDate}' AND [id_trend] = {t.IdTrend}
 										ORDER BY [time])
@@ -391,34 +393,36 @@ namespace WebAutomation.PlugIns {
 								};
 							}
 							// Log
-							if (saveToOld > 0) {
+							if (saveDataToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
-									saveToOld, t.TrendName, watchTrend.Elapsed);
+									saveDataToOld, t.TrendName, watchTrend.Elapsed);
 								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
+								saveTrendsToOld++;
 							}
-							if (saveToMuch > 0) {
+							if (saveDataToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
-									saveToMuch, t.TrendName, watchTrend.Elapsed);
+									saveDataToMuch, t.TrendName, watchTrend.Elapsed);
 								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
+								saveTrendsToMuch++;
 							}
 						} else {
 							if (DataforExport.Count > 0) Debug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
 						}
-						if (deleteToOld > 0) {
+						if (deleteDataToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
-								deleteToOld, t.TrendName, watchTrend.Elapsed);
+								deleteDataToOld, t.TrendName, watchTrend.Elapsed);
 							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
-							trendsToOld++;
+							deleteTrendsToOld++;
 						}
-						if (deleteToMuch > 0) {
+						if (deleteDataToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
-								deleteToMuch, t.TrendName, watchTrend.Elapsed);
+								deleteDataToMuch, t.TrendName, watchTrend.Elapsed);
 							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
-							trendsToMuch++;
+							deleteTrendsToMuch++;
 						}
 					} catch (Exception ex) {
 						_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -426,14 +430,14 @@ namespace WebAutomation.PlugIns {
 				}
 				watch.Stop();
 				if (ev_save != "") {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten archiviert ({saveTrendsToOld + saveTrendsToMuch}){ev_save}");
 				} else {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, keine Trenddaten archiviert", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten archiviert");
 				}
 				if (ev_del != "") {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, Trenddaten gelöscht ({1})", watch.Elapsed, trendsToOld + trendsToMuch);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten gelöscht ({deleteTrendsToOld + deleteTrendsToMuch}){ev_del}");
 				} else {
-					_eventLog.Write(MethodInfo.GetCurrentMethod(), "Dauer: {0}, keine Trenddaten gelöscht", watch.Elapsed);
+					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten gelöscht");
 				}
 			}
 			private bool writeToFile(string filename, DateTime DateForFolder, string text) {

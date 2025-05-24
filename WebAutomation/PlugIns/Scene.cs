@@ -29,7 +29,7 @@ namespace WebAutomation.PlugIns {
 		public static Dictionary<int, string> getScene(int idscene) {
 			Dictionary<int, string> returns = new Dictionary<int, string>();
 			using (Database Sql = new Database("Scene")) {
-				TableScene ts = Sql.SelectJoin<TableScene, TableSceneValue>(idscene);
+				TableScene ts = Sql.Select<TableScene, TableSceneValue>(idscene);
 				foreach(TableSceneValue tsv in ts.SubValues) {
 					returns.Add(tsv.id_dp, tsv.value);
 				}

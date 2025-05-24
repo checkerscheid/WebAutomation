@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 217                                                     $ #
+//# Revision     : $Rev:: 224                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 217 2025-05-19 22:59:46Z                      $ #
+//# File-ID      : $Id:: Program.cs 224 2025-05-24 15:49:07Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -31,7 +31,7 @@ namespace WebAutomation {
 	static class Program {
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "217";
+		public const string subversion = "224";
 		private static Debug debug;
 
 		/// <summary>
@@ -68,7 +68,6 @@ namespace WebAutomation {
 			if(createdNew) {
 				try {
 					debug = new Debug(Application.ProductName);
-					Debug.Write(MethodInfo.GetCurrentMethod(), "\r\n####################################################################");
 					Debug.Write(MethodInfo.GetCurrentMethod(), "START" +
 						"\r\n####################################################################\r\n");
 					MainProg = new WebAutomationServer(args);
@@ -92,7 +91,7 @@ namespace WebAutomation {
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Warning);
 			}
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Programm finished");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Programm finished\r\n\r\n");
 			if(System.Diagnostics.Trace.Listeners != null) {
 				System.Diagnostics.Trace.Listeners.Clear();
 			}

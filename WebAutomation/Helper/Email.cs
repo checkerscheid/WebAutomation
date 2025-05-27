@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 213                                                     $ #
+//# Revision     : $Rev:: 234                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 213 2025-05-15 14:50:57Z                        $ #
+//# File-ID      : $Id:: Email.cs 234 2025-05-27 14:15:29Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -40,8 +40,9 @@ namespace WebAutomation.Helper {
 		/// <summary></summary>
 		private SmtpClient MailClient;
 
-		private const string ServiceName = "wpAutomation";
-		private const string impressumFirma = "<span style='font-weight:bold; color:#888888;'>wp<span style='color:#A91919;'>A</span>utomation GmbH</span>";
+		private const string ServiceName = "<span style='font-weight:bold; color:#888888;'>Freaka<span style='color:#A91919;'>Z</span>one</span>";
+		private const string ServiceNameBlank = "FreakaZone";
+		private const string impressumFirma = "<span style='font-weight:bold; color:#888888;'>Freaka<span style='color:#A91919;'>Z</span>one GmbH</span>";
 		private const string impressumStrasse = "Apfelskopfweg 10";
 		private const string impressumStadt = "D-69118 Heidelberg";
 		private const string impressumTelefon = "+49 6221 / 6734737";
@@ -104,10 +105,10 @@ namespace WebAutomation.Helper {
 
 			if (IniFile.Get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
-					IniFile.Get("Projekt", "Nummer"), ServiceName, EmailAlarms.getTotalCount(r)));
+					IniFile.Get("Projekt", "Nummer"), ServiceNameBlank, EmailAlarms.getTotalCount(r)));
 			} else {
 				setSubject(String.Format("{0} - {1} Neue Alarm Aktionen",
-					ServiceName, EmailAlarms.getTotalCount(r)));
+					ServiceNameBlank, EmailAlarms.getTotalCount(r)));
 			}
 			string MailToInMail = IniFile.Get("Email", "MailToInMail");
 			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
@@ -122,7 +123,7 @@ namespace WebAutomation.Helper {
 			<br />" + String.Format("<p>Projekt: {0} - {1}</p>",
 				IniFile.Get("Projekt", "Nummer"),
 				IniFile.Get("Projekt", "Name")) + @"
-			<p style='font-weight:bold; color:#29166f;'>Ihr " + ServiceName + @" Alarm Service</p>
+			<p style='font-weight:bold; color:#29166f;'>" + ServiceName + @" Alarm Service</p>
 			<p style='font-size:8pt; color:#888;'>
 				<span style='font-weight:bold;'>
 					<br />

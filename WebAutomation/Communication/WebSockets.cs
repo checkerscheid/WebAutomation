@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 213                                                     $ #
+//# Revision     : $Rev:: 238                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 213 2025-05-15 14:50:57Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 238 2025-05-30 11:25:05Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;

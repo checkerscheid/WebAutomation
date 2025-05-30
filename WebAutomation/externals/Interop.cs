@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 14.01.2016                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 152                                                     $ #
+//# Revision     : $Rev:: 237                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Interop.cs 152 2024-12-14 16:29:12Z                      $ #
+//# File-ID      : $Id:: Interop.cs 237 2025-05-30 11:23:27Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using System;

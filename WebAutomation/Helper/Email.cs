@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 234                                                     $ #
+//# Revision     : $Rev:: 237                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 234 2025-05-27 14:15:29Z                        $ #
+//# File-ID      : $Id:: Email.cs 237 2025-05-30 11:23:27Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;

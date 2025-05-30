@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 30.05.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 225                                                     $ #
+//# Revision     : $Rev:: 239                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 225 2025-05-24 16:10:29Z                       $ #
+//# File-ID      : $Id:: D1MiniServer.cs 239 2025-05-30 11:26:03Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;

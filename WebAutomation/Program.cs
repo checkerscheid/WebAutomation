@@ -31,7 +31,7 @@ namespace WebAutomation {
 	static class Program {
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "231";
+		public const string subversion = "234";
 		private static Debug debug;
 
 		/// <summary>
@@ -43,13 +43,13 @@ namespace WebAutomation {
 		/// <param name="args">An array of command-line arguments passed to the application.</param>
 		[STAThread]
 		static void Main(string[] args) {
-			if (!IniFile.Read(true)) {
+			if(!IniFile.Read(true)) {
 				Application.Exit();
 				return;
 			}
 			string lgA = License.GetHardwareID(true);
 			string lkA = License.GetHardwareID(false);
-			if (lgA != IniFile.Get("License", "key") &&
+			if(lgA != IniFile.Get("License", "key") &&
 				lkA != IniFile.Get("License", "key") &&
 				"KeyLessVersion" != IniFile.Get("License", "key")) {
 				MessageBox.Show("Keine gültige Lizenz!\r\nDas Programm wird beendet",
@@ -71,11 +71,11 @@ namespace WebAutomation {
 					Debug.Write(MethodInfo.GetCurrentMethod(), "START" +
 						"\r\n####################################################################\r\n");
 					MainProg = new WebAutomationServer(args);
-					if (lgA == IniFile.Get("License", "key")) {
+					if(lgA == IniFile.Get("License", "key")) {
 						MainProg.LicenseAlarming = true;
 						Debug.Write(MethodInfo.GetCurrentMethod(), "Lizenz für großes Alarming gefunden");
 					}
-					if ("KeyLessVersion" == IniFile.Get("License", "key")) {
+					if("KeyLessVersion" == IniFile.Get("License", "key")) {
 						Debug.Write(MethodInfo.GetCurrentMethod(), "!!! UNLIZENZIERTE High Availability Version !!!");
 						//MainProg.LicenseAlarming = true;
 						//PDebug.Write("Lizenz für großes Alarming gefunden");

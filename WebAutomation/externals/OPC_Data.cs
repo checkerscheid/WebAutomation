@@ -105,7 +105,7 @@ namespace OPC.Data.Interface {
 	public enum OPC_QUALITY_MASTER: short {
 		QUALITY_BAD = 0x0000,
 		QUALITY_UNCERTAIN = 0x0040,
-		ERROR_QUALITY_VALUE = 0x0080,		// non standard!
+		ERROR_QUALITY_VALUE = 0x0080,       // non standard!
 		QUALITY_GOOD = 0x00C0,
 	}
 	/// <summary>
@@ -113,7 +113,7 @@ namespace OPC.Data.Interface {
 	/// </summary>
 	[Flags]
 	public enum OPC_QUALITY_STATUS: short {
-		BAD = 0x0000,	// STATUS_MASK Values for Quality = BAD
+		BAD = 0x0000,   // STATUS_MASK Values for Quality = BAD
 		CONFIG_ERROR = 0x0004,
 		NOT_CONNECTED = 0x0008,
 		DEVICE_FAILURE = 0x000c,
@@ -123,13 +123,13 @@ namespace OPC.Data.Interface {
 		OUT_OF_SERVICE = 0x001C,
 		WAIT_FOR_INITIAL_DATA = 0x0020,
 
-		UNCERTAIN = 0x0040,	// STATUS_MASK Values for Quality = UNCERTAIN
+		UNCERTAIN = 0x0040, // STATUS_MASK Values for Quality = UNCERTAIN
 		LAST_USABLE = 0x0044,
 		SENSOR_CAL = 0x0050,
 		EGU_EXCEEDED = 0x0054,
 		SUB_NORMAL = 0x0058,
 
-		OK = 0x00C0,	// STATUS_MASK Value for Quality = GOOD
+		OK = 0x00C0,    // STATUS_MASK Value for Quality = GOOD
 		LOCAL_OVERRIDE = 0x00D8
 	}
 	/// <summary>
@@ -281,17 +281,17 @@ namespace OPC.Data.Interface {
 		/// <param name="riid"></param>
 		/// <param name="ppUnk"></param>
 		void AddGroup(
-			[In, MarshalAs(UnmanagedType.LPWStr)]					string szName,
-			[In, MarshalAs(UnmanagedType.Bool)]					bool bActive,
-			[In]													int dwRequestedUpdateRate,
-			[In]													int hClientGroup,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]		int[] pTimeBias,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]		float[] pPercentDeadband,
-			[In]													int dwLCID,
-			[Out]													out	int phServerGroup,
-			[Out]													out	int pRevisedUpdateRate,
-			[In]													ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]				out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName,
+			[In, MarshalAs(UnmanagedType.Bool)] bool bActive,
+			[In] int dwRequestedUpdateRate,
+			[In] int hClientGroup,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] int[] pTimeBias,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] float[] pPercentDeadband,
+			[In] int dwLCID,
+			[Out] out int phServerGroup,
+			[Out] out int pRevisedUpdateRate,
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -299,9 +299,9 @@ namespace OPC.Data.Interface {
 		/// <param name="dwLocale"></param>
 		/// <param name="ppString"></param>
 		void GetErrorString(
-			[In]											int dwError,
-			[In]											int dwLocale,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string ppString);
+			[In] int dwError,
+			[In] int dwLocale,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string ppString);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -309,23 +309,23 @@ namespace OPC.Data.Interface {
 		/// <param name="riid"></param>
 		/// <param name="ppUnk"></param>
 		void GetGroupByName(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName,
-			[In]										ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName,
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="ppServerStatus"></param>
 		void GetStatus(
-			[Out, MarshalAs(UnmanagedType.LPStruct)]	out	SERVERSTATUS ppServerStatus);
+			[Out, MarshalAs(UnmanagedType.LPStruct)] out SERVERSTATUS ppServerStatus);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="hServerGroup"></param>
 		/// <param name="bForce"></param>
 		void RemoveGroup(
-			[In]											int hServerGroup,
-			[In, MarshalAs(UnmanagedType.Bool)]			bool bForce);
+			[In] int hServerGroup,
+			[In, MarshalAs(UnmanagedType.Bool)] bool bForce);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -334,10 +334,10 @@ namespace OPC.Data.Interface {
 		/// <param name="ppUnk"></param>
 		/// <returns></returns>
 		[PreserveSig]
-		int CreateGroupEnumerator(										// may return S_FALSE
-			[In]											int dwScope,
-			[In]										ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+		int CreateGroupEnumerator(                                      // may return S_FALSE
+			[In] int dwScope,
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 
 	}
 	/// <summary>
@@ -354,17 +354,17 @@ namespace OPC.Data.Interface {
 		/// <param name="riid"></param>
 		/// <param name="ppUnk"></param>
 		void GetPublicGroupByName(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName,
-			[In]										ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName,
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="hServerGroup"></param>
 		/// <param name="bForce"></param>
 		void RemovePublicGroup(
-			[In]											int hServerGroup,
-			[In, MarshalAs(UnmanagedType.Bool)]			bool bForce);
+			[In] int hServerGroup,
+			[In, MarshalAs(UnmanagedType.Bool)] bool bForce);
 
 	}
 	/// <summary>
@@ -379,15 +379,15 @@ namespace OPC.Data.Interface {
 		/// </summary>
 		/// <param name="pNameSpaceType"></param>
 		void QueryOrganization(
-			[Out, MarshalAs(UnmanagedType.U4)]			out	OPCNAMESPACETYPE pNameSpaceType);
+			[Out, MarshalAs(UnmanagedType.U4)] out OPCNAMESPACETYPE pNameSpaceType);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="dwBrowseDirection"></param>
 		/// <param name="szName"></param>
 		void ChangeBrowsePosition(
-			[In, MarshalAs(UnmanagedType.U4)]				OPCBROWSEDIRECTION dwBrowseDirection,
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName);
+			[In, MarshalAs(UnmanagedType.U4)] OPCBROWSEDIRECTION dwBrowseDirection,
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName);
 
 		/// <summary>
 		/// 
@@ -400,19 +400,19 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int BrowseOPCItemIDs(
-			[In, MarshalAs(UnmanagedType.U4)]				OPCBROWSETYPE dwBrowseFilterType,
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szFilterCriteria,
-			[In, MarshalAs(UnmanagedType.U2)]				short vtDataTypeFilter,
-			[In, MarshalAs(UnmanagedType.U4)]				OPCACCESSRIGHTS dwAccessRightsFilter,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.U4)] OPCBROWSETYPE dwBrowseFilterType,
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szFilterCriteria,
+			[In, MarshalAs(UnmanagedType.U2)] short vtDataTypeFilter,
+			[In, MarshalAs(UnmanagedType.U4)] OPCACCESSRIGHTS dwAccessRightsFilter,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="szItemDataID"></param>
 		/// <param name="szItemID"></param>
 		void GetItemID(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szItemDataID,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string szItemID);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szItemDataID,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string szItemID);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -421,8 +421,8 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int BrowseAccessPaths(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szItemID,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szItemID,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 	}
 	/// <summary>
 	/// Item Properties
@@ -440,11 +440,11 @@ namespace OPC.Data.Interface {
 		/// <param name="ppDescriptions"></param>
 		/// <param name="ppvtDataTypes"></param>
 		void QueryAvailableProperties(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szItemID,
-			[Out]										out int dwCount,
-			[Out]										out IntPtr ppPropertyIDs,
-			[Out]										out IntPtr ppDescriptions,
-			[Out]										out	IntPtr ppvtDataTypes);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szItemID,
+			[Out] out int dwCount,
+			[Out] out IntPtr ppPropertyIDs,
+			[Out] out IntPtr ppDescriptions,
+			[Out] out IntPtr ppvtDataTypes);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -456,11 +456,11 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int GetItemProperties(
-			[In, MarshalAs(UnmanagedType.LPWStr)]						string szItemID,
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]	int[] pdwPropertyIDs,
-			[Out]													out IntPtr ppvData,
-			[Out]													out	IntPtr ppErrors);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szItemID,
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pdwPropertyIDs,
+			[Out] out IntPtr ppvData,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -472,11 +472,11 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int LookupItemIDs(
-			[In, MarshalAs(UnmanagedType.LPWStr)]						string szItemID,
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]	int[] pdwPropertyIDs,
-			[Out]													out IntPtr ppszNewItemIDs,
-			[Out]													out	IntPtr ppErrors);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szItemID,
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pdwPropertyIDs,
+			[Out] out IntPtr ppszNewItemIDs,
+			[Out] out IntPtr ppErrors);
 	}
 	/// <summary>
 	/// GroupStateMgt
@@ -497,14 +497,14 @@ namespace OPC.Data.Interface {
 		/// <param name="phClientGroup"></param>
 		/// <param name="phServerGroup"></param>
 		void GetState(
-			[Out]										out	int pUpdateRate,
-			[Out, MarshalAs(UnmanagedType.Bool)]		out	bool pActive,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string ppName,
-			[Out]										out	int pTimeBias,
-			[Out]										out	float pPercentDeadband,
-			[Out]										out	int pLCID,
-			[Out]										out	int phClientGroup,
-			[Out]										out	int phServerGroup);
+			[Out] out int pUpdateRate,
+			[Out, MarshalAs(UnmanagedType.Bool)] out bool pActive,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string ppName,
+			[Out] out int pTimeBias,
+			[Out] out float pPercentDeadband,
+			[Out] out int pLCID,
+			[Out] out int phClientGroup,
+			[Out] out int phServerGroup);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -516,19 +516,19 @@ namespace OPC.Data.Interface {
 		/// <param name="pLCID"></param>
 		/// <param name="phClientGroup"></param>
 		void SetState(
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]											int[] pRequestedUpdateRate,
-			[Out]																					out	int pRevisedUpdateRate,
-			[In, MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool, SizeConst = 1)]		bool[] pActive,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]											int[] pTimeBias,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]		float[] pPercentDeadband,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]		int[] pLCID,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)]		int[] phClientGroup);
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] int[] pRequestedUpdateRate,
+			[Out] out int pRevisedUpdateRate,
+			[In, MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool, SizeConst = 1)] bool[] pActive,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] int[] pTimeBias,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] float[] pPercentDeadband,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] int[] pLCID,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeConst = 1)] int[] phClientGroup);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="szName"></param>
 		void SetName(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -536,9 +536,9 @@ namespace OPC.Data.Interface {
 		/// <param name="riid"></param>
 		/// <param name="ppUnk"></param>
 		void CloneGroup(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName,
-			[In]										ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName,
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 
 	}
 	/// <summary>
@@ -553,7 +553,7 @@ namespace OPC.Data.Interface {
 		/// </summary>
 		/// <param name="pPublic"></param>
 		void GetState(
-			[Out, MarshalAs(UnmanagedType.Bool)]		out	bool pPublic);
+			[Out, MarshalAs(UnmanagedType.Bool)] out bool pPublic);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -576,10 +576,10 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int AddItems(
-			[In]											int dwCount,
-			[In]											IntPtr pItemArray,
-			[Out]										out IntPtr ppAddResults,
-			[Out]										out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In] IntPtr pItemArray,
+			[Out] out IntPtr ppAddResults,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -591,11 +591,11 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int ValidateItems(
-			[In]											int dwCount,
-			[In]											IntPtr pItemArray,
-			[In, MarshalAs(UnmanagedType.Bool)]			bool bBlobUpdate,
-			[Out]										out	IntPtr ppValidationResults,
-			[Out]										out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In] IntPtr pItemArray,
+			[In, MarshalAs(UnmanagedType.Bool)] bool bBlobUpdate,
+			[Out] out IntPtr ppValidationResults,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -605,9 +605,9 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int RemoveItems(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -618,10 +618,10 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int SetActiveState(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In, MarshalAs(UnmanagedType.Bool)]						bool bActive,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In, MarshalAs(UnmanagedType.Bool)] bool bActive,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -632,10 +632,10 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int SetClientHandles(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phClient,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phClient,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -646,10 +646,10 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int SetDatatypes(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In]														IntPtr pRequestedDatatypes,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In] IntPtr pRequestedDatatypes,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -658,8 +658,8 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int CreateEnumerator(
-			[In]										ref Guid riid,
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In] ref Guid riid,
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 
 	}
 	/// <summary>
@@ -680,11 +680,11 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int Read(
-			[In, MarshalAs(UnmanagedType.U4)]							OPCDATASOURCE dwSource,
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]	int[] phServer,
-			[Out]													out IntPtr ppItemValues,
-			[Out]													out	IntPtr ppErrors);
+			[In, MarshalAs(UnmanagedType.U4)] OPCDATASOURCE dwSource,
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] phServer,
+			[Out] out IntPtr ppItemValues,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -695,10 +695,10 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int Write(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	object[] pItemValues,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] object[] pItemValues,
+			[Out] out IntPtr ppErrors);
 
 	}
 	/// <summary>
@@ -719,11 +719,11 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int Read(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In]														int dwTransactionID,
-			[Out]													out int pdwCancelID,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In] int dwTransactionID,
+			[Out] out int pdwCancelID,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -736,12 +736,12 @@ namespace OPC.Data.Interface {
 		/// <returns></returns>
 		[PreserveSig]
 		int Write(
-			[In]														int dwCount,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	int[] phServer,
-			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)]	object[] pItemValues,
-			[In]														int dwTransactionID,
-			[Out]													out int pdwCancelID,
-			[Out]													out	IntPtr ppErrors);
+			[In] int dwCount,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] int[] phServer,
+			[In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] object[] pItemValues,
+			[In] int dwTransactionID,
+			[Out] out int pdwCancelID,
+			[Out] out IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -749,27 +749,27 @@ namespace OPC.Data.Interface {
 		/// <param name="dwTransactionID"></param>
 		/// <param name="pdwCancelID"></param>
 		void Refresh2(
-			[In, MarshalAs(UnmanagedType.U4)]				OPCDATASOURCE dwSource,
-			[In]											int dwTransactionID,
-			[Out]										out int pdwCancelID);
+			[In, MarshalAs(UnmanagedType.U4)] OPCDATASOURCE dwSource,
+			[In] int dwTransactionID,
+			[Out] out int pdwCancelID);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="dwCancelID"></param>
 		void Cancel2(
-			[In]											int dwCancelID);
+			[In] int dwCancelID);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="bEnable"></param>
 		void SetEnable(
-			[In, MarshalAs(UnmanagedType.Bool)]			bool bEnable);
+			[In, MarshalAs(UnmanagedType.Bool)] bool bEnable);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="pbEnable"></param>
 		void GetEnable(
-			[Out, MarshalAs(UnmanagedType.Bool)]		out	bool pbEnable);
+			[Out, MarshalAs(UnmanagedType.Bool)] out bool pbEnable);
 
 	}
 	/// <summary>
@@ -793,16 +793,16 @@ namespace OPC.Data.Interface {
 		/// <param name="pftTimeStamps"></param>
 		/// <param name="ppErrors"></param>
 		void OnDataChange(
-			[In]											int dwTransid,
-			[In]											int hGroup,
-			[In]											int hrMasterquality,
-			[In]											int hrMastererror,
-			[In]											int dwCount,
-			[In]											IntPtr phClientItems,
-			[In]											IntPtr pvValues,
-			[In]											IntPtr pwQualities,
-			[In]											IntPtr pftTimeStamps,
-			[In]											IntPtr ppErrors);
+			[In] int dwTransid,
+			[In] int hGroup,
+			[In] int hrMasterquality,
+			[In] int hrMastererror,
+			[In] int dwCount,
+			[In] IntPtr phClientItems,
+			[In] IntPtr pvValues,
+			[In] IntPtr pwQualities,
+			[In] IntPtr pftTimeStamps,
+			[In] IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -817,16 +817,16 @@ namespace OPC.Data.Interface {
 		/// <param name="pftTimeStamps"></param>
 		/// <param name="ppErrors"></param>
 		void OnReadComplete(
-			[In]											int dwTransid,
-			[In]											int hGroup,
-			[In]											int hrMasterquality,
-			[In]											int hrMastererror,
-			[In]											int dwCount,
-			[In]											IntPtr phClientItems,
-			[In]											IntPtr pvValues,
-			[In]											IntPtr pwQualities,
-			[In]											IntPtr pftTimeStamps,
-			[In]											IntPtr ppErrors);
+			[In] int dwTransid,
+			[In] int hGroup,
+			[In] int hrMasterquality,
+			[In] int hrMastererror,
+			[In] int dwCount,
+			[In] IntPtr phClientItems,
+			[In] IntPtr pvValues,
+			[In] IntPtr pwQualities,
+			[In] IntPtr pftTimeStamps,
+			[In] IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -837,20 +837,20 @@ namespace OPC.Data.Interface {
 		/// <param name="pClienthandles"></param>
 		/// <param name="ppErrors"></param>
 		void OnWriteComplete(
-			[In]											int dwTransid,
-			[In]											int hGroup,
-			[In]											int hrMastererr,
-			[In]											int dwCount,
-			[In]											IntPtr pClienthandles,
-			[In]											IntPtr ppErrors);
+			[In] int dwTransid,
+			[In] int hGroup,
+			[In] int hrMastererr,
+			[In] int dwCount,
+			[In] IntPtr pClienthandles,
+			[In] IntPtr ppErrors);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="dwTransid"></param>
 		/// <param name="hGroup"></param>
 		void OnCancelComplete(
-			[In]											int dwTransid,
-			[In]											int hGroup);
+			[In] int dwTransid,
+			[In] int hGroup);
 
 	}
 	/// <summary>
@@ -867,15 +867,15 @@ namespace OPC.Data.Interface {
 		/// <param name="ppItemArray"></param>
 		/// <param name="pceltFetched"></param>
 		void Next(
-			[In]											int celt,
-			[Out]										out	IntPtr ppItemArray,
-			[Out]										out int pceltFetched);
+			[In] int celt,
+			[Out] out IntPtr ppItemArray,
+			[Out] out int pceltFetched);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="celt"></param>
 		void Skip(
-			[In]											int celt);
+			[In] int celt);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -885,7 +885,7 @@ namespace OPC.Data.Interface {
 		/// </summary>
 		/// <param name="ppUnk"></param>
 		void Clone(
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 	}
 }
 /** @} */

@@ -15,7 +15,6 @@
 //###################################################################################
 using FreakaZone.Libraries.wpSQL;
 using FreakaZone.Libraries.wpSQL.Table;
-using System;
 using System.Collections.Generic;
 /**
 * @addtogroup WebAutomation
@@ -28,7 +27,7 @@ namespace WebAutomation.PlugIns {
 	public class Scene {
 		public static Dictionary<int, string> getScene(int idscene) {
 			Dictionary<int, string> returns = new Dictionary<int, string>();
-			using (Database Sql = new Database("Scene")) {
+			using(Database Sql = new Database("Scene")) {
 				TableScene ts = Sql.Select<TableScene, TableSceneValue>(idscene);
 				foreach(TableSceneValue tsv in ts.SubValues) {
 					returns.Add(tsv.id_dp, tsv.value);

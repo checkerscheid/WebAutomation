@@ -252,7 +252,7 @@ namespace WebAutomation.PlugIns {
 			set { _nodelaycome = value; }
 		}
 		private bool _wartung;
-		public bool Wartung { 
+		public bool Wartung {
 			set { _wartung = value; }
 			get { return _wartung; }
 		}
@@ -286,7 +286,7 @@ namespace WebAutomation.PlugIns {
 			this._needquit = true;
 			this._timerstarted = false;
 			this._wartung = false;
-			if (sec > 0) {
+			if(sec > 0) {
 				_hasDelay = true;
 				_delay = new Timer((double)(sec * 1000));
 				_delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
@@ -304,7 +304,7 @@ namespace WebAutomation.PlugIns {
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
 		private void Delay_Tick(object sender, ElapsedEventArgs e) {
-			if (_nodelaycome) {
+			if(_nodelaycome) {
 				SetCome(DateTime.Now);
 				_eventLog.Write(MethodInfo.GetCurrentMethod(), "{0} ({1}) - Alarmdelay finished - real come",
 					this._alarmtext, this._dpname);
@@ -316,7 +316,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		private void TimerStart() {
-			if (_hasDelay) {
+			if(_hasDelay) {
 				_delay.Stop();
 				_delay.Start();
 				_timerstarted = true;
@@ -328,7 +328,7 @@ namespace WebAutomation.PlugIns {
 		/// 
 		/// </summary>
 		private void TimerStop() {
-			if (_hasDelay) {
+			if(_hasDelay) {
 				_delay.Stop();
 				_timerstarted = false;
 			}
@@ -511,7 +511,7 @@ namespace WebAutomation.PlugIns {
 			_inalarm = true;
 			string sqlautoquit = "NULL";
 			string sqlautoquitfrom = "NULL";
-			if (_autoquit) {
+			if(_autoquit) {
 				_quit = Now;
 				_needquit = true;
 				sqlautoquit = String.Format("'{0}'",
@@ -521,7 +521,7 @@ namespace WebAutomation.PlugIns {
 				_needquit = false;
 				_quit = Alarm.Default;
 			}
-			using (Database Sql = new Database("Alarm Come in Historic")) {
+			using(Database Sql = new Database("Alarm Come in Historic")) {
 				Sql.NonResponse(
 					"INSERT INTO [alarmhistoric] ([id_alarm], [come], [quit], [quitfrom], [text]) " +
 					"VALUES ({0}, '{1}', {2}, {3}, '{4}')",
@@ -540,7 +540,7 @@ namespace WebAutomation.PlugIns {
 			_alarmupdate = Now;
 			_gone = Now;
 			_inalarm = false;
-			using (Database Sql = new Database("Alarm Gone in Historic")) {
+			using(Database Sql = new Database("Alarm Gone in Historic")) {
 				Sql.NonResponse(
 					"UPDATE [alarmhistoric] SET [gone] = '{0}'  WHERE [id_alarm] = {1} AND [gone] IS NULL",
 					Now.ToString(Database.DateTimeFormat),
@@ -551,7 +551,7 @@ namespace WebAutomation.PlugIns {
 		public void UpdateDelay(int sec) {
 			TimerStop();
 			_delay = null;
-			if (sec > 0) {
+			if(sec > 0) {
 				_hasDelay = true;
 				_delay = new Timer((double)(sec * 1000));
 				_delay.Elapsed += new ElapsedEventHandler(Delay_Tick);
@@ -602,7 +602,7 @@ namespace WebAutomation.PlugIns {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarms Init");
 			_eventLog = new Logger(Logger.ESource.PlugInAlarm);
 			FillAlarmGroups();
-			using (Database Sql = new Database("Init Alarms")) {
+			using(Database Sql = new Database("Init Alarms")) {
 				string[][] DBAlarms = Sql.Query(@"
 				SELECT
 					[a].[id_alarm], [a].[text], [a].[link], [t].[name], [t].[autoquit],
@@ -631,12 +631,12 @@ namespace WebAutomation.PlugIns {
 					[a].[id_alarmgroups1], [a].[id_alarmgroups2], [a].[id_alarmgroups3],
 					[a].[id_alarmgroups4], [a].[id_alarmgroups5],
 					[g1].[name], [g2].[name], [g3].[name], [g4].[name], [g5].[name]");
-				for (int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
+				for(int ialarms = 0; ialarms < DBAlarms.Length; ialarms++) {
 					int idAlarm = Int32.Parse(DBAlarms[ialarms][0]);
 					int idDp = Int32.Parse(DBAlarms[ialarms][6]);
 					Alarm TheAlarm;
 					int delay;
-					if (Int32.TryParse(DBAlarms[ialarms][11], out delay)) {
+					if(Int32.TryParse(DBAlarms[ialarms][11], out delay)) {
 						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], delay);
 					} else {
 						TheAlarm = new Alarm(idAlarm, idDp, DBAlarms[ialarms][7], 0);
@@ -660,7 +660,7 @@ namespace WebAutomation.PlugIns {
 					TheAlarm.Alarmnames3 = DBAlarms[ialarms][21];
 					TheAlarm.Alarmnames4 = DBAlarms[ialarms][22];
 					TheAlarm.Alarmnames5 = DBAlarms[ialarms][23];
-					if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
+					if(TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 						TheAlarm.Max = Int32.Parse(DBAlarms[ialarms][10]);
 					_alarmList.Add(TheAlarm);
 					Datapoints.Get(idDp).idAlarm = idAlarm;
@@ -723,7 +723,8 @@ namespace WebAutomation.PlugIns {
 			return returns;
 		}
 		public static Alarm Get(int? idAlarm) {
-			if(idAlarm == null) return null;
+			if(idAlarm == null)
+				return null;
 			return _alarmList.Find(t => t.IdAlarm == idAlarm);
 		}
 		public static void RemoveAlarm(int? idAlarm) {

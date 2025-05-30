@@ -32,7 +32,7 @@ namespace WebAutomation.Helper {
 	/// <summary>
 	/// 
 	/// </summary>
-	public class Email : IDisposable {
+	public class Email: IDisposable {
 		/// <summary></summary>
 		private Logger eventLog;
 		/// <summary></summary>
@@ -64,7 +64,8 @@ namespace WebAutomation.Helper {
 			mailMessage.IsBodyHtml = true;
 			mailMessage.BodyEncoding = Encoding.UTF8;
 			MailClient = new SmtpClient(IniFile.Get("Email", "Server"), IniFile.GetInt("Email", "Port"));
-			if (useSSL.ToLower() == "true") MailClient.EnableSsl = true;
+			if(useSSL.ToLower() == "true")
+				MailClient.EnableSsl = true;
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestartet");
 		}
 		/// <summary>
@@ -103,7 +104,7 @@ namespace WebAutomation.Helper {
 			mailMessage.Subject = "";
 			mailMessage.Body = "";
 
-			if (IniFile.Get("Email", "ProjectNumberInSubject") == "true") {
+			if(IniFile.Get("Email", "ProjectNumberInSubject") == "true") {
 				setSubject(String.Format("{0} {1} - {2} Neue Alarm Aktionen",
 					IniFile.Get("Projekt", "Nummer"), ServiceNameBlank, EmailAlarms.getTotalCount(r)));
 			} else {
@@ -111,11 +112,14 @@ namespace WebAutomation.Helper {
 					ServiceNameBlank, EmailAlarms.getTotalCount(r)));
 			}
 			string MailToInMail = IniFile.Get("Email", "MailToInMail");
-			if(MailToInMail != "") MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
+			if(MailToInMail != "")
+				MailToInMail = @"E-Mail: <a href='mailto:" + MailToInMail + "'> " + MailToInMail + @" </a><br />";
 			string LinkToInMail = IniFile.Get("Email", "LinkToInMail");
 			string LinkNameInMail = IniFile.Get("Email", "LinkNameInMail");
-			if(LinkNameInMail == "") LinkNameInMail = LinkToInMail;
-			if(LinkToInMail != "") LinkToInMail = @"WEB: <a href='https://" + LinkToInMail + "'>" + LinkNameInMail + @"</a><br />";
+			if(LinkNameInMail == "")
+				LinkNameInMail = LinkToInMail;
+			if(LinkToInMail != "")
+				LinkToInMail = @"WEB: <a href='https://" + LinkToInMail + "'>" + LinkNameInMail + @"</a><br />";
 			mailMessage.Body = @"
 		<div style='font-family:Arial; font-size:9pt;'>
 			<p>In Ihrer Anlage stehen die folgenden Alarme an:</p>
@@ -212,7 +216,7 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		private string getTypeColor(string Alarmtype) {
 			string TypeColor;
-			switch (Alarmtype) {
+			switch(Alarmtype) {
 				case "Alarm":
 					TypeColor = "<span style='color:#A91919; font-weight:bold;'>{0}</span>";
 					break;
@@ -241,13 +245,13 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		public void send() {
-			if (IniFile.Get("Email", "UseUserPassword") == "true") {
+			if(IniFile.Get("Email", "UseUserPassword") == "true") {
 				MailClient.Credentials = new NetworkCredential(IniFile.Get("Email", "User"),
 					IniFile.Get("Email", "Password"));
 			}
 			MailClient.Send(mailMessage);
 			string to = "\r\n";
-			foreach (MailAddress sender in mailMessage.To) {
+			foreach(MailAddress sender in mailMessage.To) {
 				to += sender.Address + "\r\n";
 			}
 			mailMessage.To.Clear();
@@ -259,13 +263,13 @@ namespace WebAutomation.Helper {
 		public void reset() {
 			bool entered = false;
 			int notEntered = 0;
-			while (!entered && notEntered < 10) {
+			while(!entered && notEntered < 10) {
 				if(Monitor.TryEnter(EmailAlarms.Alarmtext)) {
 					EmailAlarms.Alarmtext.Clear();
 					Monitor.Exit(EmailAlarms.Alarmtext);
 					entered = true;
 				} else {
-					if (++notEntered >= 10) {
+					if(++notEntered >= 10) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
@@ -275,13 +279,13 @@ namespace WebAutomation.Helper {
 			}
 			entered = false;
 			notEntered = 0;
-			while (!entered && notEntered < 10) {
-				if (Monitor.TryEnter(EmailAlarms.Alarmsms)) {
+			while(!entered && notEntered < 10) {
+				if(Monitor.TryEnter(EmailAlarms.Alarmsms)) {
 					EmailAlarms.Alarmsms.Clear();
 					Monitor.Exit(EmailAlarms.Alarmsms);
 					entered = true;
 				} else {
-					if (++notEntered >= 10) {
+					if(++notEntered >= 10) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
@@ -291,13 +295,13 @@ namespace WebAutomation.Helper {
 			}
 			entered = false;
 			notEntered = 0;
-			while (!entered && notEntered < 10) {
+			while(!entered && notEntered < 10) {
 				if(Monitor.TryEnter(EmailAlarms.count)) {
 					EmailAlarms.count.Clear();
 					Monitor.Exit(EmailAlarms.count);
 					entered = true;
 				} else {
-					if (++notEntered >= 10) {
+					if(++notEntered >= 10) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"Angefordertes Item blockiert.\r\nAlarm.reset nicht möglich");
 					} else {
@@ -378,13 +382,13 @@ namespace WebAutomation.Helper {
 			public static void Add(int idalarm, int minutes, string html) {
 				bool entered = false;
 				int notEntered = 0;
-				while (!entered && notEntered < 10) {
-					if (Monitor.TryEnter(Alarmtext)) {
+				while(!entered && notEntered < 10) {
+					if(Monitor.TryEnter(Alarmtext)) {
 						try {
-							if (!Alarmtext.ContainsKey(idalarm)) {
+							if(!Alarmtext.ContainsKey(idalarm)) {
 								Alarmtext.Add(idalarm, new Dictionary<int, string>() { { minutes, "" } });
 							}
-							if (!Alarmtext[idalarm].ContainsKey(minutes)) {
+							if(!Alarmtext[idalarm].ContainsKey(minutes)) {
 								Alarmtext[idalarm].Add(minutes, "");
 							}
 							Alarmtext[idalarm][minutes] += html;
@@ -393,7 +397,7 @@ namespace WebAutomation.Helper {
 							entered = true;
 						}
 					} else {
-						if (++notEntered >= 10) {
+						if(++notEntered >= 10) {
 							Debug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.Add nicht möglich",
 									idalarm));
@@ -407,13 +411,13 @@ namespace WebAutomation.Helper {
 			public static void AddSMS(int idalarm, int minutes, string html) {
 				bool entered = false;
 				int notEntered = 0;
-				while (!entered && notEntered < 10) {
-					if (Monitor.TryEnter(Alarmsms)) {
+				while(!entered && notEntered < 10) {
+					if(Monitor.TryEnter(Alarmsms)) {
 						try {
-							if (!Alarmsms.ContainsKey(idalarm)) {
+							if(!Alarmsms.ContainsKey(idalarm)) {
 								Alarmsms.Add(idalarm, new Dictionary<int, string>() { { minutes, "" } });
 							}
-							if (!Alarmsms[idalarm].ContainsKey(minutes)) {
+							if(!Alarmsms[idalarm].ContainsKey(minutes)) {
 								Alarmsms[idalarm].Add(minutes, "");
 							}
 							Alarmsms[idalarm][minutes] += html;
@@ -422,7 +426,7 @@ namespace WebAutomation.Helper {
 							entered = true;
 						}
 					} else {
-						if (++notEntered >= 10) {
+						if(++notEntered >= 10) {
 							Debug.Write(MethodInfo.GetCurrentMethod(),
 								String.Format("Angefordertes Item blockiert.\r\nAlarms.AddSMS nicht möglich",
 									idalarm));
@@ -440,8 +444,8 @@ namespace WebAutomation.Helper {
 			public static string getText(PRecipient r) {
 				string html = "";
 				foreach(KeyValuePair<int, int> kvp in r.Minutes()) {
-					if (r.Active(kvp.Key)) {
-						if (getcount(kvp.Key, kvp.Value) > 0) {
+					if(r.Active(kvp.Key)) {
+						if(getcount(kvp.Key, kvp.Value) > 0) {
 							html += Alarmtext[kvp.Key][kvp.Value];
 						}
 					} else {
@@ -452,9 +456,9 @@ namespace WebAutomation.Helper {
 			}
 			public static List<string> getSMS(PRecipient r) {
 				List<string> html = new List<string>();
-				foreach (KeyValuePair<int, int> kvp in r.Minutes()) {
-					if (r.Active(kvp.Key)) {
-						if (getcount(kvp.Key, kvp.Value) > 0) {
+				foreach(KeyValuePair<int, int> kvp in r.Minutes()) {
+					if(r.Active(kvp.Key)) {
+						if(getcount(kvp.Key, kvp.Value) > 0) {
 							if(Alarmsms.ContainsKey(kvp.Key) && Alarmsms[kvp.Key].ContainsKey(kvp.Value))
 								html.Add(Alarmsms[kvp.Key][kvp.Value]);
 						}
@@ -469,10 +473,10 @@ namespace WebAutomation.Helper {
 			/// </summary>
 			/// <param name="idalarm"></param>
 			public static void countup(int idalarm, int minutes) {
-				if (!count.ContainsKey(idalarm)) {
-					count.Add(idalarm, new Dictionary<int, int>() { {minutes, 0} });
+				if(!count.ContainsKey(idalarm)) {
+					count.Add(idalarm, new Dictionary<int, int>() { { minutes, 0 } });
 				}
-				if (!count[idalarm].ContainsKey(minutes)) {
+				if(!count[idalarm].ContainsKey(minutes)) {
 					count[idalarm].Add(minutes, 0);
 				}
 				count[idalarm][minutes]++;
@@ -483,7 +487,7 @@ namespace WebAutomation.Helper {
 			/// <param name="idalarm"></param>
 			/// <returns></returns>
 			public static int getcount(int idalarm, int minutes) {
-				if (count.ContainsKey(idalarm) && count[idalarm].ContainsKey(minutes)) {
+				if(count.ContainsKey(idalarm) && count[idalarm].ContainsKey(minutes)) {
 					return count[idalarm][minutes];
 				} else {
 					return 0;
@@ -497,7 +501,7 @@ namespace WebAutomation.Helper {
 			public static int getTotalCount(PRecipient r) {
 				int counter = 0;
 				foreach(KeyValuePair<int, int> kvp in r.Minutes()) {
-					if (r.Active(kvp.Key)) {
+					if(r.Active(kvp.Key)) {
 						counter += getcount(kvp.Key, kvp.Value);
 					}
 				}

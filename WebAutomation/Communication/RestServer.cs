@@ -22,8 +22,10 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using WebAutomation.D1Mini;
+using WebAutomation.Shelly;
 
-namespace WebAutomation.Helper {
+namespace WebAutomation.Communication {
 	public class RestServer {
 		/// <summary></summary>
 		private Logger eventLog;

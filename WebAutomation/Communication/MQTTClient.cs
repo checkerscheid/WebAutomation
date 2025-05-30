@@ -22,15 +22,17 @@ using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Protocol;
 using Newtonsoft.Json;
-using ShellyDevice;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebAutomation.D1Mini;
+using WebAutomation.Shelly;
+using WebAutomation.Shelly.Device;
 
-namespace WebAutomation.Helper {
+namespace WebAutomation.Communication {
 	public class MQTTClient {
 		public event EventHandler<valueChangedEventArgs> valueChanged;
 		public event EventHandler<valueChangedEventArgs> d1MiniChanged;
@@ -75,7 +77,8 @@ namespace WebAutomation.Helper {
 			connectPending = false;
 			using(Database Sql = new Database("MQTT Server")) {
 				DBBroker = Sql.Query(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
-			};
+			}
+			;
 			_idBroker = Int32.Parse(DBBroker[0][0]);
 			_port = Int32.Parse(DBBroker[0][2]);
 			_ipBroker = DBBroker[0][1];
@@ -102,7 +105,8 @@ LEFT JOIN [dp] ON [dp].[id_mqtttopic] = [t].[id_mqtttopic]
 WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				for(int itopic = 0; itopic < DBtopic.Length; itopic++) {
 					int idtopic = Int32.Parse(DBtopic[itopic][0]);
-					int iddatapoint = 0; Int32.TryParse(DBtopic[itopic][5], out iddatapoint);
+					int iddatapoint = 0;
+					Int32.TryParse(DBtopic[itopic][5], out iddatapoint);
 					try {
 						topic nt = new topic(idtopic, iddatapoint, DBtopic[itopic][2], DBtopic[itopic][3] == "True", DBtopic[itopic][4] == "True");
 						if(!_topics.ContainsKey(DBtopic[itopic][1]))
@@ -421,14 +425,14 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			bool returns = true;
 			if(!shellyMqttUpdate())
 				returns = false;
-			if(!d1MiniMqttUpdate()) 
+			if(!d1MiniMqttUpdate())
 				returns = false;
 			return returns;
 		}
 		public bool shellyMqttUpdate() {
 			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
-			foreach(ShellyServer.Shelly s in ShellyServer.ForceMqttUpdateAvailable) {
+			foreach(Shelly.Shelly s in ShellyServer.ForceMqttUpdateAvailable) {
 				msg.Topic = $"{s.MqttId}/ForceMqttUpdate";
 				try {
 					msg.PayloadSegment = getFromString("1");

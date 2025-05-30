@@ -15,16 +15,16 @@
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpSQL;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Xml.Schema;
-using WebAutomation.Helper;
+using WebAutomation.Communication;
+using WebAutomation.D1Mini;
 using WebAutomation.PlugIns;
+using WebAutomation.Shelly;
 
 namespace WebAutomation {
 
@@ -84,7 +84,7 @@ namespace WebAutomation {
 					"[dp].[id_dpgroup], [dp].[id_opcdatapoint], [dp].[id_mqtttopic], [dp].[name], [dp].[description]," +
 					"ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([ns].[usergroupwrite], 100))) AS [usergroupwrite], " +
 					"[dp].[unit], [dp].[nks], [dp].[min], [dp].[max], [dp].[factor], [dp].[active], " +
-					"[g].[id_dpnamespace] " + 
+					"[g].[id_dpnamespace] " +
 					"FROM [dp] " +
 					"INNER JOIN [dpgroup] [g] ON [g].[id_dpgroup] = [dp].[id_dpgroup] " +
 					"INNER JOIN [dpnamespace] [ns] ON [ns].[id_dpnamespace] = [g].[id_dpnamespace] " +
@@ -92,13 +92,16 @@ namespace WebAutomation {
 				int i = 0;
 				if(erg.Length > 0) {
 					Int32.TryParse(erg[0][i++], out _idGroup);
-					_idOpc = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]); i++;
-					_idMqtt = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]); i++;
+					_idOpc = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]);
+					i++;
+					_idMqtt = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]);
+					i++;
 					_name = erg[0][i++];
 					_description = erg[0][i++];
 					_writeLevel = Int32.Parse(erg[0][i++]);
 					_unit = erg[0][i++];
-					_nks = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]); i++;
+					_nks = erg[0][i] == "" ? null : Int32.Parse(erg[0][i]);
+					i++;
 					_min = Double.Parse(erg[0][i++]);
 					_max = Double.Parse(erg[0][i++]);
 					_factor = Double.Parse(erg[0][i++]);
@@ -253,7 +256,7 @@ namespace WebAutomation {
 			WriteValue(value, "Dictionary");
 		}
 	}
-	
+
 	/// <summary>
 	/// Provides a centralized management system for handling and interacting with datapoints.
 	/// </summary>
@@ -310,7 +313,7 @@ namespace WebAutomation {
 		/// <param name="e">The event data containing the ID of the datapoint and the new value.</param>
 		private static void ShellyServer_valueChanged(object sender, ShellyServer.valueChangedEventArgs e) {
 			if(_dp.Exists(t => t.ID == e.IdDatapoint))
-				_dp.Find(t => t.ID == e.IdDatapoint).SetValue(e.Value, "wpShellyServer");
+				_dp.Find(t => t.ID == e.IdDatapoint).SetValue(e.Value, "Shelly Server");
 		}
 
 		/// <summary>
@@ -322,7 +325,7 @@ namespace WebAutomation {
 		/// <param name="e">The event arguments containing the ID of the datapoint and the new value.</param>
 		private static void D1MiniServer_valueChanged(object sender, D1MiniServer.valueChangedEventArgs e) {
 			if(_dp.Exists(t => t.ID == e.idDatapoint))
-				_dp.Find(t => t.ID == e.idDatapoint).SetValue(e.value, "wpD1MiniServer");
+				_dp.Find(t => t.ID == e.idDatapoint).SetValue(e.value, "D1Mini Server");
 		}
 
 		/// <summary>
@@ -334,7 +337,7 @@ namespace WebAutomation {
 		/// <param name="e">The event arguments containing the ID of the datapoint and its new value.</param>
 		private static void MQTTClient_valueChanged(object sender, MQTTClient.valueChangedEventArgs e) {
 			if(_dp.Exists(t => t.ID == e.idDatapoint))
-				_dp.Find(t => t.ID == e.idDatapoint).SetValue(e.value, "wpMQTTClient");
+				_dp.Find(t => t.ID == e.idDatapoint).SetValue(e.value, "MQTT Client");
 		}
 
 		/// <summary>
@@ -346,7 +349,7 @@ namespace WebAutomation {
 		/// <param name="e">The event arguments containing the ID of the OPC point and its new value.</param>
 		private static void OPCClient_valueChanged(object sender, OPCClient.valueChangedEventArgs e) {
 			if(_dp.Exists(t => t.IdOpc == e.idOPCPoint))
-				_dp.Find(t => t.IdOpc == e.idOPCPoint).SetValue(e.value, "wpOPCClient");
+				_dp.Find(t => t.IdOpc == e.idOPCPoint).SetValue(e.value, "OPC Client");
 		}
 
 		/// <summary>
@@ -411,7 +414,8 @@ namespace WebAutomation {
 		/// <param name="value">The value to write to each data point. Cannot be null.</param>
 		public static void WriteValues(List<int> DpIds, string value) {
 			Dictionary<int, string> d = new Dictionary<int, string>();
-			foreach (int i in DpIds) d.Add(i, value);
+			foreach(int i in DpIds)
+				d.Add(i, value);
 			WriteValues(d);
 		}
 
@@ -447,7 +451,7 @@ namespace WebAutomation {
 			get { return _items; }
 			set { _items = value; }
 		}
-		
+
 		/// <summary>
 		/// Adds an OPC item to the collection, updating the existing item if one with the same Hclt value already exists.
 		/// </summary>
@@ -514,7 +518,7 @@ namespace WebAutomation {
 			if(Monitor.TryEnter(Items, 5000)) {
 				try {
 					if(Items.Exists(t => t.Hclt == id)) {
-							returns = true;
+						returns = true;
 					}
 				} catch(Exception ex) {
 					EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
@@ -558,7 +562,8 @@ namespace WebAutomation {
 		/// array is empty, no action is performed. Ensure that the identifiers provided are valid.</remarks>
 		/// <param name="Datapoints">An array of integers representing the unique identifiers of the items to delete. Cannot be null.</param>
 		public static void DeleteItems(int[] Datapoints) {
-			for(int i = 0; i < Datapoints.Length; i++) DeleteItem(Datapoints[i]);
+			for(int i = 0; i < Datapoints.Length; i++)
+				DeleteItem(Datapoints[i]);
 		}
 	}
 }

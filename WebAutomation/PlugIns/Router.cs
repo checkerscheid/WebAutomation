@@ -28,7 +28,7 @@ namespace WebAutomation.PlugIns {
 		private static Dictionary<int, List<int>> RouterItems = new Dictionary<int, List<int>>();
 		public static void AddRouter() {
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
-			using (Database Sql = new Database("Add Router")) {
+			using(Database Sql = new Database("Add Router")) {
 				List<TableRouter> ltr = Sql.Select<TableRouter>();
 				foreach(TableRouter tr in ltr) {
 					try {
@@ -50,23 +50,24 @@ namespace WebAutomation.PlugIns {
 		}
 		public static void UpdateRouter(int fromid) {
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
-			using (Database Sql = new Database("Update Router for Item")) {
-				string[][] DBRouter = Sql.Query(@"SELECT [id_to] FROM [opcrouter] WHERE [id_dp] = {0}", fromid);
-				if (DBRouter.Length == 0) {
-					if(RouterItems.ContainsKey(fromid)) RouterItems.Remove(fromid);
+			using(Database Sql = new Database("Update Router for Item")) {
+				string[][] DBRouter = Sql.Query(@"SELECT [id_to] FROM [router] WHERE [id_dp] = {0} AND [id_to] IS NOT NULL", fromid);
+				if(DBRouter.Length == 0) {
+					if(RouterItems.ContainsKey(fromid))
+						RouterItems.Remove(fromid);
 				} else {
-					if (RouterItems.ContainsKey(fromid)) {
+					if(RouterItems.ContainsKey(fromid)) {
 						RouterItems[fromid].Clear();
 					} else {
 						RouterItems.Add(fromid, new List<int>());
 					}
-					for (int irouter = 0; irouter < DBRouter.Length; irouter++) {
+					for(int irouter = 0; irouter < DBRouter.Length; irouter++) {
 						try {
 							int idto;
-							if (Int32.TryParse(DBRouter[irouter][0], out idto)) {
+							if(Int32.TryParse(DBRouter[irouter][0], out idto)) {
 								RouterItems[fromid].Add(idto);
 							}
-						} catch (Exception ex) {
+						} catch(Exception ex) {
 							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 						}
 					}

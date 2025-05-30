@@ -68,7 +68,7 @@ namespace WebAutomation.externals {
 			string userName = null;
 			string password = null;
 			string domain = null;
-			if (credential != null) {
+			if(credential != null) {
 				userName = credential.UserName;
 				password = credential.Password;
 				domain = credential.Domain;
@@ -77,7 +77,7 @@ namespace WebAutomation.externals {
 			this.m_hPassword = GCHandle.Alloc(password, GCHandleType.Pinned);
 			this.m_hDomain = GCHandle.Alloc(domain, GCHandleType.Pinned);
 			this.m_hIdentity = new GCHandle();
-			if ((userName != null) && (userName != string.Empty)) {
+			if((userName != null) && (userName != string.Empty)) {
 				COAUTHIDENTITY coauthidentity = new COAUTHIDENTITY {
 					User = this.m_hUserName.AddrOfPinnedObject(),
 					UserLength = (userName != null) ? ((uint)userName.Length) : 0,
@@ -108,19 +108,19 @@ namespace WebAutomation.externals {
 		}
 
 		public void Deallocate() {
-			if (this.m_hUserName.IsAllocated) {
+			if(this.m_hUserName.IsAllocated) {
 				this.m_hUserName.Free();
 			}
-			if (this.m_hPassword.IsAllocated) {
+			if(this.m_hPassword.IsAllocated) {
 				this.m_hPassword.Free();
 			}
-			if (this.m_hDomain.IsAllocated) {
+			if(this.m_hDomain.IsAllocated) {
 				this.m_hDomain.Free();
 			}
-			if (this.m_hIdentity.IsAllocated) {
+			if(this.m_hIdentity.IsAllocated) {
 				this.m_hIdentity.Free();
 			}
-			if (this.m_hAuthInfo.IsAllocated) {
+			if(this.m_hAuthInfo.IsAllocated) {
 				this.m_hAuthInfo.Free();
 			}
 		}
@@ -156,7 +156,7 @@ namespace WebAutomation.externals {
 			FormatMessageW(0x1000, IntPtr.Zero, error, 0, lpBuffer, 0x3ff, IntPtr.Zero);
 			string str = Marshal.PtrToStringUni(lpBuffer);
 			Marshal.FreeCoTaskMem(lpBuffer);
-			if ((str != null) && (str.Length > 0)) {
+			if((str != null) && (str.Length > 0)) {
 				return str;
 			}
 			return string.Format("0x{0,0:X}", error);
@@ -176,26 +176,26 @@ namespace WebAutomation.externals {
 			pResults[0].hr = 0;
 			try {
 				uint dwClsCtx = 5;
-				if (((hostName != null) && (hostName.Length > 0)) && (hostName != "localhost")) {
+				if(((hostName != null) && (hostName.Length > 0)) && (hostName != "localhost")) {
 					dwClsCtx = 20;
 				}
 				CoCreateInstanceEx(ref clsid, null, dwClsCtx, ref pServerInfo, 1, pResults);
-			} catch (Exception exception) {
+			} catch(Exception exception) {
 				throw exception;
 			} finally {
-				if (handle.IsAllocated) {
+				if(handle.IsAllocated) {
 					handle.Free();
 				}
 				info.Deallocate();
 			}
-			if (pResults[0].hr != 0) {
+			if(pResults[0].hr != 0) {
 				throw new ExternalException("CoCreateInstanceEx: " + GetSystemMessage((int)pResults[0].hr));
 			}
 			return pResults[0].pItf;
 		}
 
 		public static void ReleaseServer(object server) {
-			if ((server != null) && server.GetType().IsCOMObject) {
+			if((server != null) && server.GetType().IsCOMObject) {
 				Marshal.FinalReleaseComObject(server);
 			}
 		}
@@ -217,7 +217,7 @@ namespace WebAutomation.externals {
 		/// </summary>
 		public static void InitializeSecurity() {
 			int errorCode = CoInitializeSecurity(IntPtr.Zero, -1, null, IntPtr.Zero, 1, 2, IntPtr.Zero, 0, IntPtr.Zero);
-			if (errorCode != 0) {
+			if(errorCode != 0) {
 				throw new ExternalException("CoInitializeSecurity: " + GetSystemMessage(errorCode), errorCode);
 			}
 		}

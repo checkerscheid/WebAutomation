@@ -22,7 +22,6 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
-using System.Threading.Tasks;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation.Helper {
@@ -36,16 +35,18 @@ namespace WebAutomation.Helper {
 			eventLog = new Logger(Logger.ESource.PlugInWatchdog);
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog init");
 			int watchdogVerz;
-			if (Int32.TryParse(IniFile.Get("Watchdog", "Verz"), out watchdogVerz)) {
-				if (watchdogVerz <= 0) watchdogVerz = 1;
+			if(Int32.TryParse(IniFile.Get("Watchdog", "Verz"), out watchdogVerz)) {
+				if(watchdogVerz <= 0)
+					watchdogVerz = 1;
 				watchdogTimer = new System.Timers.Timer(1000 * 60 * watchdogVerz);
 				watchdogTimer.Elapsed += watchdog_Tick;
 				watchdogTimer.AutoReset = true;
 				watchdogTimer.Enabled = true;
-				if (!Int32.TryParse(IniFile.Get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
+				if(!Int32.TryParse(IniFile.Get("Watchdog", "MaxInt"), out maxWatchdogByte)) {
 					maxWatchdogByte = 255;
 				}
-				if (maxWatchdogByte < 2) maxWatchdogByte = 2;
+				if(maxWatchdogByte < 2)
+					maxWatchdogByte = 2;
 				watchdogByte = maxWatchdogByte - 1;
 				eventLog.Write(MethodInfo.GetCurrentMethod(), "PlugIn Watchdog initialisiert");
 				// We are faster!!!
@@ -58,7 +59,7 @@ namespace WebAutomation.Helper {
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "Watchdog gestartet");
 		}
 		public void finished() {
-			if (watchdogTimer != null) {
+			if(watchdogTimer != null) {
 				watchdogTimer.Stop();
 				watchdogTimer.Enabled = false;
 				watchdogTimer.Dispose();
@@ -71,7 +72,8 @@ namespace WebAutomation.Helper {
 		private void setWDB() {
 			watchdogByteLast = watchdogByte;
 			watchdogByte++;
-			if (watchdogByte > maxWatchdogByte || watchdogByte < 1) watchdogByte = 1;
+			if(watchdogByte > maxWatchdogByte || watchdogByte < 1)
+				watchdogByte = 1;
 
 			int watchdogId, MqttAlarm;
 			bool MqttAlarmValid = false;
@@ -135,18 +137,19 @@ namespace WebAutomation.Helper {
 		private string _serviceName;
 		public ServiceControllerStatus ServiceStatus {
 			set {
-				if (_serviceStatus != value) {
+				if(_serviceStatus != value) {
 					_serviceStatus = value;
-					if (_serviceStatus == ServiceControllerStatus.Stopped) {
-						if (Common.IsAdmin()) {
+					if(_serviceStatus == ServiceControllerStatus.Stopped) {
+						if(Common.IsAdmin()) {
 							try {
 								serviceStart.Change(2000, Timeout.Infinite);
-							} catch (Exception ex) {
+							} catch(Exception ex) {
 								eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 							}
 						}
 					}
-					if (ServiceStatusChanged != null) ServiceStatusChanged(new ServiceStatusChangedEventArgs(value));
+					if(ServiceStatusChanged != null)
+						ServiceStatusChanged(new ServiceStatusChangedEventArgs(value));
 				}
 			}
 
@@ -155,9 +158,9 @@ namespace WebAutomation.Helper {
 		public wpServiceStatus(string servicename) {
 			eventLog = new Logger(Logger.ESource.PlugInServiceStatus);
 			this._serviceName = servicename;
-			if (_serviceName != "" && checkServiceInstalled()) {
+			if(_serviceName != "" && checkServiceInstalled()) {
 				serviceTimer = new Timer(Timer_Tick, _serviceName, 0, 500);
-				if (Common.IsAdmin()) {
+				if(Common.IsAdmin()) {
 					Debug.Write(MethodInfo.GetCurrentMethod(), "Autostart Services activated.");
 					serviceStart = new Timer(new TimerCallback(Start_Tick));
 				}
@@ -175,8 +178,8 @@ namespace WebAutomation.Helper {
 			_service.Start();
 		}
 		private bool checkServiceInstalled() {
-			foreach (ServiceController sc in ServiceController.GetServices()) {
-				if (sc.ServiceName == _serviceName) {
+			foreach(ServiceController sc in ServiceController.GetServices()) {
+				if(sc.ServiceName == _serviceName) {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), "Service '{0}' exists - start monitoring", _serviceName);
 					return true;
 				}
@@ -184,7 +187,7 @@ namespace WebAutomation.Helper {
 			eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Service '{0}' did not exists - monitoring faild", _serviceName);
 			return false;
 		}
-		public class ServiceStatusChangedEventArgs : EventArgs {
+		public class ServiceStatusChangedEventArgs: EventArgs {
 			public ServiceControllerStatus newStatus;
 			public ServiceStatusChangedEventArgs(ServiceControllerStatus _newStatus) {
 				this.newStatus = _newStatus;
@@ -215,14 +218,16 @@ namespace WebAutomation.Helper {
 		public float MemoryStatus {
 			set {
 				_memory = value;
-				if (MemoryStatusChanged != null) MemoryStatusChanged(new SystemStatusChangedEventArgs(value));
+				if(MemoryStatusChanged != null)
+					MemoryStatusChanged(new SystemStatusChangedEventArgs(value));
 			}
 
 		}
 		public float ProzessorStatus {
 			set {
 				_prozessor = value;
-				if (ProzessorStatusChanged != null) ProzessorStatusChanged(new SystemStatusChangedEventArgs(value));
+				if(ProzessorStatusChanged != null)
+					ProzessorStatusChanged(new SystemStatusChangedEventArgs(value));
 			}
 
 		}
@@ -240,14 +245,14 @@ namespace WebAutomation.Helper {
 		}
 		private void memoryTimer_Tick(object stateInfo) {
 			float fTemp = getMemory();
-			if (fTemp != _memory || _firstMemory) {
+			if(fTemp != _memory || _firstMemory) {
 				_firstMemory = false;
 				MemoryStatus = fTemp;
 			}
 		}
 		private void prozessorTimer_Tick(object stateInfo) {
 			float fTemp = getProzessor();
-			if (fTemp != _prozessor || _firstProzessor) {
+			if(fTemp != _prozessor || _firstProzessor) {
 				_firstProzessor = false;
 				ProzessorStatus = fTemp;
 			}
@@ -257,11 +262,13 @@ namespace WebAutomation.Helper {
 		}
 		private float getProzessor() {
 			float _cpu = (float)Math.Round((double)cpuCounter.NextValue(), 0);
-			if (_cpu < 0) _cpu = 0;
-			if (_cpu > 100) _cpu = 100;
+			if(_cpu < 0)
+				_cpu = 0;
+			if(_cpu > 100)
+				_cpu = 100;
 			return _cpu;
 		}
-		public class SystemStatusChangedEventArgs : EventArgs {
+		public class SystemStatusChangedEventArgs: EventArgs {
 			public float newStatus;
 			public SystemStatusChangedEventArgs(float _newStatus) {
 				this.newStatus = _newStatus;

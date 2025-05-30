@@ -62,7 +62,7 @@ namespace OPC.Data {
 	/// </summary>
 	public class OPCItemResult {
 		/// <summary></summary>
-		public int Error;			// content below only valid if Error=S_OK
+		public int Error;           // content below only valid if Error=S_OK
 		/// <summary></summary>
 		public int HandleServer;
 		/// <summary></summary>
@@ -77,9 +77,9 @@ namespace OPC.Data {
 	/// </summary>
 	public class OPCItemState {
 		/// <summary></summary>
-		public int Error;			// content below only valid if Error=S_OK
+		public int Error;           // content below only valid if Error=S_OK
 		/// <summary></summary>
-		public int HandleClient;	// always valid for callbacks
+		public int HandleClient;    // always valid for callbacks
 		/// <summary></summary>
 		public object DataValue;
 		/// <summary></summary>
@@ -95,7 +95,7 @@ namespace OPC.Data {
 		public override string ToString() {
 			StringBuilder sb = new StringBuilder("OPCIST: ", 256);
 			sb.AppendFormat("error=0x{0:x} hclt=0x{1:x}", Error, HandleClient);
-			if (Error == HRESULTS.S_OK) {
+			if(Error == HRESULTS.S_OK) {
 				sb.AppendFormat(" val={0} time={1} qual=", DataValue, TimeStamp);
 				sb.Append(OpcGroup.QualityToString(Quality));
 			}
@@ -146,11 +146,13 @@ namespace OPC.Data {
 		/// <returns></returns>
 		public override string ToString() {
 			StringBuilder sb = new StringBuilder("OPCIAT: '", 512);
-			sb.Append(ItemID); sb.Append("' ('"); sb.Append(AccessPath);
+			sb.Append(ItemID);
+			sb.Append("' ('");
+			sb.Append(AccessPath);
 			sb.AppendFormat("') hc=0x{0:x} hs=0x{1:x} act={2}", HandleClient, HandleServer, Active);
 			sb.AppendFormat("\r\n\tacc={0} typr={1} typc={2}", AccessRights, RequestedDataType, CanonicalDataType);
 			sb.AppendFormat("\r\n\teut={0} eui={1}", EUType, EUInfo);
-			if (!(Blob == null))
+			if(!(Blob == null))
 				sb.AppendFormat(" blob size={0}", Blob.Length);
 
 			return sb.ToString();
@@ -384,10 +386,10 @@ namespace OPC.Data {
 			Guid guidGrpTst = typGrpMgt.GUID;
 
 			object objtemp;
-			if (state.Public) {
+			if(state.Public) {
 				IOPCServerPublicGroups ifPubGrps = null;
 				ifPubGrps = (IOPCServerPublicGroups)ifServer;
-				if (ifPubGrps == null)
+				if(ifPubGrps == null)
 					Marshal.ThrowExceptionForHR(HRESULTS.E_NOINTERFACE);
 
 				ifPubGrps.GetPublicGroupByName(state.Name, ref guidGrpTst, out objtemp);
@@ -396,7 +398,7 @@ namespace OPC.Data {
 				ifServer.AddGroup(state.Name, state.Active, state.UpdateRate, state.HandleClient, biasTime, percentDeadband, state.LocaleID,
 									out state.HandleServer, out state.UpdateRate, ref guidGrpTst, out objtemp);
 			}
-			if (objtemp == null)
+			if(objtemp == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_NOINTERFACE);
 
 			ifMgt = (IOPCGroupStateMgt)objtemp;
@@ -415,17 +417,21 @@ namespace OPC.Data {
 			//if(wpDebug.debugOPC)
 			//	wpDebug.Write("OPC Data Grp '{0}' - Beginn Remove", myname);
 			EventLog = null;
-			if (!(_countItem == null)) _countItem.Clear();
+			if(!(_countItem == null))
+				_countItem.Clear();
 			_countItem = null;
-			if(!(_countItemState == null)) _countItemState.Clear();
+			if(!(_countItemState == null))
+				_countItemState.Clear();
 			_countItemState = null;
-			if(!(ifAsync == null)) SetEnable(false);
-			if(!(ifMgt == null)) Active = false;
+			if(!(ifAsync == null))
+				SetEnable(false);
+			if(!(ifMgt == null))
+				Active = false;
 			//if(wpDebug.debugOPC)
 			//	wpDebug.Write("OPC Data Grp '{0}' - Unadvice Callbackcookie", myname);
 			if(!(callbackcpoint == null)) {
 				try {
-					if (callbackcookie != 0) {
+					if(callbackcookie != 0) {
 						callbackcpoint.Unadvise(callbackcookie);
 						callbackcookie = 0;
 					}
@@ -455,11 +461,11 @@ namespace OPC.Data {
 
 			//if(wpDebug.debugOPC)
 			//	wpDebug.Write("OPC DATA GRP '{0}' - RemoveGroup", myname);
-			if (!(ifServer == null)) {
-				if (!state.Public) {
+			if(!(ifServer == null)) {
+				if(!state.Public) {
 					try {
 						ifServer.RemoveGroup(state.HandleServer, bForce);
-					} catch (Exception ex) {
+					} catch(Exception ex) {
 						EventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
@@ -474,12 +480,12 @@ namespace OPC.Data {
 		/// </summary>
 		/// <param name="bForce"></param>
 		public void DeletePublic(bool bForce) {
-			if (!state.Public)
+			if(!state.Public)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_FAIL);
 
 			IOPCServerPublicGroups ifPubGrps = null;
 			ifPubGrps = (IOPCServerPublicGroups)ifServer;
-			if (ifPubGrps == null)
+			if(ifPubGrps == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_NOINTERFACE);
 			int serverhandle = state.HandleServer;
 			Remove(false);
@@ -490,12 +496,12 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public void MoveToPublic() {
-			if (state.Public)
+			if(state.Public)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_FAIL);
 
 			IOPCPublicGroupStateMgt ifPubMgt = null;
 			ifPubMgt = (IOPCPublicGroupStateMgt)ifMgt;
-			if (ifPubMgt == null)
+			if(ifPubMgt == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_NOINTERFACE);
 			ifPubMgt.MoveToPublic();
 			ifPubMgt.GetState(out state.Public);
@@ -512,8 +518,8 @@ namespace OPC.Data {
 		/// <summary>
 		/// 
 		/// </summary>
-		public void GetStates()	{ // like a refresh
-			ifMgt.GetState(out	state.UpdateRate, out state.Active, out state.Name, out state.TimeBias, out state.PercentDeadband,
+		public void GetStates() { // like a refresh
+			ifMgt.GetState(out state.UpdateRate, out state.Active, out state.Name, out state.TimeBias, out state.PercentDeadband,
 							out state.LocaleID, out state.HandleClient, out state.HandleServer);
 		}
 		/// <summary>
@@ -630,22 +636,27 @@ namespace OPC.Data {
 			int runDef = (int)ptrDef;
 			OPCITEMDEFintern idf = new OPCITEMDEFintern();
 			idf.wReserved = 0;
-			foreach (OPCItemDef d in arrDef) {
+			foreach(OPCItemDef d in arrDef) {
 				idf.szAccessPath = d.AccessPath;
 				idf.szItemID = d.ItemID;
 				idf.bActive = d.Active;
 				idf.hClient = d.HandleClient;
 
-				if (_countItem.ContainsKey(d.HandleClient)) _countItem[d.HandleClient] = HRESULTS.CONNECT_E_NOCONNECTION;
-				else _countItem.Add(d.HandleClient, HRESULTS.CONNECT_E_NOCONNECTION);
-				if (_countItemState.ContainsKey(d.HandleClient)) _countItemState[d.HandleClient] = (short)OPC_QUALITY_STATUS.NOT_CONNECTED;
-				else _countItemState.Add(d.HandleClient, (short)OPC_QUALITY_STATUS.NOT_CONNECTED);
+				if(_countItem.ContainsKey(d.HandleClient))
+					_countItem[d.HandleClient] = HRESULTS.CONNECT_E_NOCONNECTION;
+				else
+					_countItem.Add(d.HandleClient, HRESULTS.CONNECT_E_NOCONNECTION);
+				if(_countItemState.ContainsKey(d.HandleClient))
+					_countItemState[d.HandleClient] = (short)OPC_QUALITY_STATUS.NOT_CONNECTED;
+				else
+					_countItemState.Add(d.HandleClient, (short)OPC_QUALITY_STATUS.NOT_CONNECTED);
 
 				idf.vtRequestedDataType = (short)d.RequestedDataType;
-				idf.dwBlobSize = 0; idf.pBlob = IntPtr.Zero;
-				if (d.Blob != null) {
+				idf.dwBlobSize = 0;
+				idf.pBlob = IntPtr.Zero;
+				if(d.Blob != null) {
 					idf.dwBlobSize = d.Blob.Length;
-					if (idf.dwBlobSize > 0) {
+					if(idf.dwBlobSize > 0) {
 						hasblobs = true;
 						idf.pBlob = Marshal.AllocCoTaskMem(idf.dwBlobSize);
 						Marshal.Copy(d.Blob, 0, idf.pBlob, idf.dwBlobSize);
@@ -661,39 +672,41 @@ namespace OPC.Data {
 			int hresult = ifItems.AddItems(count, ptrDef, out ptrRes, out ptrErr);
 
 			runDef = (int)ptrDef;
-			if (hasblobs) {
-				for (int i = 0; i < count; i++) {
+			if(hasblobs) {
+				for(int i = 0; i < count; i++) {
 					IntPtr blob = (IntPtr)Marshal.ReadInt32((IntPtr)(runDef + 20));
-					if (blob != IntPtr.Zero)
+					if(blob != IntPtr.Zero)
 						Marshal.FreeCoTaskMem(blob);
 					Marshal.DestroyStructure((IntPtr)runDef, typeOPCITEMDEF);
 					runDef += sizeOPCITEMDEF;
 				}
 			} else {
-				for (int i = 0; i < count; i++) {
+				for(int i = 0; i < count; i++) {
 					Marshal.DestroyStructure((IntPtr)runDef, typeOPCITEMDEF);
 					runDef += sizeOPCITEMDEF;
 				}
 			}
 			Marshal.FreeCoTaskMem(ptrDef);
 
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			int runRes = (int)ptrRes;
 			int runErr = (int)ptrErr;
-			if ((runRes == 0) || (runErr == 0))
+			if((runRes == 0) || (runErr == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			arrRes = new OPCItemResult[count];
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				arrRes[i] = new OPCItemResult();
 				arrRes[i].Error = Marshal.ReadInt32((IntPtr)runErr);
 
-				if (_countItem.ContainsKey(arrDef[i].HandleClient)) _countItem[arrDef[i].HandleClient] = arrRes[i].Error;
-				else _countItem.Add(arrDef[i].HandleClient, arrRes[i].Error);
+				if(_countItem.ContainsKey(arrDef[i].HandleClient))
+					_countItem[arrDef[i].HandleClient] = arrRes[i].Error;
+				else
+					_countItem.Add(arrDef[i].HandleClient, arrRes[i].Error);
 
-				if (HRESULTS.Failed(arrRes[i].Error)) {
+				if(HRESULTS.Failed(arrRes[i].Error)) {
 					runRes += sizeOPCITEMRESULT;
 					runErr += 4;
 					continue;
@@ -704,9 +717,9 @@ namespace OPC.Data {
 				arrRes[i].AccessRights = (OPCACCESSRIGHTS)Marshal.ReadInt32((IntPtr)(runRes + 8));
 
 				int ptrblob = Marshal.ReadInt32((IntPtr)(runRes + 16));
-				if ((ptrblob != 0)) {
+				if((ptrblob != 0)) {
 					int blobsize = Marshal.ReadInt32((IntPtr)(runRes + 12));
-					if (blobsize > 0) {
+					if(blobsize > 0) {
 						arrRes[i].Blob = new byte[blobsize];
 						Marshal.Copy((IntPtr)ptrblob, arrRes[i].Blob, 0, blobsize);
 					}
@@ -738,22 +751,27 @@ namespace OPC.Data {
 			int runDef = (int)ptrDef;
 			OPCITEMDEFintern idf = new OPCITEMDEFintern();
 			idf.wReserved = 0;
-			foreach (OPCItemDef d in arrDef) {
+			foreach(OPCItemDef d in arrDef) {
 				idf.szAccessPath = d.AccessPath;
 				idf.szItemID = d.ItemID;
 				idf.bActive = d.Active;
 				idf.hClient = d.HandleClient;
 
-				if (_countItem.ContainsKey(d.HandleClient)) _countItem[d.HandleClient] = HRESULTS.CONNECT_E_NOCONNECTION;
-				else _countItem.Add(d.HandleClient, HRESULTS.CONNECT_E_NOCONNECTION);
-				if (_countItemState.ContainsKey(d.HandleClient)) _countItemState[d.HandleClient] = (short)OPC_QUALITY_STATUS.NOT_CONNECTED;
-				else _countItemState.Add(d.HandleClient, (short)OPC_QUALITY_STATUS.NOT_CONNECTED);
+				if(_countItem.ContainsKey(d.HandleClient))
+					_countItem[d.HandleClient] = HRESULTS.CONNECT_E_NOCONNECTION;
+				else
+					_countItem.Add(d.HandleClient, HRESULTS.CONNECT_E_NOCONNECTION);
+				if(_countItemState.ContainsKey(d.HandleClient))
+					_countItemState[d.HandleClient] = (short)OPC_QUALITY_STATUS.NOT_CONNECTED;
+				else
+					_countItemState.Add(d.HandleClient, (short)OPC_QUALITY_STATUS.NOT_CONNECTED);
 
 				idf.vtRequestedDataType = (short)d.RequestedDataType;
-				idf.dwBlobSize = 0; idf.pBlob = IntPtr.Zero;
-				if (d.Blob != null) {
+				idf.dwBlobSize = 0;
+				idf.pBlob = IntPtr.Zero;
+				if(d.Blob != null) {
 					idf.dwBlobSize = d.Blob.Length;
-					if (idf.dwBlobSize > 0) {
+					if(idf.dwBlobSize > 0) {
 						hasblobs = true;
 						idf.pBlob = Marshal.AllocCoTaskMem(idf.dwBlobSize);
 						Marshal.Copy(d.Blob, 0, idf.pBlob, idf.dwBlobSize);
@@ -769,36 +787,36 @@ namespace OPC.Data {
 			int hresult = ifItems.ValidateItems(count, ptrDef, blobUpd, out ptrRes, out ptrErr);
 
 			runDef = (int)ptrDef;
-			if (hasblobs) {
-				for (int i = 0; i < count; i++) {
+			if(hasblobs) {
+				for(int i = 0; i < count; i++) {
 					IntPtr blob = (IntPtr)Marshal.ReadInt32((IntPtr)(runDef + 20));
-					if (blob != IntPtr.Zero)
+					if(blob != IntPtr.Zero)
 						Marshal.FreeCoTaskMem(blob);
 					Marshal.DestroyStructure((IntPtr)runDef, typeOPCITEMDEF);
 					runDef += sizeOPCITEMDEF;
 				}
 			} else {
-				for (int i = 0; i < count; i++) {
+				for(int i = 0; i < count; i++) {
 					Marshal.DestroyStructure((IntPtr)runDef, typeOPCITEMDEF);
 					runDef += sizeOPCITEMDEF;
 				}
 			}
 			Marshal.FreeCoTaskMem(ptrDef);
 
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			int runRes = (int)ptrRes;
 			int runErr = (int)ptrErr;
-			if ((runRes == 0) || (runErr == 0))
+			if((runRes == 0) || (runErr == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			arrRes = new OPCItemResult[count];
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				arrRes[i] = new OPCItemResult();
 				arrRes[i].Error = Marshal.ReadInt32((IntPtr)runErr);
 
-				if (HRESULTS.Failed(arrRes[i].Error)) {
+				if(HRESULTS.Failed(arrRes[i].Error)) {
 					runRes += sizeOPCITEMRESULT;
 					runErr += 4;
 					continue;
@@ -809,9 +827,9 @@ namespace OPC.Data {
 				arrRes[i].AccessRights = (OPCACCESSRIGHTS)Marshal.ReadInt32((IntPtr)(runRes + 8));
 
 				int ptrblob = Marshal.ReadInt32((IntPtr)(runRes + 16));
-				if ((ptrblob != 0)) {
+				if((ptrblob != 0)) {
 					int blobsize = Marshal.ReadInt32((IntPtr)(runRes + 12));
-					if (blobsize > 0) {
+					if(blobsize > 0) {
 						arrRes[i].Blob = new byte[blobsize];
 						Marshal.Copy((IntPtr)ptrblob, arrRes[i].Blob, 0, blobsize);
 					}
@@ -839,7 +857,7 @@ namespace OPC.Data {
 			int hresult = HRESULTS.S_OK;
 			if(count > 0) {
 				hresult = ifItems.RemoveItems(count, arrHSrv, out ptrErr);
-				if (HRESULTS.Failed(hresult))
+				if(HRESULTS.Failed(hresult))
 					Marshal.ThrowExceptionForHR(hresult);
 				arrErr = new int[count];
 				Marshal.Copy(ptrErr, arrErr, 0, count);
@@ -859,7 +877,7 @@ namespace OPC.Data {
 			int count = arrHSrv.Length;
 			IntPtr ptrErr;
 			int hresult = ifItems.SetActiveState(count, arrHSrv, activate, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -877,12 +895,12 @@ namespace OPC.Data {
 		public bool SetClientHandles(int[] arrHSrv, int[] arrHClt, out int[] arrErr) {
 			arrErr = null;
 			int count = arrHSrv.Length;
-			if (count != arrHClt.Length)
+			if(count != arrHClt.Length)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			IntPtr ptrErr;
 			int hresult = ifItems.SetClientHandles(count, arrHSrv, arrHClt, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -900,12 +918,12 @@ namespace OPC.Data {
 		public bool SetDatatypes(int[] arrHSrv, VarEnum[] arrVT, out int[] arrErr) {
 			arrErr = null;
 			int count = arrHSrv.Length;
-			if (count != arrVT.Length)
+			if(count != arrVT.Length)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			IntPtr ptrVT = Marshal.AllocCoTaskMem(count * 2);
 			int runVT = (int)ptrVT;
-			foreach (VarEnum v in arrVT) {
+			foreach(VarEnum v in arrVT) {
 				Marshal.WriteInt16((IntPtr)runVT, (short)v);
 				runVT += 2;
 			}
@@ -915,7 +933,7 @@ namespace OPC.Data {
 
 			Marshal.FreeCoTaskMem(ptrVT);
 
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -933,9 +951,9 @@ namespace OPC.Data {
 			object objtemp;
 
 			int hresult = ifItems.CreateEnumerator(ref guidEnuAtt, out objtemp);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
-			if ((hresult == HRESULTS.S_FALSE) || (objtemp == null))
+			if((hresult == HRESULTS.S_FALSE) || (objtemp == null))
 				return null;
 
 			IEnumOPCItemAttributes ifenu = (IEnumOPCItemAttributes)objtemp;
@@ -958,16 +976,16 @@ namespace OPC.Data {
 			IntPtr ptrErr;
 			lastchange = DateTime.Now;
 			int hresult = ifSync.Read(src, count, arrHSrv, out ptrStat, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			int runErr = (int)ptrErr;
 			int runStat = (int)ptrStat;
-			if ((runErr == 0) || (runStat == 0))
+			if((runErr == 0) || (runStat == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			arrStat = new OPCItemState[count];
-			for (int i = 0; i < count; i++) {														// WORKAROUND !!!
+			for(int i = 0; i < count; i++) {                                                        // WORKAROUND !!!
 				arrStat[i] = new OPCItemState();
 
 				arrStat[i].Error = Marshal.ReadInt32((IntPtr)runErr);
@@ -975,18 +993,19 @@ namespace OPC.Data {
 
 				arrStat[i].HandleClient = Marshal.ReadInt32((IntPtr)runStat);
 
-				if (HRESULTS.Succeeded(arrStat[i].Error)) {
+				if(HRESULTS.Succeeded(arrStat[i].Error)) {
 					short vt = Marshal.ReadInt16((IntPtr)(runStat + 16));
-					if (vt == (short)VarEnum.VT_ERROR)
+					if(vt == (short)VarEnum.VT_ERROR)
 						arrStat[i].Error = Marshal.ReadInt32((IntPtr)(runStat + 24));
 
 					arrStat[i].TimeStamp = Marshal.ReadInt64((IntPtr)(runStat + 4));
 					arrStat[i].Quality = Marshal.ReadInt16((IntPtr)(runStat + 12));
 					arrStat[i].DataValue = Marshal.GetObjectForNativeVariant((IntPtr)(runStat + 16));
 
-					if (_countItemState.ContainsKey(arrStat[i].HandleClient))
+					if(_countItemState.ContainsKey(arrStat[i].HandleClient))
 						_countItemState[arrStat[i].HandleClient] = arrStat[i].Quality;
-					else _countItemState.Add(arrStat[i].HandleClient, arrStat[i].Quality);
+					else
+						_countItemState.Add(arrStat[i].HandleClient, arrStat[i].Quality);
 
 					DUMMY_VARIANT.VariantClear((IntPtr)(runStat + 16));
 				} else
@@ -1009,12 +1028,12 @@ namespace OPC.Data {
 		public bool Write(int[] arrHSrv, object[] arrVal, out int[] arrErr) {
 			arrErr = null;
 			int count = arrHSrv.Length;
-			if (count != arrVal.Length)
+			if(count != arrVal.Length)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			IntPtr ptrErr;
 			int hresult = ifSync.Write(count, arrHSrv, arrVal, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -1037,7 +1056,7 @@ namespace OPC.Data {
 
 			IntPtr ptrErr;
 			int hresult = ifAsync.Read(count, arrHSrv, transactionID, out cancelID, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -1061,12 +1080,12 @@ namespace OPC.Data {
 			arrErr = null;
 			cancelID = 0;
 			int count = arrHSrv.Length;
-			if (count != arrVal.Length)
+			if(count != arrVal.Length)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			IntPtr ptrErr;
 			int hresult = ifAsync.Write(count, arrHSrv, arrVal, transactionID, out cancelID, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			arrErr = new int[count];
@@ -1125,7 +1144,7 @@ namespace OPC.Data {
 			if(Debug.debugOPC) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnDataChange");
 			}
-			if ((dwCount == 0) || (hGroup != state.HandleClient))
+			if((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
 			int count = (int)dwCount;
 
@@ -1144,7 +1163,7 @@ namespace OPC.Data {
 			e.lastChange = lastchange;
 			e.sts = new OPCItemState[count];
 
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				e.sts[i] = new OPCItemState();
 				e.sts[i].Error = Marshal.ReadInt32((IntPtr)rune);
 				rune += 4;
@@ -1152,9 +1171,9 @@ namespace OPC.Data {
 				e.sts[i].HandleClient = Marshal.ReadInt32((IntPtr)runh);
 				runh += 4;
 
-				if (HRESULTS.Succeeded(e.sts[i].Error)) {
+				if(HRESULTS.Succeeded(e.sts[i].Error)) {
 					short vt = Marshal.ReadInt16((IntPtr)runv);
-					if (vt == (short)VarEnum.VT_ERROR)
+					if(vt == (short)VarEnum.VT_ERROR)
 						e.sts[i].Error = Marshal.ReadInt32((IntPtr)(runv + 8));
 
 					e.sts[i].CanonicalDataType = (VarEnum)vt;
@@ -1162,8 +1181,10 @@ namespace OPC.Data {
 					e.sts[i].Quality = Marshal.ReadInt16((IntPtr)runq);
 					e.sts[i].TimeStamp = Marshal.ReadInt64((IntPtr)runt);
 
-					if (_countItemState.ContainsKey(e.sts[i].HandleClient)) _countItemState[e.sts[i].HandleClient] = e.sts[i].Quality;
-					else _countItemState.Add(e.sts[i].HandleClient, e.sts[i].Quality);
+					if(_countItemState.ContainsKey(e.sts[i].HandleClient))
+						_countItemState[e.sts[i].HandleClient] = e.sts[i].Quality;
+					else
+						_countItemState.Add(e.sts[i].HandleClient, e.sts[i].Quality);
 				}
 
 				runv += DUMMY_VARIANT.ConstSize;
@@ -1171,7 +1192,7 @@ namespace OPC.Data {
 				runt += 8;
 			}
 
-			if (DataChanged != null)
+			if(DataChanged != null)
 				DataChanged(this, e);
 		}
 		/// <summary>
@@ -1193,7 +1214,7 @@ namespace OPC.Data {
 			if(Debug.debugOPC) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnReadComplete");
 			}
-			if ((dwCount == 0) || (hGroup != state.HandleClient))
+			if((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
 			int count = (int)dwCount;
 
@@ -1212,7 +1233,7 @@ namespace OPC.Data {
 			e.lastChange = lastchange;
 			e.sts = new OPCItemState[count];
 
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				e.sts[i] = new OPCItemState();
 				e.sts[i].Error = Marshal.ReadInt32((IntPtr)rune);
 				rune += 4;
@@ -1220,9 +1241,9 @@ namespace OPC.Data {
 				e.sts[i].HandleClient = Marshal.ReadInt32((IntPtr)runh);
 				runh += 4;
 
-				if (HRESULTS.Succeeded(e.sts[i].Error)) {
+				if(HRESULTS.Succeeded(e.sts[i].Error)) {
 					short vt = Marshal.ReadInt16((IntPtr)runv);
-					if (vt == (short)VarEnum.VT_ERROR)
+					if(vt == (short)VarEnum.VT_ERROR)
 						e.sts[i].Error = Marshal.ReadInt32((IntPtr)(runv + 8));
 
 					e.sts[i].CanonicalDataType = (VarEnum)vt;
@@ -1230,8 +1251,10 @@ namespace OPC.Data {
 					e.sts[i].Quality = Marshal.ReadInt16((IntPtr)runq);
 					e.sts[i].TimeStamp = Marshal.ReadInt64((IntPtr)runt);
 
-					if (_countItemState.ContainsKey(e.sts[i].HandleClient)) _countItemState[e.sts[i].HandleClient] = e.sts[i].Quality;
-					else _countItemState.Add(e.sts[i].HandleClient, e.sts[i].Quality);
+					if(_countItemState.ContainsKey(e.sts[i].HandleClient))
+						_countItemState[e.sts[i].HandleClient] = e.sts[i].Quality;
+					else
+						_countItemState.Add(e.sts[i].HandleClient, e.sts[i].Quality);
 				}
 
 				runv += DUMMY_VARIANT.ConstSize;
@@ -1239,7 +1262,7 @@ namespace OPC.Data {
 				runt += 8;
 			}
 
-			if (ReadCompleted != null)
+			if(ReadCompleted != null)
 				ReadCompleted(this, e);
 		}
 		/// <summary>
@@ -1257,7 +1280,7 @@ namespace OPC.Data {
 			if(Debug.debugOPC) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnWriteComplete");
 			}
-			if ((dwCount == 0) || (hGroup != state.HandleClient))
+			if((dwCount == 0) || (hGroup != state.HandleClient))
 				return;
 			int count = (int)dwCount;
 
@@ -1270,7 +1293,7 @@ namespace OPC.Data {
 			e.masterError = hrMastererr;
 			e.res = new OPCWriteResult[count];
 
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				e.res[i] = new OPCWriteResult();
 
 				e.res[i].Error = Marshal.ReadInt32((IntPtr)rune);
@@ -1280,7 +1303,7 @@ namespace OPC.Data {
 				runh += 4;
 			}
 
-			if (WriteCompleted != null)
+			if(WriteCompleted != null)
 				WriteCompleted(this, e);
 		}
 
@@ -1288,11 +1311,11 @@ namespace OPC.Data {
 			if(Debug.debugOPC) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "OpcGroup.OnCancelComplete");
 			}
-			if (hGroup != state.HandleClient)
+			if(hGroup != state.HandleClient)
 				return;
 
 			CancelCompleteEventArgs e = new CancelCompleteEventArgs(dwTransid, hGroup);
-			if (CancelCompleted != null)
+			if(CancelCompleted != null)
 				CancelCompleted(this, e);
 		}
 		/// <summary>
@@ -1300,26 +1323,34 @@ namespace OPC.Data {
 		/// </summary>
 		public event DataChangeEventHandler DataChanged;
 		public bool hasDataChanged() {
-			if(DataChanged != null && DataChanged.GetInvocationList().Length > 0) return true;
-			else return false;
+			if(DataChanged != null && DataChanged.GetInvocationList().Length > 0)
+				return true;
+			else
+				return false;
 		}
 		/// <summary></summary>
 		public event ReadCompleteEventHandler ReadCompleted;
 		public bool hasReadCompleted() {
-			if(ReadCompleted != null && ReadCompleted.GetInvocationList().Length > 0) return true;
-			else return false;
+			if(ReadCompleted != null && ReadCompleted.GetInvocationList().Length > 0)
+				return true;
+			else
+				return false;
 		}
 		/// <summary></summary>
 		public event WriteCompleteEventHandler WriteCompleted;
 		public bool hasWriteCompleted() {
-			if(WriteCompleted != null && WriteCompleted.GetInvocationList().Length > 0) return true;
-			else return false;
+			if(WriteCompleted != null && WriteCompleted.GetInvocationList().Length > 0)
+				return true;
+			else
+				return false;
 		}
 		/// <summary></summary>
 		public event CancelCompleteEventHandler CancelCompleted;
 		public bool hasCancelCompleted() {
-			if(CancelCompleted != null && CancelCompleted.GetInvocationList().Length > 0) return true;
-			else return false;
+			if(CancelCompleted != null && CancelCompleted.GetInvocationList().Length > 0)
+				return true;
+			else
+				return false;
 		}
 		/// <summary>
 		/// helper
@@ -1352,7 +1383,7 @@ namespace OPC.Data {
 			Guid sinkguid = sinktype.GUID;
 
 			cpointcontainer.FindConnectionPoint(ref sinkguid, out callbackcpoint);
-			if (callbackcpoint == null)
+			if(callbackcpoint == null)
 				return;
 
 			callbackcpoint.Advise(this, out callbackcookie);
@@ -1379,7 +1410,7 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public void Dispose() {
-			if (!(ifEnum == null)) {
+			if(!(ifEnum == null)) {
 				int rc = Marshal.FinalReleaseComObject(ifEnum);
 				ifEnum = null;
 			}
@@ -1396,13 +1427,13 @@ namespace OPC.Data {
 			int count;
 			ifEnum.Next(enumcountmax, out ptrAtt, out count);
 			int runatt = (int)ptrAtt;
-			if ((runatt == 0) || (count <= 0) || (count > enumcountmax))
+			if((runatt == 0) || (count <= 0) || (count > enumcountmax))
 				return;
 
 			attributes = new OPCItemAttributes[count];
 			IntPtr ptrString;
 
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				attributes[i] = new OPCItemAttributes();
 
 				ptrString = (IntPtr)Marshal.ReadInt32((IntPtr)runatt);
@@ -1425,9 +1456,9 @@ namespace OPC.Data {
 				DUMMY_VARIANT.VariantClear((IntPtr)(runatt + 40));
 
 				int ptrblob = Marshal.ReadInt32((IntPtr)(runatt + 28));
-				if ((ptrblob != 0)) {
+				if((ptrblob != 0)) {
 					int blobsize = Marshal.ReadInt32((IntPtr)(runatt + 24));
-					if (blobsize > 0) {
+					if(blobsize > 0) {
 						attributes[i].Blob = new byte[blobsize];
 						Marshal.Copy((IntPtr)ptrblob, attributes[i].Blob, 0, blobsize);
 					}

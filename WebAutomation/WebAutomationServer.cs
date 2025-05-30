@@ -27,8 +27,11 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebAutomation.Communication;
+using WebAutomation.D1Mini;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
+using WebAutomation.Shelly;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 using static WebAutomation.Helper.Email;
 using static WebAutomation.Helper.wpServiceStatus;
@@ -46,7 +49,7 @@ namespace WebAutomation {
 	/// email notifications, and system status tracking.  This class is designed to be extensible and supports various
 	/// modes of operation, including  maintenance mode and minimized startup. It also includes mechanisms for service
 	/// monitoring  (e.g., Apache and MSSQL) and resource usage tracking (e.g., memory and processor status).</remarks>
-	public partial class WebAutomationServer : Form {
+	public partial class WebAutomationServer: Form {
 		private Logger eventLog;
 		public WebCom wpWebCom;
 		public WebSockets wpWebSockets;
@@ -114,7 +117,8 @@ namespace WebAutomation {
 		public event StringChangedEventHandler StringChanged;
 		public string lastchange {
 			set {
-				if (StringChanged != null) StringChanged(new StringChangedEventArgs($"{DateTime.Now.ToString()} {value}"));
+				if(StringChanged != null)
+					StringChanged(new StringChangedEventArgs($"{DateTime.Now.ToString()} {value}"));
 			}
 		}
 		//public string Message {
@@ -190,19 +194,19 @@ namespace WebAutomation {
 			_wpBigProject = false;
 			_wpForceRead = false;
 			_wpPSOPC = false;
-			if (argList.Count > 0) {
+			if(argList.Count > 0) {
 				Debug.SetDebug(argList, Application.ProductName);
-				if (argList.Contains("wpWartung".ToLower())) {
+				if(argList.Contains("wpWartung".ToLower())) {
 					_wpWartung = true;
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Wartungsmodus' gestartet", Application.ProductName);
 				}
-				if (argList.Contains("wpMinStart".ToLower())) {
+				if(argList.Contains("wpMinStart".ToLower())) {
 					_wpStartMinimized = true;
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Information,
 						"{0} Server im 'minimiertem Modus' gestartet", Application.ProductName);
 				}
-				if (argList.Contains("wpAllowCloseBrowser".ToLower())) {
+				if(argList.Contains("wpAllowCloseBrowser".ToLower())) {
 					_wpAllowCloseBrowser = true;
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server darf den lokalen Browser schließen", Application.ProductName);
@@ -212,12 +216,12 @@ namespace WebAutomation {
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Big Project Modus' gestartet", Application.ProductName);
 				}
-				if (argList.Contains("wpForceRead".ToLower())) {
+				if(argList.Contains("wpForceRead".ToLower())) {
 					_wpForceRead = true;
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'Force Read Modus' gestartet", Application.ProductName);
 				}
-				if (argList.Contains("wpPSOPC".ToLower())) {
+				if(argList.Contains("wpPSOPC".ToLower())) {
 					_wpPSOPC = true;
 					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						"{0} Server im 'PSOPC (Analphabet) Modus' gestartet", Application.ProductName);
@@ -329,16 +333,16 @@ namespace WebAutomation {
 		/// <param name="defaultValue">The default value to assign to the column if <paramref name="canBeNull"/> is <see langword="false"/>. This value
 		/// must be compatible with the specified <paramref name="type"/>.</param>
 		private void CheckTable(string table, string column, string type, bool canBeNull, string defaultValue) {
-			using (Database Sql = new Database("Check Database")) {
+			using(Database Sql = new Database("Check Database")) {
 				string[][] DB = Sql.Query(@"SELECT [COLUMN_NAME] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{0}' AND [COLUMN_NAME] = '{1}'", table, column);
 				try {
-					if (DB.Length == 0 || DB[0].Length == 0 || DB[0][0] != column) {
+					if(DB.Length == 0 || DB[0].Length == 0 || DB[0][0] != column) {
 						Sql.NonResponse("ALTER TABLE [{0}] ADD [{1}] {2} {3}",
 							table, column, type,
 							canBeNull ? "NULL" : "NOT NULL CONSTRAINT [DF_" + table + "_" + column + "] DEFAULT(" + defaultValue + ")");
 						Debug.Write(MethodInfo.GetCurrentMethod(), "Add [{1}] to [{0}]", table, column);
 					}
-				} catch (Exception ex) {
+				} catch(Exception ex) {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
@@ -379,19 +383,19 @@ namespace WebAutomation {
 			int SQLCounter = 0;
 			int SQLCounterMax;
 			int SQLCounterTime;
-			if (Int32.TryParse(IniFile.Get("SQL", "reconnect"), out SQLCounterMax) &&
+			if(Int32.TryParse(IniFile.Get("SQL", "reconnect"), out SQLCounterMax) &&
 				Int32.TryParse(IniFile.Get("SQL", "reconnectTime"), out SQLCounterTime)) {
 				do {
 					Sql = new Database("Test SQL Connection");
-					if (!Sql.Available) {
+					if(!Sql.Available) {
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Error,
 							"{0} Server kann Datenbank nicht erreichen.\r\n\tReconnect nach {1} Sekunden\r\n\tVerbleibende Versuche: {2}",
 							Application.ProductName, SQLCounterTime, SQLCounterMax - 1 - SQLCounter);
 						SQLCounter++;
 						Thread.Sleep(SQLCounterTime * 1000);
 					}
-				} while (Sql.Available == false && SQLCounter < SQLCounterMax);
-				if (SQLCounter >= SQLCounterMax) {
+				} while(Sql.Available == false && SQLCounter < SQLCounterMax);
+				if(SQLCounter >= SQLCounterMax) {
 					MessageBox.Show("Keine Verbindung zur Datenbank!\r\nDas Programm wird beendet",
 						"Datenbankfehler",
 						MessageBoxButtons.OK,
@@ -419,7 +423,7 @@ namespace WebAutomation {
 		/// <param name="e">An object containing information about the service status change, including the new status.</param>
 		private void ApacheService_ServiceStatusChanged(ServiceStatusChangedEventArgs e) {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
-			switch (s) {
+			switch(s) {
 				case ServiceControllerStatus.Running:
 					eventLog.Write(MethodInfo.GetCurrentMethod(), "Apache Server Status changed: {0} ({1})", s, ApacheName);
 					break;
@@ -484,7 +488,7 @@ namespace WebAutomation {
 		/// <param name="e">An instance of <see cref="ServiceStatusChangedEventArgs"/> containing information about the new service status.</param>
 		private void MssqlService_ServiceStatusChanged(ServiceStatusChangedEventArgs e) {
 			ServiceControllerStatus s = (ServiceControllerStatus)e.newStatus;
-			switch (s) {
+			switch(s) {
 				case ServiceControllerStatus.Running:
 					eventLog.Write(MethodInfo.GetCurrentMethod(), "Mssql Server Status changed: {0} ({1})", s, MssqlName);
 					break;
@@ -530,12 +534,12 @@ namespace WebAutomation {
 		/// <param name="text">The text to set on the specified <see cref="Control"/>. Can be <see langword="null"/> or empty.</param>
 		public void SetText(Control control, string text) {
 			try {
-				if (control.InvokeRequired) {
+				if(control.InvokeRequired) {
 					control.Invoke(new ControlString(SetText), new object[] { control, text });
 				} else {
 					control.Text = text;
 				}
-			} catch (Exception ex) {
+			} catch(Exception ex) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), ex.ToString());
 			}
 		}

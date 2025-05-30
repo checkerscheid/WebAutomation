@@ -19,8 +19,10 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebAutomation.D1Mini;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
+using WebAutomation.Shelly;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 
 namespace WebAutomation {

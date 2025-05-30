@@ -61,7 +61,7 @@ namespace OPC.Data {
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString() {
-			if (Error == HRESULTS.S_OK)
+			if(Error == HRESULTS.S_OK)
 				return "ID:" + PropertyID + " Data:" + Data.ToString();
 			else
 				return "ID:" + PropertyID + " Error:" + Error.ToString();
@@ -82,7 +82,7 @@ namespace OPC.Data {
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString() {
-			if (Error == HRESULTS.S_OK)
+			if(Error == HRESULTS.S_OK)
 				return "ID:" + PropertyID + " newID:" + newItemID;
 			else
 				return "ID:" + PropertyID + " Error:" + Error.ToString();
@@ -178,7 +178,7 @@ namespace OPC.Data {
 			Disconnect();
 
 			Type typeofOPCserver = Type.GetTypeFromProgID(prgidOPCserver);
-			if (typeofOPCserver == null)
+			if(typeofOPCserver == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.OPC_E_NOTFOUND);
 
 			// unmanaged Code
@@ -188,7 +188,7 @@ namespace OPC.Data {
 			// OPCserverObj = Activator.CreateInstance(typeofOPCserver);
 
 			ifServer = (IOPCServer)OPCserverObj;
-			if (ifServer == null)
+			if(ifServer == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.CONNECT_E_NOCONNECTION);
 
 			// connect all interfaces
@@ -203,9 +203,9 @@ namespace OPC.Data {
 		/// 
 		/// </summary>
 		public void Disconnect() {
-			if (!(shutdowncpoint == null)) {
+			if(!(shutdowncpoint == null)) {
 				try {
-					if (shutdowncookie != 0) {
+					if(shutdowncookie != 0) {
 						shutdowncpoint.Unadvise(shutdowncookie);
 						shutdowncookie = 0;
 					}
@@ -223,7 +223,7 @@ namespace OPC.Data {
 			ifItmProps = null;
 			ifCommon = null;
 			ifServer = null;
-			if (!(OPCserverObj == null)) {
+			if(!(OPCserverObj == null)) {
 				Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Data Srv '{0}' - Marshal.ReleaseComObject OPCserverObj", this._name);
 				if(this._name != "CoDeSys.OPC.02")
 					Interop.ReleaseServer(OPCserverObj);
@@ -237,7 +237,7 @@ namespace OPC.Data {
 		/// <param name="serverStatus"></param>
 		public void GetStatus(out SERVERSTATUS serverStatus) {
 			try {
-				if (ifServer == null) {
+				if(ifServer == null) {
 					serverStatus = null;
 				} else {
 					ifServer.GetStatus(out serverStatus);
@@ -280,7 +280,7 @@ namespace OPC.Data {
 		/// <returns></returns>
 		public OpcGroup AddGroup(string groupName, bool setActive, int requestedUpdateRate,
 									int[] biasTime, float[] percentDeadband, int localeID) {
-			if (ifServer == null)
+			if(ifServer == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			OpcGroup grp = new OpcGroup(ref ifServer, false, groupName, setActive, requestedUpdateRate);
@@ -293,7 +293,7 @@ namespace OPC.Data {
 		/// <param name="groupName"></param>
 		/// <returns></returns>
 		public OpcGroup GetPublicGroup(string groupName) {
-			if (ifServer == null)
+			if(ifServer == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			OpcGroup grp = new OpcGroup(ref ifServer, true, groupName, false, 1000);
@@ -323,11 +323,11 @@ namespace OPC.Data {
 			int count;
 			IntPtr ptrIds;
 			int hresult = ifCommon.QueryAvailableLocaleIDs(out count, out ptrIds);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
-			if (((int)ptrIds) == 0)
+			if(((int)ptrIds) == 0)
 				return;
-			if (count < 1) { Marshal.FreeCoTaskMem(ptrIds); return; }
+			if(count < 1) { Marshal.FreeCoTaskMem(ptrIds); return; }
 
 			lcids = new int[count];
 			Marshal.Copy(ptrIds, lcids, 0, count);
@@ -405,25 +405,25 @@ namespace OPC.Data {
 			lst = null;
 			IEnumString enumerator;
 			BrowseOPCItemIDs(typ, "", VarEnum.VT_EMPTY, 0, out enumerator);
-			if (enumerator == null)
+			if(enumerator == null)
 				return;
 
 			lst = new ArrayList(500);
 			int int2;
 			IntPtr cft = new IntPtr(&int2);
-			
-			
+
+
 			string[] strF = new string[100];
 			int hresult;
 			do {
 				hresult = enumerator.Next(100, strF, cft);
 
-				if (int2 > 0) {
-					for (int i = 0; i < int2; i++)
+				if(int2 > 0) {
+					for(int i = 0; i < int2; i++)
 						lst.Add(strF[i]);
 				}
 			}
-			while (hresult == HRESULTS.S_OK);
+			while(hresult == HRESULTS.S_OK);
 
 			int rc = Marshal.FinalReleaseComObject(enumerator);
 			enumerator = null;
@@ -442,19 +442,19 @@ namespace OPC.Data {
 			IntPtr ptrDesc;
 			IntPtr ptrTyp;
 			ifItmProps.QueryAvailableProperties(itemID, out count, out ptrID, out ptrDesc, out ptrTyp);
-			if ((count == 0) || (count > 10000))
+			if((count == 0) || (count > 10000))
 				return;
 
 			int runID = (int)ptrID;
 			int runDesc = (int)ptrDesc;
 			int runTyp = (int)ptrTyp;
-			if ((runID == 0) || (runDesc == 0) || (runTyp == 0))
+			if((runID == 0) || (runDesc == 0) || (runTyp == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			opcProperties = new OPCProperty[count];
 
 			IntPtr ptrString;
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				opcProperties[i] = new OPCProperty();
 
 				opcProperties[i].PropertyID = Marshal.ReadInt32((IntPtr)runID);
@@ -483,30 +483,30 @@ namespace OPC.Data {
 		public bool GetItemProperties(string itemID, int[] propertyIDs, out OPCPropertyData[] propertiesData) {
 			propertiesData = null;
 			int count = propertyIDs.Length;
-			if (count < 1)
+			if(count < 1)
 				return false;
 
 			IntPtr ptrDat;
 			IntPtr ptrErr;
 			int hresult = ifItmProps.GetItemProperties(itemID, count, propertyIDs, out ptrDat, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			int runDat = (int)ptrDat;
 			int runErr = (int)ptrErr;
-			if ((runDat == 0) || (runErr == 0))
+			if((runDat == 0) || (runErr == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			propertiesData = new OPCPropertyData[count];
 
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				propertiesData[i] = new OPCPropertyData();
 				propertiesData[i].PropertyID = propertyIDs[i];
 
 				propertiesData[i].Error = Marshal.ReadInt32((IntPtr)runErr);
 				runErr += 4;
 
-				if (propertiesData[i].Error == HRESULTS.S_OK) {
+				if(propertiesData[i].Error == HRESULTS.S_OK) {
 					propertiesData[i].Data = Marshal.GetObjectForNativeVariant((IntPtr)runDat);
 					DUMMY_VARIANT.VariantClear((IntPtr)runDat);
 				} else
@@ -529,31 +529,31 @@ namespace OPC.Data {
 		public bool LookupItemIDs(string itemID, int[] propertyIDs, out OPCPropertyItem[] propertyItems) {
 			propertyItems = null;
 			int count = propertyIDs.Length;
-			if (count < 1)
+			if(count < 1)
 				return false;
 
 			IntPtr ptrErr;
 			IntPtr ptrIds;
 			int hresult = ifItmProps.LookupItemIDs(itemID, count, propertyIDs, out ptrIds, out ptrErr);
-			if (HRESULTS.Failed(hresult))
+			if(HRESULTS.Failed(hresult))
 				Marshal.ThrowExceptionForHR(hresult);
 
 			int runIds = (int)ptrIds;
 			int runErr = (int)ptrErr;
-			if ((runIds == 0) || (runErr == 0))
+			if((runIds == 0) || (runErr == 0))
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			propertyItems = new OPCPropertyItem[count];
 
 			IntPtr ptrString;
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				propertyItems[i] = new OPCPropertyItem();
 				propertyItems[i].PropertyID = propertyIDs[i];
 
 				propertyItems[i].Error = Marshal.ReadInt32((IntPtr)runErr);
 				runErr += 4;
 
-				if (propertyItems[i].Error == HRESULTS.S_OK) {
+				if(propertyItems[i].Error == HRESULTS.S_OK) {
 					ptrString = (IntPtr)Marshal.ReadInt32((IntPtr)runIds);
 					propertyItems[i].newItemID = Marshal.PtrToStringUni(ptrString);
 					Marshal.FreeCoTaskMem(ptrString);
@@ -573,7 +573,7 @@ namespace OPC.Data {
 		/// <param name="shutdownReason"></param>
 		void IOPCShutdown.ShutdownRequest(string shutdownReason) {
 			ShutdownRequestEventArgs e = new ShutdownRequestEventArgs(shutdownReason);
-			if (ShutdownRequested != null)
+			if(ShutdownRequested != null)
 				ShutdownRequested(this, e);
 		}
 		/// <summary>
@@ -588,7 +588,7 @@ namespace OPC.Data {
 			Guid sinkguid = sinktype.GUID;
 
 			cpointcontainer.FindConnectionPoint(ref sinkguid, out shutdowncpoint);
-			if (shutdowncpoint == null)
+			if(shutdowncpoint == null)
 				return;
 
 			shutdowncpoint.Advise(this, out shutdowncookie);

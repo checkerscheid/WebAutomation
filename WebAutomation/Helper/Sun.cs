@@ -21,6 +21,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using WebAutomation.Communication;
 
 namespace WebAutomation.Helper {
 	public class Sun {

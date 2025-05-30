@@ -15,7 +15,6 @@
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
 using FreakaZone.Libraries.wpIniFile;
-using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -24,9 +23,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WatsonWebsocket;
-using static WebAutomation.Helper.ShellyServer;
+using WebAutomation.D1Mini;
+using WebAutomation.Shelly;
 
-namespace WebAutomation.Helper {
+namespace WebAutomation.Communication {
 	public class WebSockets {
 
 		#region Server
@@ -99,7 +99,7 @@ namespace WebAutomation.Helper {
 
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			if(cmd.src != null) {
-				Shelly shelly = ShellyServer.GetShellyFromWsId(cmd.src.ToString());
+				Shelly.Shelly shelly = ShellyServer.GetShellyFromWsId(cmd.src.ToString());
 				if(shelly != null) {
 					//if(shelly.IdOnOff > 0) {
 					//	Datapoint dp = Datapoints.Get(shelly.IdOnOff);
@@ -275,7 +275,8 @@ namespace WebAutomation.Helper {
 				myDatapoints = new List<string>();
 			}
 			public void Add(string Datapoints) {
-				if(!myDatapoints.Contains(Datapoints)) myDatapoints.Add(Datapoints);
+				if(!myDatapoints.Contains(Datapoints))
+					myDatapoints.Add(Datapoints);
 			}
 			public bool hasDatapoint(string check) {
 				return myDatapoints.Contains(check);

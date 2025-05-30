@@ -22,7 +22,6 @@ using FreakaZone.Libraries.wpSQL.Table;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -31,13 +30,16 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebAutomation.D1Mini;
+using WebAutomation.Helper;
 using WebAutomation.PlugIns;
+using WebAutomation.Shelly;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 /**
 * @addtogroup WebAutomation
 * @{
 */
-namespace WebAutomation.Helper {
+namespace WebAutomation.Communication {
 	/// <summary>
 	/// 
 	/// </summary>
@@ -258,7 +260,7 @@ namespace WebAutomation.Helper {
 				WebComListener.Start();
 				eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("{0} gestartet", WebComServer.Name));
 				do {
-					if (!WebComListener.Pending()) {
+					if(!WebComListener.Pending()) {
 						Thread.Sleep(250);
 						continue;
 					}
@@ -266,7 +268,7 @@ namespace WebAutomation.Helper {
 					Thread ClientThread = new Thread(new ParameterizedThreadStart(TCP_HandleClient));
 					ClientThread.Name = "WebcomHandleClient";
 					ClientThread.Start(Pclient);
-				} while (!isFinished);
+				} while(!isFinished);
 			} catch(Exception ex) {
 				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
@@ -285,14 +287,14 @@ namespace WebAutomation.Helper {
 				do {
 					bytesRead = clientStream.Read(message, bytesRead, (int)tcpClient.ReceiveBufferSize);
 					s_message += encoder.GetString(message, 0, bytesRead);
-				} while (clientStream.DataAvailable);
-				if (!isFinished) {
+				} while(clientStream.DataAvailable);
+				if(!isFinished) {
 					byte[] answer = await getAnswer(s_message);
 					clientStream.Write(answer, 0, answer.Length);
 					clientStream.Flush();
 					clientStream.Close();
 				}
-			} catch (Exception ex) {
+			} catch(Exception ex) {
 				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, tcpClient.ToString());
 			} finally {
 				tcpClient.Close();
@@ -310,8 +312,8 @@ namespace WebAutomation.Helper {
 			string[] param;
 			int outint;
 			int outint2;
-			D1Mini d1md;
-			switch (s_befehl[0]) {
+			D1Mini.D1Mini d1md;
+			switch(s_befehl[0]) {
 				case wpBefehl.cHello:
 					returns = new ret { erg = ret.OK, message = "Hello FreakaZone Client" }.ToString();
 					break;
@@ -325,7 +327,7 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cSelectJoinJoin:
-					using (Database Sql = new Database("Select Join Join")) {
+					using(Database Sql = new Database("Select Join Join")) {
 						returns = Sql.Select<TableDummynamespace, TableDummygroup, TableDummy>().ToString();
 					}
 					break;
@@ -351,7 +353,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cWriteScene:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[1], out outint)) {
+					if(Int32.TryParse(param[1], out outint)) {
 						returns = writeSceneDP(outint, param[0]);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "Szene nicht gefunden" }.ToString();
@@ -398,7 +400,7 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					d1md = D1MiniServer.Get(param[0]);
 					if(d1md != null) {
-						D1Mini.CmdList cL = new D1Mini.CmdList(param[1]);
+						D1Mini.D1Mini.CmdList cL = new D1Mini.D1Mini.CmdList(param[1]);
 						if(d1md.SendCmd(cL))
 							returns = new ret { erg = ret.OK }.ToString();
 					}
@@ -477,7 +479,7 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cOPCServer:
-					if (s_befehl[1] != null) {
+					if(s_befehl[1] != null) {
 						returns = OPCClient.getAllOPCServer(s_befehl[1]);
 					} else {
 						returns = OPCClient.getAllOPCServer();
@@ -486,10 +488,10 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cOPCGroup:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param.Length == 2 && param[0] != null && param[1] != null) {
+						if(param.Length == 2 && param[0] != null && param[1] != null) {
 							Program.MainProg.wpOPCClient.DoBrowse(param[0], param[1]);
 							returns = Program.MainProg.wpOPCClient.OPCgebrowsed;
-						} else if (param.Length == 1 && param[0] != null) {
+						} else if(param.Length == 1 && param[0] != null) {
 							Program.MainProg.wpOPCClient.DoBrowse(param[0]);
 							returns = Program.MainProg.wpOPCClient.OPCgebrowsed;
 						} else {
@@ -514,14 +516,14 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cOPCItem:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (param.Length == 3 && param[0] != null && param[1] != null && param[2] != null) {
+					if(param.Length == 3 && param[0] != null && param[1] != null && param[2] != null) {
 						returns = Program.MainProg.wpOPCClient.getItems(param[0], param[1], param[2]);
 					} else {
 						returns = Program.MainProg.wpOPCClient.getItems(param[0], param[1]);
 					}
 					break;
 				case wpBefehl.cOPCServerDetails:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.GetOPCServerDetails(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "OPC Server nicht gefunden" }.ToString();
@@ -537,14 +539,14 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cOPCGroupDetails:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.GetOPCGroupDetails(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "OPC Gruppe nicht gefunden" }.ToString();
 					}
 					break;
 				case wpBefehl.cOPCGroupActive:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.ChangeOPCGroupState(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "OPC Gruppe nicht gefunden" }.ToString();
@@ -553,7 +555,7 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cChangeOPCGroupWriteLevel:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = new ret { erg = ret.OK }.ToString();
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						WriteLevel.AddGroupWriteLevel(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "OPC Server nicht gefunden" }.ToString();
@@ -562,8 +564,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cChangeOPCItemType:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = new ret { erg = ret.OK }.ToString();
-					if (Int32.TryParse(param[0], out outint)) {
-						if (Program.MainProg.wpOPCClient.ChangeOPCItemType(outint, PVTEnum.get(param[1])) != 0) {
+					if(Int32.TryParse(param[0], out outint)) {
+						if(Program.MainProg.wpOPCClient.ChangeOPCItemType(outint, PVTEnum.get(param[1])) != 0) {
 							returns = new ret { erg = ret.ERROR, message = "Hat nicht geklappt" }.ToString();
 						}
 					}
@@ -571,7 +573,7 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cChangeOPCItemWriteLevel:
 					param = wpBefehl.getParam(s_befehl[1]);
 					returns = new ret { erg = ret.OK }.ToString();
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						WriteLevel.AddItemWriteLevel(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "OPC Server nicht gefunden" }.ToString();
@@ -579,7 +581,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cRenameOPCServer:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						Program.MainProg.wpOPCClient.ChangeOPCServerName(outint, param[1]);
 						returns = new ret { erg = ret.OK }.ToString();
 					} else {
@@ -588,7 +590,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cRenameOPCGroup:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						Program.MainProg.wpOPCClient.renameOPCGroup(outint, param[1]);
 						returns = new ret { erg = ret.OK }.ToString();
 					} else {
@@ -596,21 +598,21 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cActivateServer:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.newOPCServer(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR }.ToString();
 					}
 					break;
 				case wpBefehl.cActivateGroup:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.newOPCGroup(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR }.ToString();
 					}
 					break;
 				case wpBefehl.cActivateItems:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.newOPCItems(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR }.ToString();
@@ -624,14 +626,14 @@ namespace WebAutomation.Helper {
 					}
 					break;
 				case wpBefehl.cRemoveOPCServer:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.removeOPCServer(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR }.ToString();
 					}
 					break;
 				case wpBefehl.cRemoveOPCGroup:
-					if (Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
+					if(Int32.TryParse(wpBefehl.getParam(s_befehl[1])[0], out outint)) {
 						returns = Program.MainProg.wpOPCClient.removeOPCGroup(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR }.ToString();
@@ -644,7 +646,7 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cMoveOPCItem:
 					returns = new ret { erg = ret.ERROR, message = "keine gültigen Parameter" }.ToString();
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint) &&
+					if(Int32.TryParse(param[0], out outint) &&
 						Int32.TryParse(param[1], out outint2)) {
 						OPCItem TheItem = OpcDatapoints.GetItem(outint);
 						if(TheItem != null) {
@@ -659,7 +661,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cQuitAlarm:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[1], out outint)) {
+					if(Int32.TryParse(param[1], out outint)) {
 						returns = quitAlarm(param[0], outint, param[2]);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = $"ID: {param[1]} DOSNT EXISTS" }.ToString();
@@ -671,7 +673,7 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cUpdateAlarm:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						returns = UpdateAlarm(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = $"ID: {param[1]} DOSNT EXISTS" }.ToString();
@@ -684,7 +686,7 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cDeleteAlarm:
 					param = wpBefehl.getParam(s_befehl[1]);
 					if(Int32.TryParse(param[0], out outint)) {
-						using (Database Sql = new Database("Delete Alarm")) {
+						using(Database Sql = new Database("Delete Alarm")) {
 							Datapoint AlarmWeg = Datapoints.GetFromAlarmId(outint);
 							if(AlarmWeg != null) {
 								Alarms.RemoveAlarm(AlarmWeg.idAlarm);
@@ -699,7 +701,7 @@ namespace WebAutomation.Helper {
 					param = wpBefehl.getParam(s_befehl[1]);
 					for(int i = 0; i < param.Length; i++) {
 						if(Int32.TryParse(param[i], out outint)) {
-							using (Database Sql = new Database("Delete Alarm")) {
+							using(Database Sql = new Database("Delete Alarm")) {
 								Datapoint AlarmWeg = Datapoints.GetFromAlarmId(outint);
 								if(AlarmWeg != null) {
 									Alarms.RemoveAlarm(AlarmWeg.idAlarm);
@@ -719,16 +721,16 @@ namespace WebAutomation.Helper {
 					break;
 				case wpBefehl.cCalendarRenew:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						returns = Program.MainProg.CalDav.renewCalendar(outint);
 					} else {
 						returns = new ret { erg = ret.ERROR, message = "id not found" }.ToString();
 					}
 					break;
-#region Trend
+				#region Trend
 				case wpBefehl.cSaveNewTrend:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						Trends.AddTrend(outint);
 						returns = new ret { erg = ret.OK }.ToString();
 					} else {
@@ -748,8 +750,8 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cDeleteTrend:
 					// Version3.0Test: DeleteTrend
 					param = wpBefehl.getParam(s_befehl[1]);
-					for (int i = 0; i < param.Length; i++) {
-						if (Int32.TryParse(param[i], out outint)) {
+					for(int i = 0; i < param.Length; i++) {
+						if(Int32.TryParse(param[i], out outint)) {
 							Trends.RemoveTrend(outint);
 						}
 					}
@@ -806,10 +808,10 @@ namespace WebAutomation.Helper {
 					}
 					returns = new ret { erg = ret.OK }.ToString();
 					break;
-#endregion
+				#endregion
 				case wpBefehl.cUpdateRouter:
 					param = wpBefehl.getParam(s_befehl[1]);
-					if (Int32.TryParse(param[0], out outint)) {
+					if(Int32.TryParse(param[0], out outint)) {
 						Router.UpdateRouter(outint);
 					}
 					returns = new ret { erg = ret.OK }.ToString();
@@ -817,9 +819,11 @@ namespace WebAutomation.Helper {
 				case wpBefehl.cReadEvent:
 					param = wpBefehl.getParam(s_befehl[1]);
 					try {
-						if (param != null) returns = Logger.ReadLog(param[0]);
-						else returns = Logger.ReadLog();
-					} catch (Exception ex) {
+						if(param != null)
+							returns = Logger.ReadLog(param[0]);
+						else
+							returns = Logger.ReadLog();
+					} catch(Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
@@ -832,7 +836,7 @@ namespace WebAutomation.Helper {
 						init();
 						eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning, "Reload Settings");
 						returns = new ret { erg = ret.OK }.ToString();
-					} catch (Exception ex) {
+					} catch(Exception ex) {
 						returns = new ret { erg = ret.ERROR, message = ex.Message, trace = ex.StackTrace }.ToString();
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
@@ -884,7 +888,7 @@ namespace WebAutomation.Helper {
 			int writeLevel;
 			ret returns = new ret();
 			try {
-				if (Int32.TryParse(param[1], out idDp) &&
+				if(Int32.TryParse(param[1], out idDp) &&
 					Int32.TryParse(param[0], out writeLevel)) {
 					Datapoint DP = Datapoints.Get(idDp);
 					if(DP != null) {
@@ -939,7 +943,7 @@ namespace WebAutomation.Helper {
 			try {
 				Dictionary<int, string> toWrite = new Dictionary<int, string>();
 				for(int i = 1; i < param.Length; i = i + 2) {
-					if (Int32.TryParse(param[i], out outint)) {
+					if(Int32.TryParse(param[i], out outint)) {
 						Datapoint dp = Datapoints.Get(outint);
 						string korrekt = param[i + 1];
 						toWrite.Add(outint, korrekt);
@@ -949,7 +953,7 @@ namespace WebAutomation.Helper {
 					}
 				}
 				Datapoints.WriteValues(toWrite);
-			} catch (Exception ex) {
+			} catch(Exception ex) {
 				returns.erg = ret.ERROR;
 				returns.message = ex.Message;
 				returns.trace = ex.StackTrace;
@@ -961,13 +965,13 @@ namespace WebAutomation.Helper {
 			string[][] erg;
 			ret returns = new ret { erg = ret.OK, message = "" };
 			user = user.ToLower();
-			using (Database Sql = new Database("get User Level")) {
+			using(Database Sql = new Database("get User Level")) {
 				erg = Sql.Query(@"SELECT TOP 1 [g].[order]
 					FROM [user] [u]
 					INNER JOIN [usergroup] [g] ON [u].[id_usergroup] = [g].[id_usergroup]
 					WHERE [login] = '{0}'", user);
 			}
-			if (erg.Length == 1 && erg[0].Length == 1 &&
+			if(erg.Length == 1 && erg[0].Length == 1 &&
 				Int32.TryParse(erg[0][0], out level)) {
 				List<int> ids = new List<int>();
 				List<string> values = new List<string>();
@@ -975,9 +979,9 @@ namespace WebAutomation.Helper {
 				returns.message = $"WriteScene ({{idscene}}):";
 				string sqlLog = "";
 				Dictionary<int, string> d = Scene.getScene(idscene);
-				foreach (KeyValuePair<int, string> kvp in d) {
+				foreach(KeyValuePair<int, string> kvp in d) {
 					p = Datapoints.Get(kvp.Key);
-					if (p != null && p.WriteLevel <= level) {
+					if(p != null && p.WriteLevel <= level) {
 						p.WriteValue(kvp.Value);
 						returns.message += $"\r\n\tWrite DP Ok:\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
 						sqlLog += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.Name, DateTime.Now, p.Value, kvp.Value);
@@ -986,8 +990,8 @@ namespace WebAutomation.Helper {
 						returns.message += $"\r\n\tkeine Berechtigung zum schreiben\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
 					}
 				}
-				if (sqlLog.Length > 0) {
-					using (Database Sql = new Database("write Scene log")) {
+				if(sqlLog.Length > 0) {
+					using(Database Sql = new Database("write Scene log")) {
 						Sql.NonResponse("INSERT INTO [useractivity] ([username], [datapoint], [writetime], [oldvalue], [newvalue]) VALUES {0}", sqlLog.Substring(0, sqlLog.Length - 1));
 					}
 				}
@@ -1023,7 +1027,7 @@ namespace WebAutomation.Helper {
 						WHERE [a].[id_alarm] = " + idAlarm.ToString());
 					Alarm TheAlarm = Alarms.Get(idAlarm);
 					/// TODO: ohne Neustart neuen Alarm generieren
-					if (TheAlarm != null) {
+					if(TheAlarm != null) {
 						TheAlarm.Alarmtext = DBAlarms[0][1];
 						TheAlarm.Alarmlink = DBAlarms[0][2];
 						TheAlarm.Alarmtype = DBAlarms[0][3];
@@ -1031,10 +1035,10 @@ namespace WebAutomation.Helper {
 						TheAlarm.Alarmgroup = DBAlarms[0][5];
 						TheAlarm.Condition = DBAlarms[0][7];
 						TheAlarm.Min = DBAlarms[0][8];
-						if (TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
+						if(TheAlarm.Condition == ">x<" || TheAlarm.Condition == "<x>")
 							TheAlarm.Max = Int32.Parse(DBAlarms[0][9]);
 						int delay;
-						if (Int32.TryParse(DBAlarms[0][10], out delay)) {
+						if(Int32.TryParse(DBAlarms[0][10], out delay)) {
 							TheAlarm.UpdateDelay(delay);
 						}
 						TheAlarm.Alarmgroups1 = Int32.Parse(DBAlarms[0][11]);
@@ -1066,8 +1070,9 @@ namespace WebAutomation.Helper {
 			bool succeed = true;
 			int outint;
 			for(int i = 0; i < idAlarms.Length; i++) {
-				if (Int32.TryParse(idAlarms[i], out outint)) {
-					if(UpdateAlarm(outint) != "S_OK") succeed = false;
+				if(Int32.TryParse(idAlarms[i], out outint)) {
+					if(UpdateAlarm(outint) != "S_OK")
+						succeed = false;
 				} else {
 					succeed = false;
 				}
@@ -1080,7 +1085,8 @@ namespace WebAutomation.Helper {
 		/// <returns></returns>
 		private string getActiveAlarms() {
 			WatchDogByte += 1;
-			if(WatchDogByte > 255) WatchDogByte = 1;
+			if(WatchDogByte > 255)
+				WatchDogByte = 1;
 			DateTime Now = DateTime.Now;
 			string returns =
 $"{{WatchDog={WatchDogByte}}}" +
@@ -1088,7 +1094,7 @@ $"{{DateTime={Now.ToString("yyyy-MM-ddTHH:mm:ss")}}}" +
 $"{{Date={Now.ToString("dd.MM.yyyy")}}}" +
 $"{{Time={Now.ToString("HH:mm:ss")}}}" +
 $"{{Alarme=";
-			foreach (Alarm TheAlarm in Alarms.getActiveAlarms()) {
+			foreach(Alarm TheAlarm in Alarms.getActiveAlarms()) {
 				returns +=
 	$"{{{TheAlarm.IdAlarm}={{" +
 		$"{{id={TheAlarm.IdAlarm}}}" +
@@ -1116,7 +1122,7 @@ $"{{Alarme=";
 			returns +=
 $"}}" +
 $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
-				
+
 			return returns;
 		}
 		/// <summary>
@@ -1159,7 +1165,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			string toinsert = "";
 			for(int i = 1; i < param.Length - 1; i++) {
 				int alarmid;
-				if (Int32.TryParse(param[i], out alarmid)) {
+				if(Int32.TryParse(param[i], out alarmid)) {
 					TheAlarm = Alarms.Get(alarmid);
 					TheAlarmList.Add(TheAlarm);
 					TheAlarm.AlarmUpdate = DateTimeNow;
@@ -1170,7 +1176,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 					toinsert += "[id_alarm] = " + alarmid + " OR ";
 				}
 			}
-			using (Database Sql = new Database("Quit Alarm")) {
+			using(Database Sql = new Database("Quit Alarm")) {
 				Sql.NonResponse(@"UPDATE [alarmhistoric]
 					SET [quit] = '{0}', [quitfrom] = '{1}', [quittext] = '{2}'
 					WHERE ({3}) AND [quit] IS NULL",
@@ -1188,14 +1194,15 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		/// <param name="param"></param>
 		/// <returns></returns>
 		private string getActiveDP(string[] param) {
-			if (param == null) return String.Empty;
+			if(param == null)
+				return String.Empty;
 
 			string returns = "{\"Datenpunkte\":{";
-			for (int i = 0; i < param.Length; i++) {
+			for(int i = 0; i < param.Length; i++) {
 				int parsedint;
 				if(Int32.TryParse(param[i], out parsedint)) {
 					Datapoint TheItem = Datapoints.Get(parsedint);
-					if (TheItem != null) {
+					if(TheItem != null) {
 						returns += $"\"{parsedint}\":{{" +
 							"\"erg\":\"S_OK\"," +
 							$"\"Value\":\"{TheItem.Value}\"," +
@@ -1209,7 +1216,8 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 					}
 				}
 			}
-			if(returns.EndsWith(",")) returns = returns.Remove(returns.Length - 1);
+			if(returns.EndsWith(","))
+				returns = returns.Remove(returns.Length - 1);
 			return returns + "}}";
 		}
 		/// <summary>
@@ -1218,12 +1226,13 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		/// <param name="param"></param>
 		/// <returns></returns>
 		private string getActiveDPextended(string[] param) {
-			if (param == null) return null;
+			if(param == null)
+				return null;
 
 			string returns = "{Datenpunkte=";
 			int DPid;
-			for (int i = 0; i < param.Length; i++) {
-				if (Int32.TryParse(param[i], out DPid)) {
+			for(int i = 0; i < param.Length; i++) {
+				if(Int32.TryParse(param[i], out DPid)) {
 					try {
 						Datapoint TheItem = Datapoints.Get(DPid);
 						returns += $"{{{param[i]}={{Value=\"{TheItem.Value}\"}}{{TimeStamp={TheItem.LastChange.ToString("yyyy-MM-ddTHH:mm:ss")}}}}}";
@@ -1231,7 +1240,7 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, DPid.ToString());
 					}
 				} else {
-					eventLog.Write(MethodInfo.GetCurrentMethod(),ELogEntryType.Warning,
+					eventLog.Write(MethodInfo.GetCurrentMethod(), ELogEntryType.Warning,
 						String.Format("OPC Item ID nicht korrekt: {0}", param[i]));
 				}
 			}
@@ -1243,16 +1252,19 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		/// <returns></returns>
 		private string getActiveSystem() {
 			WatchDogByte += 1;
-			if (WatchDogByte > 255) WatchDogByte = 1;
+			if(WatchDogByte > 255)
+				WatchDogByte = 1;
 			DateTime Now = DateTime.Now;
 			int AlarmsCome = 0;
 			int AlarmsGone = 0;
 			int AlarmsQuit = 0;
-			foreach (Alarm TheAlarm in Alarms.getActiveAlarms()) {
-				if (TheAlarm.Come != Alarm.Default && TheAlarm.Gone == Alarm.Default)
+			foreach(Alarm TheAlarm in Alarms.getActiveAlarms()) {
+				if(TheAlarm.Come != Alarm.Default && TheAlarm.Gone == Alarm.Default)
 					AlarmsCome++;
-				if (TheAlarm.Gone != Alarm.Default) AlarmsGone++;
-				if (TheAlarm.Quit == Alarm.Default) AlarmsQuit++;
+				if(TheAlarm.Gone != Alarm.Default)
+					AlarmsGone++;
+				if(TheAlarm.Quit == Alarm.Default)
+					AlarmsQuit++;
 			}
 			return String.Format(@"{{WatchDog={0}}}{{DateTime={1}}}{{Date={2}}}{{Time={3}}}
 				{{AlarmsCome={4}}}{{AlarmsGone={5}}}{{AlarmsQuit={6}}}",

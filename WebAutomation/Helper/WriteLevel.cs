@@ -34,7 +34,7 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		public static void AddWriteLevel() {
 			eventLog = new Logger(Logger.ESource.PlugInWriteLevel);
-			using (Database Sql = new Database("Add Write Level")) {
+			using(Database Sql = new Database("Add Write Level")) {
 				string[][] DBWriteLevel = Sql.Query(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
@@ -54,7 +54,7 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddWriteLevel(int idserver) {
-			using (Database Sql = new Database("Add Write Level for Server")) {
+			using(Database Sql = new Database("Add Write Level for Server")) {
 				string[][] DBWriteLevel = Sql.Query(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
@@ -75,7 +75,7 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddGroupWriteLevel(int idgroup) {
-			using (Database Sql = new Database("Add Write Level for Group")) {
+			using(Database Sql = new Database("Add Write Level for Group")) {
 				string[][] DBWriteLevel = Sql.Query(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
@@ -96,7 +96,7 @@ namespace WebAutomation.Helper {
 		/// <param name="_Me"></param>
 		/// <param name="idserver"></param>
 		public static void AddItemWriteLevel(int iditem) {
-			using (Database Sql = new Database("Add Write Level for Item")) {
+			using(Database Sql = new Database("Add Write Level for Item")) {
 				string[][] DBWriteLevel = Sql.Query(@"SELECT
 					[dp].[id_dp],
 					ISNULL([dp].[usergroupwrite], ISNULL([g].[usergroupwrite], ISNULL([s].[usergroupwrite], 100)))
@@ -112,21 +112,21 @@ namespace WebAutomation.Helper {
 			}
 		}
 		private static void LevelToItem(string[][] WriteLevel) {
-			for (int iWriteLevel = 0; iWriteLevel < WriteLevel.Length; iWriteLevel++) {
+			for(int iWriteLevel = 0; iWriteLevel < WriteLevel.Length; iWriteLevel++) {
 				int _iddatapoint;
 				int _writelevel;
 				double _min;
 				double _max;
-				if (Int32.TryParse(WriteLevel[iWriteLevel][0], out _iddatapoint) &&
+				if(Int32.TryParse(WriteLevel[iWriteLevel][0], out _iddatapoint) &&
 					Int32.TryParse(WriteLevel[iWriteLevel][3], out _writelevel)) {
-						Datapoint TheItem = Datapoints.Get(_iddatapoint);
-						if(TheItem != null) {
-							TheItem.WriteLevel = _writelevel;
-							if (Double.TryParse(WriteLevel[iWriteLevel][1], out _min))
-								TheItem.Min = _min;
-							if (Double.TryParse(WriteLevel[iWriteLevel][2], out _max))
-								TheItem.Max = _max;
-						}
+					Datapoint TheItem = Datapoints.Get(_iddatapoint);
+					if(TheItem != null) {
+						TheItem.WriteLevel = _writelevel;
+						if(Double.TryParse(WriteLevel[iWriteLevel][1], out _min))
+							TheItem.Min = _min;
+						if(Double.TryParse(WriteLevel[iWriteLevel][2], out _max))
+							TheItem.Max = _max;
+					}
 				}
 			}
 		}

@@ -73,14 +73,14 @@ namespace OPC.Common {
 		/// </summary>
 		/// <param name="serverslist"></param>
 		/// <param name="remoteserver"></param>
-		public void ListAllData20(out OpcServers[] serverslist, string remoteserver) {					// CATID_OPCDAServer20
+		public void ListAllData20(out OpcServers[] serverslist, string remoteserver) {                  // CATID_OPCDAServer20
 			ListAll(new Guid("63D5F432-CFE4-11d1-B2C8-0060083BA1FB"), out serverslist, remoteserver);
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="serverslist"></param>
-		public void ListAllData20(out OpcServers[] serverslist) {					// CATID_OPCDAServer20
+		public void ListAllData20(out OpcServers[] serverslist) {                   // CATID_OPCDAServer20
 			ListAllData20(out serverslist, "localhost");
 		}
 		/// <summary>
@@ -102,28 +102,28 @@ namespace OPC.Common {
 			OPCListObj = Activator.CreateInstance(typeoflist);
 
 			ifList = (IOPCServerList)OPCListObj;
-			if (ifList == null)
+			if(ifList == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			ifList.EnumClassesOfCategories(1, ref catid, 0, ref catid, out EnumObj);
-			if (EnumObj == null)
+			if(EnumObj == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			ifEnum = (IEnumGUID)EnumObj;
-			if (ifEnum == null)
+			if(ifEnum == null)
 				Marshal.ThrowExceptionForHR(HRESULTS.E_ABORT);
 
 			int maxcount = 300;
 			IntPtr ptrGuid = Marshal.AllocCoTaskMem(maxcount * 16);
 			int count = 0;
 			ifEnum.Next(maxcount, ptrGuid, out count);
-			if (count < 1) { Marshal.FreeCoTaskMem(ptrGuid); return; }
+			if(count < 1) { Marshal.FreeCoTaskMem(ptrGuid); return; }
 
 			serverslist = new OpcServers[count];
 
 			byte[] guidbin = new byte[16];
 			int runGuid = (int)ptrGuid;
-			for (int i = 0; i < count; i++) {
+			for(int i = 0; i < count; i++) {
 				serverslist[i] = new OpcServers();
 				Marshal.Copy((IntPtr)runGuid, guidbin, 0, 16);
 				serverslist[i].ClsID = new Guid(guidbin);
@@ -140,12 +140,12 @@ namespace OPC.Common {
 		/// </summary>
 		public void Dispose() {
 			ifEnum = null;
-			if (!(EnumObj == null)) {
+			if(!(EnumObj == null)) {
 				int rc = Marshal.FinalReleaseComObject(EnumObj);
 				EnumObj = null;
 			}
 			ifList = null;
-			if (!(OPCListObj == null)) {
+			if(!(OPCListObj == null)) {
 				int rc = Marshal.FinalReleaseComObject(OPCListObj);
 				OPCListObj = null;
 			}
@@ -160,7 +160,7 @@ namespace OPC.Common {
 		/// <summary></summary>
 		public const int S_FALSE = 0x00000001;
 		/// <summary></summary>
-		public const int E_NOTIMPL = unchecked((int)0x80004001);		// winerror.h
+		public const int E_NOTIMPL = unchecked((int)0x80004001);        // winerror.h
 		/// <summary></summary>
 		public const int E_NOINTERFACE = unchecked((int)0x80004002);
 		/// <summary></summary>
@@ -172,11 +172,11 @@ namespace OPC.Common {
 		/// <summary></summary>
 		public const int E_INVALIDARG = unchecked((int)0x80070057);
 		/// <summary></summary>
-		public const int CONNECT_E_NOCONNECTION = unchecked((int)0x80040200);		// olectl.h
+		public const int CONNECT_E_NOCONNECTION = unchecked((int)0x80040200);       // olectl.h
 		/// <summary></summary>
 		public const int CONNECT_E_ADVISELIMIT = unchecked((int)0x80040201);
 		/// <summary></summary>
-		public const int OPC_E_INVALIDHANDLE = unchecked((int)0xC0040001);		// opcerror.h
+		public const int OPC_E_INVALIDHANDLE = unchecked((int)0xC0040001);      // opcerror.h
 		/// <summary></summary>
 		public const int OPC_E_BADTYPE = unchecked((int)0xC0040004);
 		/// <summary></summary>
@@ -226,34 +226,88 @@ namespace OPC.Common {
 		/// <returns></returns>
 		public static string getError(int hresultcode) {
 			string returns;
-			switch (hresultcode) {
-				case S_OK: returns = "S_OK"; break;
-				case S_FALSE: returns = "S_FALSE"; break;
-				case E_NOTIMPL: returns = "E_NOTIMPL"; break;
-				case E_NOINTERFACE: returns = "E_NOINTERFACE"; break;
-				case E_ABORT: returns = "E_ABORT"; break;
-				case E_FAIL: returns = "E_FAIL"; break;
-				case E_OUTOFMEMORY: returns = "E_OUTOFMEMORY"; break;
-				case E_INVALIDARG: returns = "E_INVALIDARG"; break;
-				case CONNECT_E_NOCONNECTION: returns = "CONNECT_E_NOCONNECTION"; break;
-				case CONNECT_E_ADVISELIMIT: returns = "CONNECT_E_ADVISELIMIT"; break;
-				case OPC_E_INVALIDHANDLE: returns = "OPC_E_INVALIDHANDLE"; break;
-				case OPC_E_BADTYPE: returns = "OPC_E_BADTYPE"; break;
-				case OPC_E_PUBLIC: returns = "OPC_E_PUBLIC"; break;
-				case OPC_E_BADRIGHTS: returns = "OPC_E_BADRIGHTS"; break;
-				case OPC_E_UNKNOWNITEMID: returns = "OPC_E_UNKNOWNITEMID"; break;
-				case OPC_E_INVALIDITEMID: returns = "OPC_E_INVALIDITEMID"; break;
-				case OPC_E_INVALIDFILTER: returns = "OPC_E_INVALIDFILTER"; break;
-				case OPC_E_UNKNOWNPATH: returns = "OPC_E_UNKNOWNPATH"; break;
-				case OPC_E_RANGE: returns = "OPC_E_RANGE"; break;
-				case OPC_E_DUPLICATENAME: returns = "OPC_E_DUPLICATENAME"; break;
-				case OPC_S_UNSUPPORTEDRATE: returns = "OPC_S_UNSUPPORTEDRATE"; break;
-				case OPC_S_CLAMP: returns = "OPC_S_CLAMP"; break;
-				case OPC_S_INUSE: returns = "OPC_S_INUSE"; break;
-				case OPC_E_INVALIDCONFIGFILE: returns = "OPC_E_INVALIDCONFIGFILE"; break;
-				case OPC_E_NOTFOUND: returns = "OPC_E_NOTFOUND"; break;
-				case OPC_E_INVALID_PID: returns = "OPC_E_INVALID_PID"; break;
-				default: returns = "UNKNOWN ERROR"; break;
+			switch(hresultcode) {
+				case S_OK:
+					returns = "S_OK";
+					break;
+				case S_FALSE:
+					returns = "S_FALSE";
+					break;
+				case E_NOTIMPL:
+					returns = "E_NOTIMPL";
+					break;
+				case E_NOINTERFACE:
+					returns = "E_NOINTERFACE";
+					break;
+				case E_ABORT:
+					returns = "E_ABORT";
+					break;
+				case E_FAIL:
+					returns = "E_FAIL";
+					break;
+				case E_OUTOFMEMORY:
+					returns = "E_OUTOFMEMORY";
+					break;
+				case E_INVALIDARG:
+					returns = "E_INVALIDARG";
+					break;
+				case CONNECT_E_NOCONNECTION:
+					returns = "CONNECT_E_NOCONNECTION";
+					break;
+				case CONNECT_E_ADVISELIMIT:
+					returns = "CONNECT_E_ADVISELIMIT";
+					break;
+				case OPC_E_INVALIDHANDLE:
+					returns = "OPC_E_INVALIDHANDLE";
+					break;
+				case OPC_E_BADTYPE:
+					returns = "OPC_E_BADTYPE";
+					break;
+				case OPC_E_PUBLIC:
+					returns = "OPC_E_PUBLIC";
+					break;
+				case OPC_E_BADRIGHTS:
+					returns = "OPC_E_BADRIGHTS";
+					break;
+				case OPC_E_UNKNOWNITEMID:
+					returns = "OPC_E_UNKNOWNITEMID";
+					break;
+				case OPC_E_INVALIDITEMID:
+					returns = "OPC_E_INVALIDITEMID";
+					break;
+				case OPC_E_INVALIDFILTER:
+					returns = "OPC_E_INVALIDFILTER";
+					break;
+				case OPC_E_UNKNOWNPATH:
+					returns = "OPC_E_UNKNOWNPATH";
+					break;
+				case OPC_E_RANGE:
+					returns = "OPC_E_RANGE";
+					break;
+				case OPC_E_DUPLICATENAME:
+					returns = "OPC_E_DUPLICATENAME";
+					break;
+				case OPC_S_UNSUPPORTEDRATE:
+					returns = "OPC_S_UNSUPPORTEDRATE";
+					break;
+				case OPC_S_CLAMP:
+					returns = "OPC_S_CLAMP";
+					break;
+				case OPC_S_INUSE:
+					returns = "OPC_S_INUSE";
+					break;
+				case OPC_E_INVALIDCONFIGFILE:
+					returns = "OPC_E_INVALIDCONFIGFILE";
+					break;
+				case OPC_E_NOTFOUND:
+					returns = "OPC_E_NOTFOUND";
+					break;
+				case OPC_E_INVALID_PID:
+					returns = "OPC_E_INVALID_PID";
+					break;
+				default:
+					returns = "UNKNOWN ERROR";
+					break;
 			}
 			return returns;
 		}
@@ -308,16 +362,16 @@ namespace OPC.Common {
 		public static string VarEnumToString(VarEnum vevt) {
 			string strvt = "";
 			short vtshort = (short)vevt;
-			if (vtshort == VT_ILLEGAL)
+			if(vtshort == VT_ILLEGAL)
 				return "VT_ILLEGAL";
 
-			if ((vtshort & VT_ARRAY) != 0)
+			if((vtshort & VT_ARRAY) != 0)
 				strvt += "VT_ARRAY | ";
 
-			if ((vtshort & VT_BYREF) != 0)
+			if((vtshort & VT_BYREF) != 0)
 				strvt += "VT_BYREF | ";
 
-			if ((vtshort & VT_VECTOR) != 0)
+			if((vtshort & VT_VECTOR) != 0)
 				strvt += "VT_VECTOR | ";
 
 			VarEnum vtbase = (VarEnum)(vtshort & VT_TYPEMASK);
@@ -337,13 +391,13 @@ namespace OPC.Common {
 		/// </summary>
 		/// <param name="dwLcid"></param>
 		void SetLocaleID(
-			[In]								int dwLcid);
+			[In] int dwLcid);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="pdwLcid"></param>
 		void GetLocaleID(
-			[Out]							out int pdwLcid);
+			[Out] out int pdwLcid);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -352,22 +406,22 @@ namespace OPC.Common {
 		/// <returns></returns>
 		[PreserveSig]
 		int QueryAvailableLocaleIDs(
-			[Out]							out int pdwCount,
-			[Out]							out	IntPtr pdwLcid);
+			[Out] out int pdwCount,
+			[Out] out IntPtr pdwLcid);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="dwError"></param>
 		/// <param name="ppString"></param>
 		void GetErrorString(
-			[In]											int dwError,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string ppString);
+			[In] int dwError,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string ppString);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="szName"></param>
 		void SetClientName(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szName);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szName);
 	}
 	/// <summary>
 	/// Common callback
@@ -381,7 +435,7 @@ namespace OPC.Common {
 		/// </summary>
 		/// <param name="szReason"></param>
 		void ShutdownRequest(
-			[In, MarshalAs(UnmanagedType.LPWStr)]		string szReason);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szReason);
 	}
 	/// <summary>
 	/// Server List enum
@@ -399,11 +453,11 @@ namespace OPC.Common {
 		/// <param name="catidReq"></param>
 		/// <param name="ppUnk"></param>
 		void EnumClassesOfCategories(
-			[In]											int cImplemented,	// WARNING ONLY 1!!
-			[In]										ref Guid catidImpl,		// WARNING ONLY 1!!
-			[In]											int cRequired,		// WARNING ONLY 1!!
-			[In]										ref Guid catidReq,		// WARNING ONLY 1!!
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[In] int cImplemented,  // WARNING ONLY 1!!
+			[In] ref Guid catidImpl,        // WARNING ONLY 1!!
+			[In] int cRequired,     // WARNING ONLY 1!!
+			[In] ref Guid catidReq,     // WARNING ONLY 1!!
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -411,17 +465,17 @@ namespace OPC.Common {
 		/// <param name="ppszProgID"></param>
 		/// <param name="ppszUserType"></param>
 		void GetClassDetails(
-			[In]										ref Guid clsid,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string ppszProgID,
-			[Out, MarshalAs(UnmanagedType.LPWStr)]		out	string ppszUserType);
+			[In] ref Guid clsid,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string ppszProgID,
+			[Out, MarshalAs(UnmanagedType.LPWStr)] out string ppszUserType);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="szProgId"></param>
 		/// <param name="clsid"></param>
 		void CLSIDFromProgID(
-			[In, MarshalAs(UnmanagedType.LPWStr)]			string szProgId,
-			[Out]										out Guid clsid);
+			[In, MarshalAs(UnmanagedType.LPWStr)] string szProgId,
+			[Out] out Guid clsid);
 	}
 	/// <summary>
 	/// Enum GUIDs
@@ -437,15 +491,15 @@ namespace OPC.Common {
 		/// <param name="rgelt"></param>
 		/// <param name="pceltFetched"></param>
 		void Next(
-			[In]											int celt,
-			[In]											IntPtr rgelt,				// ptr to Out-Values!!
-			[Out]										out int pceltFetched);
+			[In] int celt,
+			[In] IntPtr rgelt,              // ptr to Out-Values!!
+			[Out] out int pceltFetched);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="celt"></param>
 		void Skip(
-			[In]											int celt);
+			[In] int celt);
 		/// <summary>
 		/// 
 		/// </summary>
@@ -455,7 +509,7 @@ namespace OPC.Common {
 		/// </summary>
 		/// <param name="ppUnk"></param>
 		void Clone(
-			[Out, MarshalAs(UnmanagedType.IUnknown)]	out	object ppUnk);
+			[Out, MarshalAs(UnmanagedType.IUnknown)] out object ppUnk);
 
 	}
 }

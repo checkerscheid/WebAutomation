@@ -166,8 +166,10 @@ namespace WebAutomation.PlugIns {
 			onChangeMinValue.Interval = SetMinIntervall();
 			onChangeMinValue.Elapsed += OnChangeMinValue_Tick;
 			onChangeMinValue.AutoReset = true;
-			if(_active) onChangeMinValue.Start();
-			if(Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend Init {_trendname}");
+			if(_active)
+				onChangeMinValue.Start();
+			if(Debug.debugTrend)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Trend Init {_trendname}");
 		}
 		private int SetMinIntervall() {
 			if(_intervall == 0) {
@@ -184,7 +186,7 @@ namespace WebAutomation.PlugIns {
 			SetTrendValue(false);
 		}
 		private void ResetMinValue() {
-			if (_intervall == 0) {
+			if(_intervall == 0) {
 				onChangeMinValue?.Stop();
 				onChangeMinValue?.Start();
 			}
@@ -263,15 +265,15 @@ namespace WebAutomation.PlugIns {
 
 				TrendArchivFolder();
 
-				if (Debug.debugTrend) {
+				if(Debug.debugTrend) {
 					_maxCounter = 1 * 60;
 				} else {
 					_maxCounter = 90 * 60;
 				}
 			}
 			public async void Start() {
-				while (!_doStop) {
-					if (++_counter > _maxCounter) {
+				while(!_doStop) {
+					if(++_counter > _maxCounter) {
 						await Task.Run(() => {
 							DBcleaner();
 						});
@@ -321,8 +323,9 @@ namespace WebAutomation.PlugIns {
 				Dictionary<DateTime, string> DataforExport;
 				watch.Start();
 				Debug.Write(MethodInfo.GetCurrentMethod(), "Start Trend cleaner");
-				foreach (Trend t in _trendList) {
-					if (_doStop) break;
+				foreach(Trend t in _trendList) {
+					if(_doStop)
+						break;
 					deleteDataToOld = 0;
 					deleteDataToMuch = 0;
 					saveDataToOld = 0;
@@ -330,15 +333,15 @@ namespace WebAutomation.PlugIns {
 					DataforExport = new Dictionary<DateTime, string>();
 					watchTrend.Restart();
 					try {
-						if (t.MaxDays > 0 && t.MaxEntries > 0) {
-							using (Database Sql = new Database("Save into Archive")) {
+						if(t.MaxDays > 0 && t.MaxEntries > 0) {
+							using(Database Sql = new Database("Save into Archive")) {
 								erg = Sql.Query(@$"SELECT TOP {_maxEntries} [time], [value]
 									FROM [trendvalue] WHERE [id_trend] = {t.IdTrend}
 									AND [time] < DATEADD(day, -{t.MaxDays}, GETDATE())
 									ORDER BY [time]");
-								for (int i = 0; i < erg.Length; i++) {
-									if (DateTime.TryParse(erg[i][0], out parsed)) {
-										if (!DataforExport.ContainsKey(parsed.Date)) {
+								for(int i = 0; i < erg.Length; i++) {
+									if(DateTime.TryParse(erg[i][0], out parsed)) {
+										if(!DataforExport.ContainsKey(parsed.Date)) {
 											DataforExport.Add(parsed.Date,
 												erg[i][0] + ";" + erg[i][1] + ";\r\n");
 										} else {
@@ -383,58 +386,64 @@ namespace WebAutomation.PlugIns {
 								}
 							}
 							watchTrend.Stop();
-							foreach (KeyValuePair<DateTime, string> kvp in DataforExport) {
+							foreach(KeyValuePair<DateTime, string> kvp in DataforExport) {
 								try {
 									writeToFile(
 										String.Format("{0} - {1}", t.IdTrend, Datapoints.Get(t.IdDP).Name),
 										kvp.Key, kvp.Value);
 								} catch(Exception ex) {
 									_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-								};
+								}
+								;
 							}
 							// Log
-							if (saveDataToOld > 0) {
+							if(saveDataToOld > 0) {
 								string saveedToOld = String.Format("{0} Datensätze aus {1} archiviert - zu alt ({2})",
 									saveDataToOld, t.TrendName, watchTrend.Elapsed);
-								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
+								if(Debug.debugTrend)
+									Debug.Write(MethodInfo.GetCurrentMethod(), saveedToOld);
 								ev_save += String.Format("\r\n\t{0}", saveedToOld);
 								saveTrendsToOld++;
 							}
-							if (saveDataToMuch > 0) {
+							if(saveDataToMuch > 0) {
 								string saveedToMuch = String.Format("{0} Datensätze aus {1} archiviert - zu viel ({2})",
 									saveDataToMuch, t.TrendName, watchTrend.Elapsed);
-								if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
+								if(Debug.debugTrend)
+									Debug.Write(MethodInfo.GetCurrentMethod(), saveedToMuch);
 								ev_save += String.Format("\r\n\t{0}", saveedToMuch);
 								saveTrendsToMuch++;
 							}
 						} else {
-							if (DataforExport.Count > 0) Debug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
+							if(DataforExport.Count > 0)
+								Debug.Write(MethodInfo.GetCurrentMethod(), "Archivierung deaktiviert");
 						}
-						if (deleteDataToOld > 0) {
+						if(deleteDataToOld > 0) {
 							string deletedToOld = String.Format("{0} Datensätze aus {1} gelöscht - zu alt ({2})",
 								deleteDataToOld, t.TrendName, watchTrend.Elapsed);
-							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
+							if(Debug.debugTrend)
+								Debug.Write(MethodInfo.GetCurrentMethod(), deletedToOld);
 							ev_del += String.Format("\r\n\t{0}", deletedToOld);
 							deleteTrendsToOld++;
 						}
-						if (deleteDataToMuch > 0) {
+						if(deleteDataToMuch > 0) {
 							string deletedToMuch = String.Format("{0} Datensätze aus {1} gelöscht - zu viel ({2})",
 								deleteDataToMuch, t.TrendName, watchTrend.Elapsed);
-							if (Debug.debugTrend) Debug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
+							if(Debug.debugTrend)
+								Debug.Write(MethodInfo.GetCurrentMethod(), deletedToMuch);
 							ev_del += String.Format("\r\n\t{0}", deletedToMuch);
 							deleteTrendsToMuch++;
 						}
-					} catch (Exception ex) {
+					} catch(Exception ex) {
 						_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					}
 				}
 				watch.Stop();
-				if (ev_save != "") {
+				if(ev_save != "") {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten archiviert ({saveTrendsToOld + saveTrendsToMuch}){(Debug.debugTrend ? ev_save : "")}");
 				} else {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten archiviert");
 				}
-				if (ev_del != "") {
+				if(ev_del != "") {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, Trenddaten gelöscht ({deleteTrendsToOld + deleteTrendsToMuch}){(Debug.debugTrend ? ev_del : "")}");
 				} else {
 					_eventLog.Write(MethodInfo.GetCurrentMethod(), $"Dauer: {watch.Elapsed}, keine Trenddaten gelöscht");
@@ -446,26 +455,26 @@ namespace WebAutomation.PlugIns {
 				string m = DateForFolder.ToString("MM");
 				string d = DateForFolder.ToString("dd");
 				try {
-					if (_folderBase != "") {
+					if(_folderBase != "") {
 						string p = Directory.GetDirectoryRoot(_folderBase);
-						if (Directory.Exists(p)) {
-							if (!Directory.Exists(_folderBase))
+						if(Directory.Exists(p)) {
+							if(!Directory.Exists(_folderBase))
 								Directory.CreateDirectory(_folderBase);
-							if (!Directory.Exists(_folderBase + "\\" + _projekt))
+							if(!Directory.Exists(_folderBase + "\\" + _projekt))
 								Directory.CreateDirectory(_folderBase + "\\" + _projekt);
-							if (!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y))
+							if(!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y))
 								Directory.CreateDirectory(_folderBase + "\\" + _projekt + "\\" + y);
-							if (!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m))
+							if(!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m))
 								Directory.CreateDirectory(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m);
-							if (!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m + "\\" + d))
+							if(!Directory.Exists(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m + "\\" + d))
 								Directory.CreateDirectory(_folderBase + "\\" + _projekt + "\\" + y + "\\" + m + "\\" + d);
 							string path = _folderBase + "\\" + _projekt + "\\" + y + "\\" + m + "\\" + d + "\\" + filename + ".csv";
-							if (!File.Exists(path)) {
-								using (StreamWriter sw = File.CreateText(path)) {
+							if(!File.Exists(path)) {
+								using(StreamWriter sw = File.CreateText(path)) {
 									sw.Write(text);
 								}
 							} else {
-								using (StreamWriter sw = File.AppendText(path)) {
+								using(StreamWriter sw = File.AppendText(path)) {
 									sw.Write(text);
 								}
 							}
@@ -476,7 +485,7 @@ namespace WebAutomation.PlugIns {
 					} else {
 						returns = false;
 					}
-				} catch (Exception ex) {
+				} catch(Exception ex) {
 					_eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 				return returns;

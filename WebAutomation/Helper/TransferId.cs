@@ -41,9 +41,9 @@ namespace WebAutomation.Helper {
 		public const int TransferSceneSchedule = 7;
 		/// <summary>Transfer Grund: Szenen Zeitprogramm</summary>
 		public const int TransferShelly = 8;
-        public const int TransferMQTT = 9;
-        /// <summary>Transfer Grund: Normale Operation</summary>
-        public const int TransferNormalOP = 0;
+		public const int TransferMQTT = 9;
+		/// <summary>Transfer Grund: Normale Operation</summary>
+		public const int TransferNormalOP = 0;
 		/// <summary>Transfer Id</summary>
 		private static int _tid = 0;
 		/// <summary>Dictionary Transfer Id (id, forwhat)></summary>
@@ -61,7 +61,8 @@ namespace WebAutomation.Helper {
 
 			if(locktid.WaitOne(1000)) {
 				try {
-					if(++_tid >= Int16.MaxValue) _tid = 0;
+					if(++_tid >= Int16.MaxValue)
+						_tid = 0;
 					mytid = _tid;
 				} finally {
 					locktid.ReleaseMutex();
@@ -143,7 +144,8 @@ namespace WebAutomation.Helper {
 			while(!entered && notEntered < 10) {
 				if(Monitor.TryEnter(_dtid, 5000)) {
 					try {
-						if(_dtid.ContainsKey(id)) returns = _dtid[id].ForWhat;
+						if(_dtid.ContainsKey(id))
+							returns = _dtid[id].ForWhat;
 					} catch(Exception ex) {
 						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 					} finally {
@@ -188,7 +190,7 @@ namespace WebAutomation.Helper {
 		/// <summary>
 		/// 
 		/// </summary>
-		private class transferID : System.Timers.Timer {
+		private class transferID: System.Timers.Timer {
 			private Logger eventLog;
 			private int _id;
 			private int _forWhat;

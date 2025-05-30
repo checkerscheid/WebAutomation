@@ -24,11 +24,11 @@ using System.Runtime.InteropServices;
 * @addtogroup WebAutomation
 * @{
 */
-namespace WebAutomation.Helper {
+namespace WebAutomation.Communication {
 	/// <summary>
 	/// 
 	/// </summary>
-	public class wpOPCServer:OpcServer {
+	public class wpOPCServer: OpcServer {
 		/// <summary></summary>
 		private bool disposed = false;
 		/// <summary></summary>
@@ -71,7 +71,7 @@ namespace WebAutomation.Helper {
 		/// <param name="name"></param>
 		/// <param name="progid"></param>
 		/// <param name="clsid"></param>
-		public wpOPCServer(int id, string name, string progid, string clsid):base(name) {
+		public wpOPCServer(int id, string name, string progid, string clsid) : base(name) {
 			_id = id;
 			_progid = progid;
 			_clsid = clsid;
@@ -89,9 +89,9 @@ namespace WebAutomation.Helper {
 			GC.SuppressFinalize(this);
 		}
 		protected virtual void Dispose(bool disposing) {
-			if (disposed)
+			if(disposed)
 				return;
-			if (disposing) {
+			if(disposing) {
 				// Free any other managed objects here.
 			}
 			// Free any unmanaged objects here.
@@ -191,8 +191,8 @@ namespace WebAutomation.Helper {
 		public bool hasFirstValue {
 			get { return _hasFirstValue; }
 			set {
-				if (!hasFirstValue) {
-					using (Database Sql = new Database("startup for Datapoint")) {
+				if(!hasFirstValue) {
+					using(Database Sql = new Database("startup for Datapoint")) {
 						Sql.NonResponse("UPDATE [opcdatapoint] SET [startuptype] = '{1}', [startupquality] = '{2}' WHERE [id_opcdatapoint] = {0}", _hclt, _dbtype, OPCQuality.get(_quality));
 					}
 				}
@@ -248,7 +248,7 @@ namespace WebAutomation.Helper {
 		/// <param name="quali"></param>
 		/// <returns></returns>
 		public static string get(short quali) {
-			if (OPCQuality.Quality.ContainsKey(quali)) {
+			if(OPCQuality.Quality.ContainsKey(quali)) {
 				return OPCQuality.Quality[quali];
 			}
 			return quali.ToString();
@@ -275,12 +275,15 @@ namespace WebAutomation.Helper {
 				{"VT_VARIANT", VarEnum.VT_VARIANT}
 			};
 		public static VarEnum get(string sVTEnum) {
-			if (PVTEnum.VT_Enum.ContainsKey(sVTEnum)) return PVTEnum.VT_Enum[sVTEnum];
-			else return VarEnum.VT_EMPTY;
+			if(PVTEnum.VT_Enum.ContainsKey(sVTEnum))
+				return PVTEnum.VT_Enum[sVTEnum];
+			else
+				return VarEnum.VT_EMPTY;
 		}
 		public static string ToString(VarEnum TheType) {
-			foreach (KeyValuePair<string, VarEnum> TheEntry in PVTEnum.VT_Enum) {
-				if (TheEntry.Value == TheType) return TheEntry.Key;
+			foreach(KeyValuePair<string, VarEnum> TheEntry in PVTEnum.VT_Enum) {
+				if(TheEntry.Value == TheType)
+					return TheEntry.Key;
 			}
 			return "VT_EMPTY";
 		}

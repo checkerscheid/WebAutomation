@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using WebAutomation.Communication;
 
-namespace WebAutomation.Shelly {
+namespace WebAutomation.Controller {
 	public static class ShellyServer {
 		/// <summary></summary>
 		private static Logger eventLog;

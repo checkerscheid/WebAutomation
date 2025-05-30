@@ -23,7 +23,7 @@ using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Timers;
 
-namespace WebAutomation.D1Mini {
+namespace WebAutomation.Controller {
 
 	public class D1Mini {
 		private readonly int _id;

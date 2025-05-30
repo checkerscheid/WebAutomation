@@ -30,10 +30,9 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using WebAutomation.D1Mini;
+using WebAutomation.Controller;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
-using WebAutomation.Shelly;
 using static FreakaZone.Libraries.wpEventLog.Logger;
 /**
 * @addtogroup WebAutomation
@@ -312,7 +311,7 @@ namespace WebAutomation.Communication {
 			string[] param;
 			int outint;
 			int outint2;
-			D1Mini.D1Mini d1md;
+			D1Mini d1md;
 			switch(s_befehl[0]) {
 				case wpBefehl.cHello:
 					returns = new ret { erg = ret.OK, message = "Hello FreakaZone Client" }.ToString();
@@ -400,7 +399,7 @@ namespace WebAutomation.Communication {
 					param = wpBefehl.getParam(s_befehl[1]);
 					d1md = D1MiniServer.Get(param[0]);
 					if(d1md != null) {
-						D1Mini.D1Mini.CmdList cL = new D1Mini.D1Mini.CmdList(param[1]);
+						D1Mini.CmdList cL = new D1Mini.CmdList(param[1]);
 						if(d1md.SendCmd(cL))
 							returns = new ret { erg = ret.OK }.ToString();
 					}

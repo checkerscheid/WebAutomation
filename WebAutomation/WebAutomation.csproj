@@ -121,13 +121,13 @@
     <Compile Include="BeendenPW.Designer.cs">
       <DependentUpon>BeendenPW.cs</DependentUpon>
     </Compile>
-    <Compile Include="D1Mini\D1MiniServer.cs" />
+    <Compile Include="Controller\D1MiniServer.cs" />
     <Compile Include="externals\Interop.cs" />
     <Compile Include="externals\OPC_Common.cs" />
     <Compile Include="externals\OPC_Data.cs" />
     <Compile Include="externals\OPC_Data_Grp.cs" />
     <Compile Include="externals\OPC_Data_Srv.cs" />
-    <Compile Include="D1Mini\D1Mini.cs" />
+    <Compile Include="Controller\D1Mini.cs" />
     <Compile Include="Helper\Email.cs" />
     <Compile Include="Communication\MQTTClient.cs" />
     <Compile Include="Communication\OPCClient.cs" />
@@ -143,7 +143,7 @@
     <Compile Include="Helper\WriteLevel.cs" />
     <Compile Include="PlugIns\Alarm.cs" />
     <Compile Include="PlugIns\Trend.cs" />
-    <Compile Include="Shelly\Shelly.cs" />
+    <Compile Include="Controller\Shelly.cs" />
     <Compile Include="Helper\Watchdog.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -151,9 +151,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Dictionaries.cs" />
-    <Compile Include="Shelly\ShellyDevice.cs" />
-    <Compile Include="Shelly\ShellyServer.cs" />
-    <Compile Include="Shelly\ShellyType.cs" />
+    <Compile Include="Controller\ShellyDevice.cs" />
+    <Compile Include="Controller\ShellyServer.cs" />
+    <Compile Include="Controller\ShellyType.cs" />
     <Compile Include="WebAutomationServer.cs">
       <SubType>Form</SubType>
     </Compile>

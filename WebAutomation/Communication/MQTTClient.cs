@@ -28,9 +28,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using WebAutomation.D1Mini;
-using WebAutomation.Shelly;
-using WebAutomation.Shelly.Device;
+using WebAutomation.Controller;
+using WebAutomation.Controller.ShellyDevice;
 
 namespace WebAutomation.Communication {
 	public class MQTTClient {
@@ -432,7 +431,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		public bool shellyMqttUpdate() {
 			bool returns = true;
 			MqttApplicationMessage msg = new MqttApplicationMessage();
-			foreach(Shelly.Shelly s in ShellyServer.ForceMqttUpdateAvailable) {
+			foreach(Shelly s in ShellyServer.ForceMqttUpdateAvailable) {
 				msg.Topic = $"{s.MqttId}/ForceMqttUpdate";
 				try {
 					msg.PayloadSegment = getFromString("1");

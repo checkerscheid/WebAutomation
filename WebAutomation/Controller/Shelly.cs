@@ -25,9 +25,9 @@ using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Timers;
-using WebAutomation.Shelly.Device;
+using WebAutomation.Controller.ShellyDevice;
 
-namespace WebAutomation.Shelly {
+namespace WebAutomation.Controller {
 	public class Shelly {
 		private Logger eventLog;
 		private readonly int _id;

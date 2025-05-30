@@ -15,7 +15,7 @@
 //###################################################################################
 using System.Collections.Generic;
 
-namespace WebAutomation.Shelly.Device {
+namespace WebAutomation.Controller.ShellyDevice {
 	public class relay {
 		public string ison { get; set; }
 		public string has_timer { get; set; }

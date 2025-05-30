@@ -15,7 +15,7 @@
 //###################################################################################
 using System.Collections.Generic;
 
-namespace WebAutomation.Shelly {
+namespace WebAutomation.Controller {
 
 	public class ShellyType {
 		public const string DOOR = "SHDW";

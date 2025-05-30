@@ -22,9 +22,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WebAutomation.Communication;
-using WebAutomation.D1Mini;
+using WebAutomation.Controller;
 using WebAutomation.PlugIns;
-using WebAutomation.Shelly;
 
 namespace WebAutomation {
 

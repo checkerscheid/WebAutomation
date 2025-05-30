@@ -28,7 +28,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WebAutomation.Communication;
 
-namespace WebAutomation.D1Mini {
+namespace WebAutomation.Controller {
 	public static class D1MiniServer {
 		/// <summary></summary>
 		private static Logger eventLog;

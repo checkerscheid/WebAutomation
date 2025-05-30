@@ -22,8 +22,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using WebAutomation.D1Mini;
-using WebAutomation.Shelly;
+using WebAutomation.Controller;
 
 namespace WebAutomation.Communication {
 	public class RestServer {

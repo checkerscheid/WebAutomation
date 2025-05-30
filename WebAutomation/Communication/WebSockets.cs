@@ -23,8 +23,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WatsonWebsocket;
-using WebAutomation.D1Mini;
-using WebAutomation.Shelly;
+using WebAutomation.Controller;
 
 namespace WebAutomation.Communication {
 	public class WebSockets {
@@ -99,7 +98,7 @@ namespace WebAutomation.Communication {
 
 		private void executeCommand(wpTcpClient client, dynamic cmd) {
 			if(cmd.src != null) {
-				Shelly.Shelly shelly = ShellyServer.GetShellyFromWsId(cmd.src.ToString());
+				Shelly shelly = ShellyServer.GetShellyFromWsId(cmd.src.ToString());
 				if(shelly != null) {
 					//if(shelly.IdOnOff > 0) {
 					//	Datapoint dp = Datapoints.Get(shelly.IdOnOff);

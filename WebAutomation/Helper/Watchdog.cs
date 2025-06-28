@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Watchdog.cs 237 2025-05-30 11:23:27Z                     $ #
+//# File-ID      : $Id:: Watchdog.cs 245 2025-06-28 15:07:22Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -33,7 +33,7 @@ namespace WebAutomation.Helper {
 		private int maxWatchdogByte;
 		public Watchdog() {
 			eventLog = new Logger(Logger.ESource.PlugInWatchdog);
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog Init");
 			int watchdogVerz;
 			if(Int32.TryParse(IniFile.Get("Watchdog", "Verz"), out watchdogVerz)) {
 				if(watchdogVerz <= 0)
@@ -56,14 +56,16 @@ namespace WebAutomation.Helper {
 				Thread.Sleep(1000);
 				setWDB();
 			}
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "Watchdog gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog Inited");
 		}
 		public void finished() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog Stop");
 			if(watchdogTimer != null) {
 				watchdogTimer.Stop();
 				watchdogTimer.Enabled = false;
 				watchdogTimer.Dispose();
 			}
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Watchdog Stoped");
 		}
 		private void watchdog_Tick(object sender, EventArgs e) {
 			//PDebug.Write("Nur zum Test Watchdog: Transfer Counter: {0}", Program.MainProg.getTransferCounter());

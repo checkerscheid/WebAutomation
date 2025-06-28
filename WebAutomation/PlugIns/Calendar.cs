@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 213                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Calendar.cs 213 2025-05-15 14:50:57Z                     $ #
+//# File-ID      : $Id:: Calendar.cs 245 2025-06-28 15:07:22Z                     $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -981,7 +981,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 			}
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "Calendars gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "Calendars Inited");
 		}
 		public string renewCalendar(int _id) {
 			if(_calendarDic.ContainsKey(_id)) {

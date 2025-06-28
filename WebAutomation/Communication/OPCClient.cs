@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: OPCClient.cs 238 2025-05-30 11:25:05Z                    $ #
+//# File-ID      : $Id:: OPCClient.cs 245 2025-06-28 15:07:22Z                    $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -84,14 +84,14 @@ namespace WebAutomation.Communication {
 		/// <param name="globalServer"></param>
 		public OPCClient() {
 			running = false;
+			eventLog = new Logger(Logger.ESource.OPC);
 			init();
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		private void init() {
-			eventLog = new Logger(Logger.ESource.OPC);
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "OPC Client init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Client Init");
 
 			TheServer = new Dictionary<int, wpOPCServer>();
 			TheGroup = new Dictionary<int, Dictionary<int, OpcGroup>>();
@@ -172,7 +172,7 @@ namespace WebAutomation.Communication {
 			running = true;
 			activate();
 
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "OPC Client gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "OPC Client Inited");
 
 			//OpcChecker = new CheckOpcServerState();
 			//ThreadOpcChecker = new Thread(OpcChecker.doWork);
@@ -925,6 +925,7 @@ namespace WebAutomation.Communication {
 		/// 
 		/// </summary>
 		public void finished() {
+			Debug.Write(MethodBase.GetCurrentMethod(), "OPC Client Stop");
 			running = false;
 			//OpcChecker.doStop();
 			//ThreadOpcChecker.Join(1500);
@@ -971,7 +972,7 @@ namespace WebAutomation.Communication {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 				}
 			}
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "OPC Client gestoppt");
+			Debug.Write(MethodBase.GetCurrentMethod(), "OPC Client Stoped");
 		}
 
 		#region OPCasync
@@ -1120,7 +1121,7 @@ namespace WebAutomation.Communication {
 					//	setTasterDefault(e.res[i].HandleClient, TheItem.Value);
 					if(e.masterError != HRESULTS.S_OK) {
 						if(TransferId.getTransferReason(e.transactionID) !=
-							TransferId.TransferOpcRouter &&
+							TransferId.TransferRouter &&
 							TransferId.getTransferReason(e.transactionID) !=
 							TransferId.TransferWatchdog) {
 							strevlog += String.Format("{3}Item: {0} ({1}), Error:{2}",
@@ -1165,10 +1166,10 @@ namespace WebAutomation.Communication {
 					int[] HSrv = new int[1] { Item.Hsrv };
 					object[] Val = new object[1] { setTypeForSetValue(Item.DBType, value) };
 					int taid = TransferId.getNew(transferreason);
-					if(transferreason == TransferId.TransferOpcRouter ||
+					if(transferreason == TransferId.TransferRouter ||
 						transferreason == TransferId.TransferWatchdog ||
 						transferreason == TransferId.TransferMQTT) {
-						if(transferreason == TransferId.TransferOpcRouter && Debug.debugOpcRouter) {
+						if(transferreason == TransferId.TransferRouter && Debug.debugRouter) {
 							Debug.Write(MethodInfo.GetCurrentMethod(), "Write (TAID-{0}): Item '{1}': old: '{2}', new: '{3}'",
 								taid, Item.OpcItemName, Item.Value, value);
 						}
@@ -1301,7 +1302,7 @@ namespace WebAutomation.Communication {
 						_Group.Value.Values.CopyTo(ValToWrite, 0);
 						int taid = TransferId.getNew(transferreason);
 						if(log[_Server.Key][_Group.Key] != "") {
-							if(transferreason == TransferId.TransferOpcRouter ||
+							if(transferreason == TransferId.TransferRouter ||
 								transferreason == TransferId.TransferWatchdog) {
 								Debug.Write(MethodInfo.GetCurrentMethod(), "setValue (TAID-{0}): {1}", taid, log[_Server.Key][_Group.Key]);
 							} else {

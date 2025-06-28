@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 30.05.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 239                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: ShellyServer.cs 239 2025-05-30 11:26:03Z                 $ #
+//# File-ID      : $Id:: ShellyServer.cs 245 2025-06-28 15:07:22Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -20,6 +20,7 @@ using FreakaZone.Libraries.wpSQL.Table;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using WebAutomation.Communication;
 
 namespace WebAutomation.Controller {
@@ -85,24 +86,32 @@ namespace WebAutomation.Controller {
 				}
 			}
 			Program.MainProg.wpMQTTClient.shellyChanged += MQTTClient_shellyChanged;
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Inited");
 		}
 		public static void Start() {
+			Task.Run(() => StartAsync()).Wait();
+		}
+		public async static Task StartAsync() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Start");
+			OnlineTogglerSendIntervall = IniFile.GetInt("Shelly", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = IniFile.GetInt("Shelly", "OnlineTogglerWait");
 			foreach(Shelly s in _shellies) {
 				s.GetStatus(true);
 				s.GetHttpShelly(true);
 				s.GetMqttStatus();
 				s.Start();
+				await Task.Delay(100);
 			}
-			OnlineTogglerSendIntervall = IniFile.GetInt("Shelly", "OnlineTogglerSendIntervall");
-			OnlineTogglerWait = IniFile.GetInt("Shelly", "OnlineTogglerWait");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Started");
 		}
 		public static void Stop() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Stop");
 			if(_shellies != null) {
 				foreach(Shelly s in _shellies) {
 					s.Stop();
 				}
 			}
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Shelly Server Stoped");
 		}
 		public static void RemoveShelly(int id) {
 			using(Database Sql = new Database("Delete Shelly")) {

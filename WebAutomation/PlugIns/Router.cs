@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Router.cs 237 2025-05-30 11:23:27Z                       $ #
+//# File-ID      : $Id:: Router.cs 245 2025-06-28 15:07:22Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -26,10 +26,11 @@ namespace WebAutomation.PlugIns {
 		/// <summary></summary>
 		private static Logger eventLog;
 		private static Dictionary<int, List<int>> RouterItems = new Dictionary<int, List<int>>();
-		public static void AddRouter() {
+		public static void Start() {
+			Debug.Write(MethodBase.GetCurrentMethod(), "Router Start");
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
 			using(Database Sql = new Database("Add Router")) {
-				List<TableRouter> ltr = Sql.Select<TableRouter>();
+				List<TableRouter> ltr = Sql.Select<TableRouter>("[id_to] IS NOT NULL");
 				foreach(TableRouter tr in ltr) {
 					try {
 						if(!RouterItems.ContainsKey(tr.id_dp)) {
@@ -46,7 +47,14 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 			}
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geladen");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Router Started");
+		}
+		public static List<int> GetRoute(int id_dp) {
+			if(RouterItems.ContainsKey(id_dp)) {
+				return RouterItems[id_dp];
+			} else {
+				return new List<int>();
+			}
 		}
 		public static void UpdateRouter(int fromid) {
 			eventLog = new Logger(Logger.ESource.PlugInRouter);
@@ -73,6 +81,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 			}
+			Datapoints.Get(fromid).Route = GetRoute(fromid);
 			eventLog.Write(MethodInfo.GetCurrentMethod(), "Router PlugIn geupdatet");
 		}
 	}

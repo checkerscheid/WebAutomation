@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 03.07.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: RestServer.cs 238 2025-05-30 11:25:05Z                   $ #
+//# File-ID      : $Id:: RestServer.cs 245 2025-06-28 15:07:22Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -34,16 +34,17 @@ namespace WebAutomation.Communication {
 		private bool _isFinished;
 		private const int threadTimeOut = 500;
 		public RestServer() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server Init");
 			_isFinished = false;
 			eventLog = new Logger(Logger.ESource.Rest);
 			RestServerListener = new TcpListener(IPAddress.Any, IniFile.GetInt("RestServer", "Port"));
 			RestServerThread = new Thread(new ThreadStart(RestServer_Listen));
 			RestServerThread.Name = "RestServer";
 			RestServerThread.Start();
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server Inited");
 		}
 		public void finished() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server Stop");
 			_isFinished = true;
 			if(RestServerListener != null) {
 				RestServerListener.Stop();
@@ -52,7 +53,7 @@ namespace WebAutomation.Communication {
 			if(RestServerThread != null)
 				RestServerThread.Join(threadTimeOut * 2);
 			RestServerThread = null;
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "Rest Server gestoppt");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Rest Server Stoped");
 		}
 		private void RestServer_Listen() {
 			try {
@@ -149,7 +150,7 @@ namespace WebAutomation.Communication {
 						cmdfound = true;
 					}
 				}
-				// D1 Mini
+				// D1Mini
 				foreach(Match m in Regex.Matches(s_message, @"^GET /\?m\=([0-9ABCDEFabcdef]*)&bm\=(true|false)")) {
 					if(m.Success) { // found D1Mini State
 						mac = m.Groups[1].Value.ToLower();

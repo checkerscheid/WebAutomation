@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 238 2025-05-30 11:25:05Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 245 2025-06-28 15:07:22Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -60,14 +60,20 @@ namespace WebAutomation.Communication {
 				ws.ClientDisconnected += Ws_ClientDisconnected;
 				ws.MessageReceived += Ws_MessageReceived;
 				ws.Start();
-				eventLog.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server '{name}' gestartet, auf Port {port} gemappt");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Inited, Port {port} gemappt");
 			} catch(Exception ex) {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 		}
 		public void finished() {
-			if(ws != null && ws.IsListening)
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebSockets Server Stop");
+			if(ws != null && ws.IsListening) {
+				ws.ClientConnected -= Ws_ClientConnected;
+				ws.ClientDisconnected -= Ws_ClientDisconnected;
+				ws.MessageReceived -= Ws_MessageReceived;
 				ws.Stop();
+			}
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebSockets Server Stoped");
 		}
 		private void Ws_MessageReceived(object sender, MessageReceivedEventArgs e) {
 			string s = Encoding.UTF8.GetString(e.Data.Array).Replace("\0", string.Empty);

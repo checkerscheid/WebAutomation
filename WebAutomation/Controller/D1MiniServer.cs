@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 30.05.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 239                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1MiniServer.cs 239 2025-05-30 11:26:03Z                 $ #
+//# File-ID      : $Id:: D1MiniServer.cs 245 2025-06-28 15:07:22Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -40,13 +40,14 @@ namespace WebAutomation.Controller {
 		private static int udpPort = 51346;
 		private static bool searchActive = false;
 
-		// set MQTT Online to 0 - D1 Mini set it back. In Seconds
+		// set MQTT Online to 0 - D1Mini set it back. In Seconds
 		private static int _onlineTogglerSendIntervall = 30;
 		public static int OnlineTogglerSendIntervall {
 			set {
 				_onlineTogglerSendIntervall = value;
 				foreach(D1Mini d1md in _d1Minis) {
 					d1md.SetOnlineTogglerSendIntervall();
+					Task.Delay(100).Wait();
 				}
 			}
 			get {
@@ -72,7 +73,7 @@ namespace WebAutomation.Controller {
 			public string value { get; set; }
 		}
 		public static void Init() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "D1 Mini Server Start");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Init");
 			eventLog = new Logger(Logger.ESource.PlugInD1Mini);
 			_d1Minis = new List<D1Mini>();
 			using(Database Sql = new Database("Select D1Minis")) {
@@ -89,28 +90,30 @@ namespace WebAutomation.Controller {
 				}
 			}
 			Program.MainProg.wpMQTTClient.d1MiniChanged += MQTTClient_d1MiniChanged;
-			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Inited");
 		}
 		public static void Start() {
-			Task.Run(async () => {
-				await StartAsync();
-			});
+			Task.Run(() => StartAsync()).Wait();
 		}
 		public async static Task StartAsync() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Start");
+			OnlineTogglerSendIntervall = IniFile.GetInt("D1Mini", "OnlineTogglerSendIntervall");
+			OnlineTogglerWait = IniFile.GetInt("D1Mini", "OnlineTogglerWait");
 			foreach(D1Mini d1md in _d1Minis) {
 				d1md.Start();
 				await Task.Delay(100);
 			}
-			OnlineTogglerSendIntervall = IniFile.GetInt("D1Mini", "OnlineTogglerSendIntervall");
-			OnlineTogglerWait = IniFile.GetInt("D1Mini", "OnlineTogglerWait");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Started");
 		}
 		public static void Stop() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Stop");
 			StopSearch();
 			if(_d1Minis != null) {
 				foreach(D1Mini d1md in _d1Minis) {
 					d1md.Stop();
 				}
 			}
+			Debug.Write(MethodInfo.GetCurrentMethod(), "D1Mini Server Stoped");
 		}
 		public static void ForceRenewValue() {
 			foreach(D1Mini d1md in _d1Minis) {
@@ -349,7 +352,9 @@ VALUES (
 					string url = $"http://{_ip}/{cmd}";
 					try {
 						WebClient webClient = new WebClient();
-						returns = webClient.DownloadString(new Uri(url));
+						Task.Run(() => returns = webClient.DownloadString(new Uri(url))).Wait();
+						if(Debug.debugD1Mini)
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini sendUrlCmd after wait {_ip} - {url} - returns: {returns}");
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 					}

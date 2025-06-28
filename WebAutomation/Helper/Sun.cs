@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 237 2025-05-30 11:23:27Z                          $ #
+//# File-ID      : $Id:: Sun.cs 245 2025-06-28 15:07:22Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -54,7 +54,7 @@ namespace WebAutomation.Helper {
 				SummerId = testSummer;
 			}
 			_ = StartSunriseSunsetTimer();
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun Inited");
 		}
 		public String SetSummer(bool summer) {
 			this.summer = summer;

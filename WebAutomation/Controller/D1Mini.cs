@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 238 2025-05-30 11:25:05Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 245 2025-06-28 15:07:22Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace WebAutomation.Controller {
@@ -117,12 +118,12 @@ namespace WebAutomation.Controller {
 			set {
 				if(value) {
 					if(Debug.debugD1Mini)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 1");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `recived Online`: {_name}/info/Online, 1");
 					SetOnlineError(false);
 					toreset?.Stop();
 				} else {
 					if(Debug.debugD1Mini)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `recived Online`: {_name}/info/Online, 0 - start resetTimer");
 					toreset?.Start();
 				}
 			}
@@ -198,15 +199,17 @@ namespace WebAutomation.Controller {
 			_id_analogout = tr.id_analogout;
 		}
 		public void Start() {
-			t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
-			t.Elapsed += OnlineCheck_Elapsed;
 			if(D1MiniServer.OnlineTogglerSendIntervall > 0) {
+				t = new Timer(D1MiniServer.OnlineTogglerSendIntervall * 1000);
+				t.Elapsed += OnlineCheck_Elapsed;
 				t.Start();
+				if(Debug.debugD1Mini)
+					Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini Timer {_name} gestartet");
 				SendOnlineQuestion();
+				toreset = new Timer(D1MiniServer.OnlineTogglerWait * 1000);
+				toreset.AutoReset = false;
+				toreset.Elapsed += Toreset_Elapsed;
 			}
-			toreset = new Timer(D1MiniServer.OnlineTogglerWait * 1000);
-			toreset.AutoReset = false;
-			toreset.Elapsed += Toreset_Elapsed;
 		}
 
 		public void Stop() {
@@ -217,25 +220,29 @@ namespace WebAutomation.Controller {
 				toreset.Stop();
 			toreset = null;
 			if(Debug.debugD1Mini)
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini stopped `{_name} sendOnlineQuestion`");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini stopped `{_name} sendOnlineQuestion`");
 		}
 		public void SetOnlineTogglerSendIntervall() {
-			t.Interval = D1MiniServer.OnlineTogglerSendIntervall * 1000;
-			t.Stop();
-			if(D1MiniServer.OnlineTogglerSendIntervall > 0) {
+			if(t != null && D1MiniServer.OnlineTogglerSendIntervall > 0) {
+				t.Interval = D1MiniServer.OnlineTogglerSendIntervall * 1000;
+				t.Stop();
 				t.Start();
+				if(Debug.debugD1Mini)
+					Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini Timer {_name} gestartet");
 			}
 		}
 		public void SetOnlineTogglerWait() {
-			toreset.Interval = D1MiniServer.OnlineTogglerWait * 1000;
-			toreset.Stop();
+			if(toreset != null && D1MiniServer.OnlineTogglerWait > 0) {
+				toreset.Interval = D1MiniServer.OnlineTogglerWait * 1000;
+				toreset.Stop();
+			}
 		}
 		private void OnlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
 			SendOnlineQuestion();
 		}
 		private void Toreset_Elapsed(object sender, ElapsedEventArgs e) {
 			if(Debug.debugD1Mini)
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
 			if(_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
@@ -243,7 +250,7 @@ namespace WebAutomation.Controller {
 			} else {
 				SetOnlineError(false);
 				if(Debug.debugD1Mini)
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini OnlineToggler Script is missing?: {_name} MQTT no response, Ping OK");
 			}
 		}
 
@@ -259,22 +266,28 @@ namespace WebAutomation.Controller {
 			if(cmd.IsValid) {
 				_ = Program.MainProg.wpMQTTClient.setValue(_name + "/" + cmd.Cmd, "1");
 				if(Debug.debugD1Mini)
-					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` success: {_name}, {cmd.Cmd}");
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `sendCmd` success: {_name}, {cmd.Cmd}");
 				returns = true;
 			} else {
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendCmd` ERROR: {_name}, {cmd.Cmd}");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `sendCmd` ERROR: {_name}, {cmd.Cmd}");
 			}
 			return returns;
 		}
-		private void SendOnlineQuestion() {
-			if(Debug.debugD1Mini)
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
-			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
+		private string SendOnlineQuestion() {
+			return Task.Run(() => SendOnlineQuestionAsync()).Result;
 		}
-		private void SetOnlineError(bool e) {
+		private async Task<string> SendOnlineQuestionAsync() {
 			if(Debug.debugD1Mini)
-				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1 Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
-			_ = Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `sendOnlineQuestion`: {_name}/info/Online, 0");
+			return await Program.MainProg.wpMQTTClient.setValue(_name + "/info/Online", "0", MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce);
+		}
+		private string SetOnlineError(bool e) {
+			return Task.Run(() => SetOnlineErrorAsync(e)).Result;
+		}
+		private async Task<string> SetOnlineErrorAsync(bool e) {
+			if(Debug.debugD1Mini)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `setOnlineError`: {_name}/ERROR/Online, {(e ? "1" : "0")}");
+			return await Program.MainProg.wpMQTTClient.setValue(_name + "/ERROR/Online", e ? "1" : "0");
 		}
 		private void SetOnlineError() {
 			SetOnlineError(true);

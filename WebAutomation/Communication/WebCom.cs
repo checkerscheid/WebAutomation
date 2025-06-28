@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 238 2025-05-30 11:25:05Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 245 2025-06-28 15:07:22Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -66,7 +66,7 @@ namespace WebAutomation.Communication {
 		/// 
 		/// </summary>
 		private void init() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom Init");
 			isFinished = false;
 			WatchDogByte = 1;
 			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls; // | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
@@ -74,20 +74,21 @@ namespace WebAutomation.Communication {
 			WebComListener = new TcpListener(IPAddress.Any, IniFile.GetInt("TCP", "Port"));
 			WebComServer = new Thread(new ThreadStart(TCP_Listener));
 			WebComServer.Name = "WebComServer";
-			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom gestartet, auf Port {0} gemappt", IniFile.GetInt("TCP", "Port"));
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom Inited, Port {0} gemappt", IniFile.GetInt("TCP", "Port"));
 			WebComServer.Start();
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		public void finished() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom Stop");
 			if(WebComListener != null)
 				WebComListener.Stop();
 			WebComListener = null;
 			isFinished = true;
 			if(WebComServer != null)
 				WebComServer.Join(1500);
-			eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("{0} gestoppt", WebComServer.Name));
+			Debug.Write(MethodInfo.GetCurrentMethod(), "WebCom Stoped");
 		}
 		/// <summary>
 		/// 

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 237 2025-05-30 11:23:27Z                        $ #
+//# File-ID      : $Id:: Email.cs 245 2025-06-28 15:07:22Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -55,7 +55,7 @@ namespace WebAutomation.Helper {
 		/// 
 		/// </summary>
 		private void init() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "EMail Client init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "EMail Client Init");
 			eventLog = new Logger(Logger.ESource.Mail);
 			mailMessage = new MailMessage();
 			reset();
@@ -66,14 +66,15 @@ namespace WebAutomation.Helper {
 			MailClient = new SmtpClient(IniFile.Get("Email", "Server"), IniFile.GetInt("Email", "Port"));
 			if(useSSL.ToLower() == "true")
 				MailClient.EnableSsl = true;
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestartet");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client Inited");
 		}
 		/// <summary>
 		/// 
 		/// </summary>
 		public void Dispose() {
-			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client gestoppt");
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client Stop");
 			GC.SuppressFinalize(this);
+			eventLog.Write(MethodInfo.GetCurrentMethod(), "EMail Client Stoped");
 		}
 		/// <summary>
 		/// 

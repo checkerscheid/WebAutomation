@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 29.11.2023                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: MQTTClient.cs 238 2025-05-30 11:25:05Z                   $ #
+//# File-ID      : $Id:: MQTTClient.cs 245 2025-06-28 15:07:22Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WebAutomation.Controller;
@@ -70,23 +71,21 @@ namespace WebAutomation.Communication {
 		private Dictionary<string, string> _settings;
 		private string ForceUpdate;
 		private bool connectPending;
+		private static Object writeLock = new Object();
 		public MQTTClient() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client init");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client Init");
 			string[][] DBBroker;
 			connectPending = false;
-			using(Database Sql = new Database("MQTT Server")) {
+			using(Database Sql = new Database("MQTT Client")) {
 				DBBroker = Sql.Query(@"SELECT TOP 1 [id_mqttbroker], [address], [port] FROM [mqttbroker]");
 			}
-			;
 			_idBroker = Int32.Parse(DBBroker[0][0]);
 			_port = Int32.Parse(DBBroker[0][2]);
 			_ipBroker = DBBroker[0][1];
 			fillTopics();
 			_clientId = $"{Application.ProductName}-{Environment.MachineName}";
 			ForceUpdate = $"{_clientId}/ForceMqttUpdate";
-			MqttFactory factory = new MqttFactory();
-			_mqttClient = factory.CreateMqttClient();
-			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client Inited");
 		}
 		private void fillTopics() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client fillTopics");
@@ -123,16 +122,19 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		}
 		public async Task Start() {
 			connectPending = true;
-			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client start work");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client Start");
 			MqttClientOptions options = new MqttClientOptionsBuilder()
 				.WithTcpServer(_ipBroker, _port)
 				.WithClientId(_clientId)
 				.Build();
 			try {
+				if(_mqttClient == null) {
+					_mqttClient = new MqttFactory().CreateMqttClient();
+				}
+				_mqttClient.ApplicationMessageReceivedAsync += MqttClient_ApplicationMessageReceivedAsync;
 				MqttClientConnectResult connectResult = await _mqttClient.ConnectAsync(options);
 				if(connectResult.ResultCode == MqttClientConnectResultCode.Success) {
 					Debug.Write(MethodInfo.GetCurrentMethod(), $"Connected to MQTT broker (mqtt://{_ipBroker}:{_port}) successfully");
-					_mqttClient.ApplicationMessageReceivedAsync += MqttClient_ApplicationMessageReceivedAsync;
 					await registerDatapoints();
 					connectPending = false;
 				} else {
@@ -142,7 +144,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
 			D1MiniServer.ForceRenewValue();
-			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client start work OK");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client Started");
 		}
 		private async Task<string> registerDatapoints() {
 			foreach(KeyValuePair<string, Dictionary<string, topic>> kvp1 in _topics) {
@@ -162,7 +164,11 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			}
 			registerNewD1MiniDatapoints();
 			registerNewShellyDatapoints();
-			await _mqttClient.SubscribeAsync(ForceUpdate);
+			if(!subscribed.Contains(ForceUpdate)) {
+				await _mqttClient.SubscribeAsync(ForceUpdate);
+				subscribed.Add(ForceUpdate);
+			}
+			Debug.Write(MethodInfo.GetCurrentMethod(), $"MQTT Topics subscribed: {subscribed.Count}");
 			publishSettings();
 			forceMqttUpdate();
 			return "S_OK";
@@ -190,7 +196,7 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 			}
 		}
 		public async void Stop() {
-			Debug.Write(MethodInfo.GetCurrentMethod(), "wpMQTTClient stop");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client stop");
 			if(_mqttClient != null && _mqttClient.IsConnected) {
 				_mqttClient.ApplicationMessageReceivedAsync -= MqttClient_ApplicationMessageReceivedAsync;
 				foreach(string unsubscribe in subscribed) {
@@ -206,14 +212,15 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 				await _mqttClient.UnsubscribeAsync("#");
 				try {
 					await _mqttClient.DisconnectAsync();
-					Debug.Write(MethodInfo.GetCurrentMethod(), "wpMQTTClient gestoppt");
+					Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client stoped");
 				} catch(Exception ex) {
-					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, "wpMQTTClient nicht gestoppt");
+					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, "MQTT Client nicht gestoppt");
 				}
-				_mqttClient = null;
 			} else {
-				Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Server schon gestoppt??");
+				Debug.Write(MethodInfo.GetCurrentMethod(), "MQTT Client schon gestoppt");
 			}
+			subscribed.Clear();
+			_mqttClient = null;
 		}
 		private Task MqttClient_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e) {
 			string v = e.ApplicationMessage.ConvertPayloadToString();
@@ -369,28 +376,47 @@ WHERE [mqttgroup].[id_mqttbroker] = {_idBroker} ORDER BY [topic]");
 		public async Task<string> setValue(string topic, string value, MqttQualityOfServiceLevel QoS) {
 			ret returns = new ret() { erg = ret.OK };
 			if(topic != string.Empty) {
+				//bool writeLocked = false;
 				try {
-					MqttApplicationMessage msg = new MqttApplicationMessage {
-						Topic = topic,
-						PayloadSegment = getFromString(value),
-						QualityOfServiceLevel = QoS
-					};
-					if(_mqttClient.IsConnected) {
-						await _mqttClient.PublishAsync(msg);
-					} else {
-						SetMqttAlarm();
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"MQTT OFFLINE, setValue: {topic}, value: {value}");
-					}
-					if(Debug.debugMQTT) {
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: {topic}, value: {value}");
-					}
+					//Monitor.TryEnter(writeLock, 1000, ref writeLocked);
+					//if(writeLocked) {
+					//	Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: writeLock entered {topic}");
+						MqttApplicationMessage msg = new MqttApplicationMessage {
+							Topic = topic,
+							PayloadSegment = getFromString(value),
+							QualityOfServiceLevel = QoS
+						};
+						if(_mqttClient != null && _mqttClient.IsConnected) {
+							MqttClientPublishResult pr = await _mqttClient.PublishAsync(msg);
+							if(!pr.IsSuccess) {
+								Debug.Write(MethodInfo.GetCurrentMethod(), $"MQTT Publish '{topic}' failed: {pr.ReasonString}");
+								returns = new ret() { erg = ret.ERROR, message = $"MQTT Publish '{topic}' failed: {pr.ReasonString}" };
+							}
+						} else {
+							SetMqttAlarm();
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"MQTT OFFLINE or null, setValue: {topic}, value: {value}");
+							returns = new ret() { erg = ret.ERROR, message = $"MQTT OFFLINE or null, setValue: {topic}, value: {value}" };
+						}
+						if(Debug.debugMQTT) {
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: {topic}, value: {value}");
+						}
+					//} else {
+					//	string msg = $"setValue: writeLock Timeout ERROR {topic}";
+					//	Debug.Write(MethodInfo.GetCurrentMethod(), msg);
+					//	returns = new ret() { erg = ret.ERROR, message = msg };
+					//}
 				} catch(Exception ex) {
 					Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"setValue: topic: {topic}, value: {value}");
 					returns.erg = ret.ERROR;
 					returns.message = ex.Message;
 				} finally {
-					if(!_mqttClient.IsConnected && !connectPending) {
+					//if(writeLocked) {
+					//	Debug.Write(MethodInfo.GetCurrentMethod(), $"setValue: writeLock release {topic}");
+					//	Monitor.Exit(writeLock);
+					//}
+					if((_mqttClient == null || !_mqttClient.IsConnected) && !connectPending) {
 						Debug.Write(MethodInfo.GetCurrentMethod(), "Connection Lost, try to reconnect");
+						Stop();
 						await Start();
 					}
 				}

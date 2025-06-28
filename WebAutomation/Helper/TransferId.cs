@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 241                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: TransferId.cs 237 2025-05-30 11:23:27Z                   $ #
+//# File-ID      : $Id:: TransferId.cs 241 2025-06-18 08:34:38Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -25,8 +25,8 @@ namespace WebAutomation.Helper {
 	class TransferId {
 		/// <summary>WebAutomationServer Event Log</summary>
 		private static Logger eventLog = new Logger(Logger.ESource.TransferId);
-		/// <summary>Transfer Grund: OpcRouter</summary>
-		public const int TransferOpcRouter = 1;
+		/// <summary>Transfer Grund: Router</summary>
+		public const int TransferRouter = 1;
 		/// <summary>Transfer Grund: Watchdog</summary>
 		public const int TransferWatchdog = 2;
 		/// <summary>Transfer Grund: Taster Default</summary>
@@ -233,7 +233,7 @@ namespace WebAutomation.Helper {
 			private void ttaid_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 				string reason = "unbekannt";
 				switch(_forWhat) {
-					case TransferOpcRouter:
+					case TransferRouter:
 						reason = "Opc Router";
 						break;
 					case TransferId.TransferWatchdog:

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Trend.cs 237 2025-05-30 11:23:27Z                        $ #
+//# File-ID      : $Id:: Trend.cs 245 2025-06-28 15:07:22Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -217,10 +217,11 @@ namespace WebAutomation.PlugIns {
 			}
 			_threadCleanDB = new TrendCleanDB();
 			_threadCleanDB.Start();
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Inited");
 		}
 
 		public static void Stop() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
 			if(_threadCleanDB != null)
 				_threadCleanDB.Stop();
 			if(_trendList != null) {
@@ -228,7 +229,7 @@ namespace WebAutomation.PlugIns {
 					t.Stop();
 				}
 			}
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Stop");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Trends Stoped");
 		}
 		public static Trend Get(int idTrend) {
 			return _trendList.Find(t => t.IdTrend == idTrend);

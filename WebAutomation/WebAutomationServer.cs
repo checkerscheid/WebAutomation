@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebAutomationServer.cs 237 2025-05-30 11:23:27Z          $ #
+//# File-ID      : $Id:: WebAutomationServer.cs 245 2025-06-28 15:07:22Z          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -241,7 +241,7 @@ namespace WebAutomation {
 		/// <item><description>Ensuring required database tables and columns exist, creating them if
 		/// necessary.</description></item> <item><description>Initializing various application components such as email
 		/// handling, web communication, and data points.</description></item> <item><description>Starting background
-		/// services, including MQTT, Shelly, and D1 Mini servers.</description></item> <item><description>Setting up system
+		/// services, including MQTT, Shelly, and D1Mini servers.</description></item> <item><description>Setting up system
 		/// monitoring, including memory and processor status tracking.</description></item> </list> This method must be
 		/// called before using other application features to ensure all dependencies are properly initialized.</remarks>
 		/// <returns>A task that represents the asynchronous initialization operation.</returns>
@@ -286,6 +286,7 @@ namespace WebAutomation {
 			ShellyServer.Init();
 			D1MiniServer.Init();
 			wpRest = new RestServer();
+			Router.Start();
 			await wpMQTTClient.Start();
 			ShellyServer.Start();
 			D1MiniServer.Start();
@@ -855,25 +856,36 @@ namespace WebAutomation {
 		/// and percentage of used space. The information is formatted and displayed in the associated label. If an error
 		/// occurs while retrieving drive information, the error is logged.</remarks>
 		private void GetVolumeInfo() {
-			lbl_volumeinfo.Text = "";
-			DriveInfo[] Drives = DriveInfo.GetDrives();
+			try {
+				SetLblVolumeInfo("");
+				DriveInfo[] Drives = DriveInfo.GetDrives();
 
-			List<string> lbl = new List<string>();
-			foreach(DriveInfo d in Drives) {
-				if(d.DriveType == DriveType.Fixed) {
-					try {
-						DriveInformation di = new DriveInformation(d.TotalSize, d.TotalFreeSpace);
-						lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
-							d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
-					} catch(Exception ex) {
-						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+				List<string> lbl = new List<string>();
+				foreach(DriveInfo d in Drives) {
+					if(d.DriveType == DriveType.Fixed) {
+						try {
+							DriveInformation di = new DriveInformation(d.TotalSize, d.TotalFreeSpace);
+							lbl.Add(String.Format("{0} - {1} GB / {2} GB ({3} % belegt)",
+								d.Name, di.usedspace, di.totalspace, Math.Round(di.prozent, 1)));
+						} catch(Exception ex) {
+							eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+						}
 					}
 				}
+				string newLblText = "";
+				foreach(string s in lbl) {
+					newLblText += s + "\r\n";
+				}
+				SetLblVolumeInfo(newLblText);
+			} catch(Exception ex) {
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}
-			foreach(string s in lbl) {
-				lbl_volumeinfo.Text += s + "\r\n";
-			}
-
+		}
+		private void SetLblVolumeInfo(string t) {
+			if(lbl_volumeinfo.InvokeRequired)
+				Invoke(() => lbl_volumeinfo.Text = t);
+			else
+				lbl_volumeinfo.Text = t;
 		}
 
 		/// <summary>

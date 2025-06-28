@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 238                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 238 2025-05-30 11:25:05Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 245 2025-06-28 15:07:22Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -123,11 +123,11 @@ namespace WebAutomation.Controller {
 					if(Debug.debugShelly)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 1");
 					SetOnlineError(false);
-					toreset.Stop();
+					toreset?.Stop();
 				} else {
 					if(Debug.debugShelly)
 						Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived Online`: {_name}/info/Online, 0 - start resetTimer");
-					toreset.Start();
+					toreset?.Start();
 				}
 			}
 		}
@@ -205,36 +205,42 @@ namespace WebAutomation.Controller {
 
 		public void Start() {
 			if(ShellyType.IsGen2(_type) && _mqttActive) {
-				t = new Timer(ShellyServer.OnlineTogglerSendIntervall * 1000);
-				t.Elapsed += OnlineCheck_Elapsed;
 				if(ShellyServer.OnlineTogglerSendIntervall > 0) {
+					t = new Timer(ShellyServer.OnlineTogglerSendIntervall * 1000);
+					t.Elapsed += OnlineCheck_Elapsed;
 					t.Start();
 					SendOnlineQuestion();
+					toreset = new Timer(ShellyServer.OnlineTogglerWait * 1000);
+					toreset.AutoReset = false;
+					toreset.Elapsed += Toreset_Elapsed;
 				}
-				toreset = new Timer(ShellyServer.OnlineTogglerWait * 1000);
-				toreset.AutoReset = false;
-				toreset.Elapsed += Toreset_Elapsed;
 			}
 		}
 		public void Stop() {
 			if(ShellyType.IsGen2(_type) && _mqttActive) {
-				t.Stop();
-				toreset.Stop();
+				if(t != null)
+					t.Stop();
+				t = null;
+				if(toreset != null)
+					toreset.Stop();
+				toreset = null;
 				if(Debug.debugShelly)
 					Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly Device stopped `{_name} sendOnlineQuestion`");
 			}
 		}
 
 		public void SetOnlineTogglerSendIntervall() {
-			t.Interval = ShellyServer.OnlineTogglerSendIntervall * 1000;
-			t.Stop();
-			if(ShellyServer.OnlineTogglerSendIntervall > 0) {
+			if(t != null && ShellyServer.OnlineTogglerSendIntervall > 0) {
+				t.Interval = ShellyServer.OnlineTogglerSendIntervall * 1000;
+				t.Stop();
 				t.Start();
 			}
 		}
 		public void SetOnlineTogglerWait() {
-			toreset.Interval = ShellyServer.OnlineTogglerWait * 1000;
-			toreset.Stop();
+			if(toreset != null && ShellyServer.OnlineTogglerWait > 0) {
+				toreset.Interval = ShellyServer.OnlineTogglerWait * 1000;
+				toreset.Stop();
+			}
 		}
 		private void OnlineCheck_Elapsed(object sender, ElapsedEventArgs e) {
 			SendOnlineQuestion();
@@ -314,7 +320,7 @@ namespace WebAutomation.Controller {
 				for(int id1mini = 0; id1mini < Query.Length; id1mini++) {
 					try {
 						if(Query[id1mini][1].Contains("NeoPixel"))
-							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixelOff"));
+							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixel?turn=0"));
 						if(Query[id1mini][1].Contains("CwWw"))
 							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setCwWw?turn=0"));
 					} catch(Exception ex) {
@@ -327,6 +333,9 @@ namespace WebAutomation.Controller {
 			GetStatus(false);
 		}
 		public void GetStatus(bool force) {
+			Task.Run(() => GetStatusAsync(force)).Wait();
+		}
+		public async Task GetStatusAsync(bool force) {
 			string url = "http://" + this._ip.ToString();
 			string target = "";
 			if(ShellyType.IsGen2(this.Type)) {
@@ -369,9 +378,7 @@ namespace WebAutomation.Controller {
 							}
 						};
 						if(_lastContact.AddHours(1) < DateTime.Now || force) {
-							Task.Run(() => {
-								webClient.DownloadStringAsync(new Uri(target));
-							});
+							await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
 							_doCheckStatus.Stop();
 							_doCheckStatus.Start();
 						}
@@ -385,6 +392,9 @@ namespace WebAutomation.Controller {
 			GetHttpShelly(false);
 		}
 		public void GetHttpShelly(bool force) {
+			Task.Run(() => GetHttpShellyAsync(force)).Wait();
+		}
+		public async void GetHttpShellyAsync(bool force) {
 			string target = $"http://{this._ip.ToString()}/shelly";
 			if(ShellyType.IsGen2(this.Type) && !ShellyType.IsBat(this.Type) && this.Active) {
 				try {
@@ -410,9 +420,7 @@ namespace WebAutomation.Controller {
 							}
 						};
 						if(_lastContact.AddHours(1) < DateTime.Now || force) {
-							Task.Run(() => {
-								webClient.DownloadStringAsync(new Uri(target));
-							});
+							await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
 							_doCheckShelly.Stop();
 							_doCheckShelly.Start();
 						}
@@ -423,6 +431,9 @@ namespace WebAutomation.Controller {
 			}
 		}
 		public void GetMqttStatus() {
+			Task.Run(() => GetMqttStatusAsync()).Wait();
+		}
+		public async void GetMqttStatusAsync() {
 			string url = "http://" + this._ip.ToString();
 			string target = "";
 			if(ShellyType.IsGen2(this.Type)) {
@@ -495,7 +506,7 @@ namespace WebAutomation.Controller {
 								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
 							}
 						};
-						webClient.DownloadStringAsync(new Uri(target));
+						await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
 					}
 				} catch(Exception ex) {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");

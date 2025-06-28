@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 23.12.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Dictionaries.cs 237 2025-05-30 11:23:27Z                 $ #
+//# File-ID      : $Id:: Dictionaries.cs 245 2025-06-28 15:07:22Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -46,6 +46,7 @@ namespace WebAutomation {
 		public int? idTrend { get { return _idTrend; } set { _idTrend = value; } }
 		private int? _idAlarm;
 		public int? idAlarm { get { return _idAlarm; } set { _idAlarm = value; } }
+		public List<int> Route = new List<int>();
 		private string _value;
 		public string Value { get { return _value; } }
 		private string _valueString = "-";
@@ -106,6 +107,7 @@ namespace WebAutomation {
 					_factor = Double.Parse(erg[0][i++]);
 					_active = erg[0][i++] == "True" ? true : false;
 					Int32.TryParse(erg[0][i++], out _idNamespace);
+					Route = Router.GetRoute(_id);
 				}
 			}
 			if(Debug.debugSystem)
@@ -148,6 +150,18 @@ namespace WebAutomation {
 						Alarm a = Alarms.Get((int)_idAlarm);
 						if(a != null) {
 							a.setAlarmValue();
+						}
+					}
+					if(Route.Count > 0) {
+						foreach(int id in Route) {
+							if(Datapoints.Get(id) != null) {
+								Datapoints.Get(id).SetValue(_value, from);
+								if(Debug.debugRouter) {
+									Debug.Write(MethodInfo.GetCurrentMethod(), $"Route-Item {id} gesetzt von '{_name}' auf '{_valueString}' ({_value})");
+								}
+							} else {
+								Debug.Write(MethodInfo.GetCurrentMethod(), $"Route-Item {id} not found for '{_name}'");
+							}
 						}
 					}
 					if(Debug.debugTransferID)
@@ -287,7 +301,7 @@ namespace WebAutomation {
 					}
 				}
 			}
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Inited");
 		}
 
 		/// <summary>
@@ -297,10 +311,11 @@ namespace WebAutomation {
 		/// enabling the application         to respond to updates from MQTT, OPC, and Shelly server clients. Ensure that the
 		/// associated clients are properly         initialized before calling this method.</remarks>
 		public static void Start() {
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Start");
 			Program.MainProg.wpMQTTClient.valueChanged += MQTTClient_valueChanged;
 			Program.MainProg.wpOPCClient.valueChanged += OPCClient_valueChanged;
 			ShellyServer.ValueChanged += ShellyServer_valueChanged;
-			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Start work");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Datapoints Started");
 		}
 
 		/// <summary>

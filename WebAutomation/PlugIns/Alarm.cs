@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 237                                                     $ #
+//# Revision     : $Rev:: 245                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Alarm.cs 237 2025-05-30 11:23:27Z                        $ #
+//# File-ID      : $Id:: Alarm.cs 245 2025-06-28 15:07:22Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -704,7 +704,7 @@ namespace WebAutomation.PlugIns {
 					}
 				}
 			}
-			_eventLog.Write(MethodInfo.GetCurrentMethod(), "Alarms gestartet");
+			Debug.Write(MethodInfo.GetCurrentMethod(), "Alarms Inited");
 		}
 		public static List<Alarm> getActiveAlarms() {
 			List<Alarm> returns = new List<Alarm>();

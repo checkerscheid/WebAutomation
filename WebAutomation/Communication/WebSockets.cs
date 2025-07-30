@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 08.06.2021                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 247                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebSockets.cs 245 2025-06-28 15:07:22Z                   $ #
+//# File-ID      : $Id:: WebSockets.cs 247 2025-07-07 14:22:11Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -94,12 +94,14 @@ namespace WebAutomation.Communication {
 
 		private void Ws_ClientConnected(object sender, ConnectionEventArgs e) {
 			WatsonClients.Add(e.Client.Guid, new wpTcpClient(e.Client.Guid));
-			Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client connected: {e.Client.Guid}");
+			if(Debug.debugWebSockets)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client connected: {e.Client.Guid}");
 		}
 
 		private void Ws_ClientDisconnected(object sender, DisconnectionEventArgs e) {
 			WatsonClients.Remove(e.Client.Guid);
-			Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client disconnected: {e.Client.Guid}");
+			if(Debug.debugWebSockets)
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"WebSockets Server Client disconnected: {e.Client.Guid}");
 		}
 
 		private void executeCommand(wpTcpClient client, dynamic cmd) {

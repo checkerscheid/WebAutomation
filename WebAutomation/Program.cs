@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 247                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Program.cs 245 2025-06-28 15:07:22Z                      $ #
+//# File-ID      : $Id:: Program.cs 247 2025-07-07 14:22:11Z                      $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -31,7 +31,7 @@ namespace WebAutomation {
 	static class Program {
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "241";
+		public const string subversion = "245";
 		private static Debug debug;
 
 		/// <summary>
@@ -68,7 +68,8 @@ namespace WebAutomation {
 			if(createdNew) {
 				try {
 					debug = new Debug(Application.ProductName);
-					Debug.Write(MethodInfo.GetCurrentMethod(), "START" +
+					string[] pVersion = Application.ProductVersion.Split('.');
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"START {Application.CompanyName} - {Application.ProductName} V {pVersion[0]}.{pVersion[1]}.{subversion}" +
 						"\r\n####################################################################\r\n");
 					MainProg = new WebAutomationServer(args);
 					if(lgA == IniFile.Get("License", "key")) {

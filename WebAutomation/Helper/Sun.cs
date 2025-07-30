@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 247                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 245 2025-06-28 15:07:22Z                          $ #
+//# File-ID      : $Id:: Sun.cs 247 2025-07-07 14:22:11Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -59,16 +59,16 @@ namespace WebAutomation.Helper {
 		public String SetSummer(bool summer) {
 			this.summer = summer;
 			using(Database Sql = new Database("Sun")) {
-				Sql.Query("UPDATE [cfg] SET [value] = '" + (summer ? "1" : "0") + "' WHERE [key] = 'summer'");
+				Sql.Query("UPDATE [cfg] SET [value] = '" + (summer ? "True" : "False") + "' WHERE [key] = 'summer'");
 			}
-			Datapoints.Get(SummerId).WriteValue(summer ? "1" : "0");
+			Datapoints.Get(SummerId).WriteValue(summer ? "True" : "False");
 			return new ret() { erg = ret.OK, message = $"Summer Set to {(summer ? "True" : "False")}" }.ToString();
 		}
 		public void InitSummer() {
 			using(Database Sql = new Database("Sun")) {
-				summer = Sql.Query("SELECT TOP 1 [value] FROM [cfg] WHERE [key] = 'summer'")[0][0] == "1";
+				summer = Sql.Query("SELECT TOP 1 [value] FROM [cfg] WHERE [key] = 'summer'")[0][0] == "True";
 			}
-			Datapoints.Get(SummerId).WriteValue(summer ? "1" : "0");
+			Datapoints.Get(SummerId).WriteValue(summer ? "True" : "False");
 		}
 		private async Task StartSunriseSunsetTimer() {
 

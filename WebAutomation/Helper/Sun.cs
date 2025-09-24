@@ -126,7 +126,7 @@ namespace WebAutomation.Helper {
 			try {
 				InitSummer();
 				WebClient webClient = new WebClient();
-				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID=99efbd2754161093642df0e72e881c87&units=metric&lang=de", IniFile.Get("Projekt", "OpenWeatherCode"));
+				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID={1}&units=metric&lang=de", IniFile.Get("Projekt", "OpenWeatherCode"), IniFile.Get("Projekt", "OpenWeatherKey"));
 				webClient.DownloadStringCompleted += (e, args) => {
 					if(args.Error == null) {
 						try {

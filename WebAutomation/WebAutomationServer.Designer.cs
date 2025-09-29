@@ -19,6 +19,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebAutomation.Communication;
 using WebAutomation.Controller;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
@@ -377,6 +378,7 @@ namespace WebAutomation {
 				wpOPCClient.finished();
 			if(wpRest != null)
 				wpRest.finished();
+			CoIot.Stop();
 			D1MiniServer.Stop();
 			ShellyServer.Stop();
 			if(wpMQTTClient != null)

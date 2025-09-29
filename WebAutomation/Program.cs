@@ -31,7 +31,7 @@ namespace WebAutomation {
 	static class Program {
 		public static WebAutomationServer MainProg;
 		public static string myName;
-		public const string subversion = "245";
+		public const string subversion = "247";
 		private static Debug debug;
 
 		/// <summary>

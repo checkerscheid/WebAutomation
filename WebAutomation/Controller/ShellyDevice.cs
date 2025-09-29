@@ -49,10 +49,14 @@ namespace WebAutomation.Controller.ShellyDevice {
 		public string topic_prefix { get; set; }
 		public bool enable_control { get; set; }
 		public Mqtt mqtt { get; set; }
+		public CoIot coiot { get; set; }
 		public class Mqtt {
 			public bool enable { get; set; }
 			public string server { get; set; }
 			public string id { get; set; }
+		}
+		public class CoIot {
+			public bool enabled { get; set; }
 		}
 	}
 

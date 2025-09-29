@@ -54,7 +54,7 @@ namespace WebAutomation.Controller {
 		public bool Active {
 			get { return _active; }
 			set {
-				Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini {nameof(Active)} changed from {_active} to {value}");
+				Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini '{Name}' {nameof(Active)} changed from {_active} to {value}");
 				_active = value;
 			}
 		}

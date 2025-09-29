@@ -132,6 +132,9 @@ namespace WebAutomation.Controller {
 			}
 			return "S_OK";
 		}
+		public static List<Shelly> GetCoIot() {
+			return _shellies.FindAll(t => t.CoIotActive);
+		}
 		private static void SetValue(int idDp, string name, string value) {
 			valueChangedEventArgs vcea = new valueChangedEventArgs();
 			vcea.IdDatapoint = idDp;

@@ -109,6 +109,8 @@ namespace WebAutomation.Controller {
 		private bool _mqttWriteable;
 		public bool MqttWriteable { get => _mqttWriteable; }
 		private string _wsId;
+		public bool CoIotActive { get => _coIotActive; }
+		private bool _coIotActive;
 		public string WsId { get => _wsId; }
 		private string _type;
 		public string Type { get => _type; }
@@ -137,7 +139,8 @@ namespace WebAutomation.Controller {
 			"info/Online" ];
 
 		public Shelly(int id, string ip, string mac, int id_room, string name, string type,
-			bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable, string ws_id) {
+			bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable, string ws_id,
+			bool coiot_active) {
 			eventLog = new Logger(Logger.ESource.PlugInShelly);
 			_id = id;
 			IPAddress ipaddress;
@@ -153,6 +156,7 @@ namespace WebAutomation.Controller {
 			_mqttId = mqtt_id;
 			_mqttPrefix = mqtt_prefix;
 			_mqttWriteable = mqtt_writeable;
+			_coIotActive = coiot_active;
 			_wsId = ws_id;
 			_doCheckStatus = new Timer(_doCheckStatusIntervall * 60 * 1000);
 			_doCheckStatus.AutoReset = true;
@@ -180,6 +184,7 @@ namespace WebAutomation.Controller {
 			_mqttId = ts.mqtt_id;
 			_mqttPrefix = ts.mqtt_prefix;
 			_mqttWriteable = ts.mqtt_writeable;
+			_coIotActive = ts.coiot_active;
 			_wsId = ts.ws_id;
 			_lastContact = ts.lastcontact;
 
@@ -448,7 +453,7 @@ namespace WebAutomation.Controller {
 						webClient.DownloadStringCompleted += (e, args) => {
 							if(args.Error == null) {
 								mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(args.Result);
-								bool res_mqtt_enable, res_mqtt_writeable;
+								bool res_mqtt_enable, res_mqtt_writeable, res_coiot_enable;
 								string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
 								if(ShellyType.IsGen2(this.Type)) {
 									res_mqtt_enable = sdms.enable;
@@ -456,12 +461,14 @@ namespace WebAutomation.Controller {
 									res_mqtt_id = sdms.client_id;
 									res_mqtt_prefix = sdms.topic_prefix;
 									res_mqtt_writeable = sdms.enable_control;
+									res_coiot_enable = false;
 								} else {
 									res_mqtt_enable = sdms.mqtt.enable;
 									res_mqtt_server = sdms.mqtt.server;
 									res_mqtt_id = sdms.mqtt.id;
 									res_mqtt_prefix = "shellies/" + sdms.mqtt.id;
 									res_mqtt_writeable = true;
+									res_coiot_enable = sdms.coiot.enabled;
 								}
 								string updatesql = "";
 								if(_mqttActive != res_mqtt_enable) {
@@ -493,6 +500,12 @@ namespace WebAutomation.Controller {
 									if(!String.IsNullOrEmpty(updatesql))
 										updatesql += ", ";
 									updatesql += $"[mqtt_writeable] = {(_mqttWriteable ? "1" : "0")}";
+								}
+								if(_coIotActive != res_coiot_enable) {
+									_coIotActive = res_coiot_enable;
+									if(!String.IsNullOrEmpty(updatesql))
+										updatesql += ", ";
+									updatesql += $"[coiot_active] = {(_coIotActive ? "1" : "0")}";
 								}
 								if(!String.IsNullOrEmpty(updatesql)) {
 									using(Database Sql = new Database("Update Shelly MQTT ID")) {

@@ -293,6 +293,7 @@ namespace WebAutomation {
 			wpWatchdog = new Watchdog();
 			CalDav = new Calendars();
 			wpSun = new Sun();
+			CoIot.Start();
 			lastState = this.WindowState;
 			isFinished = false;
 			_isInit = true;

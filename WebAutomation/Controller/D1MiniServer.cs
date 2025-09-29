@@ -261,9 +261,9 @@ namespace WebAutomation.Controller {
 					Debug.Write(MethodBase.GetCurrentMethod(), $"D1Mini not found IP {_ip}");
 					//return new ret { erg = ret.ERROR, message = "D1Mini not found" }.ToString();
 				}
-				if(d1md == null || d1md.Active) {
+				if(d1md != null || d1md.Active) {
 					if(Debug.debugD1Mini)
-						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}");
+						Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini getJson Status {_ip}, {d1md.Name}");
 
 					string url = $"http://{_ip}/status";
 					try {
@@ -272,7 +272,7 @@ namespace WebAutomation.Controller {
 						if(saveStatus)
 							SaveJsonStatus(_ip, returns);
 					} catch(Exception ex) {
-						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}, {d1md.Name}: '{returns}'");
 					}
 				}
 			} else {

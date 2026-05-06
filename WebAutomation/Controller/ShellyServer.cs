@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 30.05.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: ShellyServer.cs 245 2025-06-28 15:07:22Z                 $ #
+//# File-ID      : $Id:: ShellyServer.cs 251 2025-12-23 12:06:40Z                 $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -19,6 +19,8 @@ using FreakaZone.Libraries.wpSQL;
 using FreakaZone.Libraries.wpSQL.Table;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using WebAutomation.Communication;
@@ -98,6 +100,7 @@ namespace WebAutomation.Controller {
 			foreach(Shelly s in _shellies) {
 				s.GetStatus(true);
 				s.GetHttpShelly(true);
+				s.GetOutputStatus(true);
 				s.GetMqttStatus();
 				s.Start();
 				await Task.Delay(100);
@@ -126,6 +129,11 @@ namespace WebAutomation.Controller {
 				return _shellies.Find(t => t.WsId == wsId);
 			return null;
 		}
+		public static Shelly GetShellyWithCoIoT(string ip) {
+			if (_shellies != null && _shellies.Exists(t => t.Ip == ip && t.CoIotActive))
+				return _shellies.Find(t => t.Ip == ip && t.CoIotActive);
+			return null;
+		}
 		public static string GetAllStatus() {
 			foreach(Shelly s in _shellies) {
 				s.GetStatus(true);
@@ -133,7 +141,7 @@ namespace WebAutomation.Controller {
 			return "S_OK";
 		}
 		public static List<Shelly> GetCoIot() {
-			return _shellies.FindAll(t => t.CoIotActive);
+			return _shellies.FindAll(t => t.CoIotActive).FindAll(t => t.Active);
 		}
 		private static void SetValue(int idDp, string name, string value) {
 			valueChangedEventArgs vcea = new valueChangedEventArgs();
@@ -144,8 +152,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetState(string mac, bool state) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdOnOff, s.Name, state ? "True" : "False");
 				string DebugNewValue = $"Neuer Wert: Raum: {s.Name}, Status: {state}";
 				if(Debug.debugShelly)
@@ -159,8 +167,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetWindow(string mac, bool window, string temp, string ldr) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdWindow, s.Name, window ? "True" : "False");
 				SetValue(s.IdTemp, s.Name, temp.Replace(".", ","));
 				SetValue(s.IdLdr, s.Name, ldr.Replace(".", ","));
@@ -179,8 +187,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetWindow(string mac, bool window) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdWindow, s.Name, window ? "True" : "False");
 				string DebugNewValue = String.Format("Raum: {0}", s.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Window: {0}, ", window ? "True" : "False");
@@ -195,8 +203,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetHumTemp(string mac, string hum, string temp) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdHum, s.Name, hum.Replace(".", ","));
 				SetValue(s.IdTemp, s.Name, temp.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", s.Name);
@@ -213,8 +221,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetTemp(string mac, string temp) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdTemp, s.Name, temp.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", s.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Temp: {0}", temp);
@@ -229,8 +237,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetHum(string mac, string hum) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				SetValue(s.IdHum, s.Name, hum.Replace(".", ","));
 				string DebugNewValue = String.Format("Raum: {0}", s.Name);
 				DebugNewValue += String.Format("\r\n\tNeuer Wert: Hum: {0}, ", hum);
@@ -245,8 +253,8 @@ namespace WebAutomation.Controller {
 		}
 		public static bool SetLongPress(string mac) {
 			bool returns = false;
-			if(_shellies.Exists(t => t.Mac == mac)) {
-				Shelly s = _shellies.Find(t => t.Mac == mac);
+			if(_shellies.Exists(t => t.Mac.ToLower() == mac)) {
+				Shelly s = _shellies.Find(t => t.Mac.ToLower() == mac);
 				s.SetLongPress();
 				string DebugNewValue = String.Format("Raum: {0}", s.Name);
 				if(Debug.debugShelly)
@@ -257,6 +265,44 @@ namespace WebAutomation.Controller {
 				eventLog.Write(MethodInfo.GetCurrentMethod(), $"Shelly nicht gefunden: {mac}");
 			}
 			return returns;
+		}
+		public static string SendUrlCmd(string ip, string cmd) {
+			IPAddress _ip;
+			string target = $"http://{ip}/{cmd}";
+			ret returns = new ret() { erg = ret.ERROR };
+			if(IPAddress.TryParse(ip, out _ip)) {
+				Shelly shelly = _shellies.Find(t => t.Ip.ToString() == ip);
+				if(shelly != null) {
+					if(shelly.Active) {
+						HttpClientHandler handler = new HttpClientHandler();
+						if(shelly.Un != "" && shelly.Pw != "") {
+							handler.Credentials = new NetworkCredential(shelly.Un, shelly.Pw);
+						}
+						using(HttpClient webClient = new HttpClient(handler)) {
+							Task.Run(async () => {
+								try {
+									HttpResponseMessage response = await webClient.GetAsync(target);
+									response.EnsureSuccessStatusCode();
+									returns.erg = ret.OK;
+									returns.Json = await response.Content.ReadAsStringAsync();
+									if(Debug.debugShelly)
+										Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly sendUrlCmd after wait {_ip} - returns: {returns.message}");
+								} catch(Exception ex) {
+									returns.message = ex.Message;
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{target}: '{returns.message}'");
+								}
+							}).Wait();
+						}
+					} else {
+						returns.message = "Shelly not active";
+					}
+				} else {
+					returns.message = "Shelly not found";
+				}
+			} else {
+				returns.message = "IP not valid";
+			}
+			return returns.ToString();
 		}
 
 		private static void MQTTClient_shellyChanged(object sender, MQTTClient.valueChangedEventArgs e) {

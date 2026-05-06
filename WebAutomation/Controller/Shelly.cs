@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Shelly.cs 245 2025-06-28 15:07:22Z                       $ #
+//# File-ID      : $Id:: Shelly.cs 251 2025-12-23 12:06:40Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -23,6 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Timers;
 using WebAutomation.Controller.ShellyDevice;
@@ -52,6 +53,11 @@ namespace WebAutomation.Controller {
 		public int IdOnOff {
 			get { return _idOnOff; }
 			set { _idOnOff = value; }
+		}
+		private int _idBrightness;
+		public int IdBrightness {
+			get { return _idBrightness; }
+			set { _idBrightness = value; }
 		}
 		private int _idTemp;
 		public int IdTemp {
@@ -92,6 +98,22 @@ namespace WebAutomation.Controller {
 		public string Name {
 			get { return _name; }
 		}
+		private string _un;
+		public string Un {
+			get { return _un; }
+			set { _un = value; }
+		}
+		private string _pw;
+		public string Pw {
+			get { return _pw; }
+			set { _pw = value; }
+		}
+		private int _autoOff;
+		public int AutoOff {
+			get { return _autoOff; }
+			set { _autoOff = value; }
+		}
+
 		private DateTime _lastContact;
 		public DateTime LastContact {
 			get { return _lastContact; }
@@ -138,7 +160,7 @@ namespace WebAutomation.Controller {
 		private readonly List<string> subscribeList = [
 			"info/Online" ];
 
-		public Shelly(int id, string ip, string mac, int id_room, string name, string type,
+		public Shelly(int id, string ip, string mac, int id_room, string name, string type, string un, string pw,
 			bool mqtt_active, string mqtt_server, string mqtt_id, string mqtt_prefix, bool mqtt_writeable, string ws_id,
 			bool coiot_active) {
 			eventLog = new Logger(Logger.ESource.PlugInShelly);
@@ -151,6 +173,8 @@ namespace WebAutomation.Controller {
 			_room = id_room;
 			_name = name;
 			_type = type;
+			_un = un;
+			_pw = pw;
 			_mqttActive = mqtt_active;
 			_mqttServer = mqtt_server;
 			_mqttId = mqtt_id;
@@ -178,6 +202,8 @@ namespace WebAutomation.Controller {
 			_room = ts.id_restroom;
 			_name = ts.name;
 			_type = ts.type;
+			_un = ts.un;
+			_pw = ts.pw;
 			_active = ts.active;
 			_mqttActive = ts.mqtt_active;
 			_mqttServer = ts.mqtt_server;
@@ -187,9 +213,11 @@ namespace WebAutomation.Controller {
 			_coIotActive = ts.coiot_active;
 			_wsId = ts.ws_id;
 			_lastContact = ts.lastcontact;
+			_autoOff = ts.autooff;
 
 			TableRest tr = (TableRest)ts.SubValues.First();
 			_idOnOff = tr.id_onoff;
+			_idBrightness = tr.id_brightness;
 			_idTemp = tr.id_temp;
 			_idHum = tr.id_hum;
 			_idLdr = tr.id_ldr;
@@ -387,6 +415,64 @@ namespace WebAutomation.Controller {
 							_doCheckStatus.Stop();
 							_doCheckStatus.Start();
 						}
+					}
+				} catch(Exception ex) {
+					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+				}
+			}
+		}
+		public void GetOutputStatus() {
+			GetOutputStatus(false);
+		}
+		public void GetOutputStatus(bool force) {
+			Task.Run(() => GetOutputStatusAsync(force)).Wait();
+		}
+		public async Task GetOutputStatusAsync(bool force) {
+			string url = "http://" + this._ip.ToString();
+			string target = "";
+			if(ShellyType.IsGen2(this.Type)) {
+				target = $"{url}/rpc/Switch.GetConfig?id=0";
+			} else if(ShellyType.IsLight(this.Type)) {
+				target = $"{url}/settings/lights/0";
+			} else if(ShellyType.IsRelay(this.Type)) {
+				target = $"{url}/settings/relays/0";
+			}
+			if(!String.IsNullOrEmpty(target) && !ShellyType.IsBat(this.Type) && this.Active) {
+				try {
+					using(WebClient webClient = new WebClient()) {
+						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
+						webClient.DownloadStringCompleted += (e, args) => {
+							if(args.Error == null) {
+								_lastContact = DateTime.Now;
+								dynamic sds = JsonConvert.DeserializeObject<dynamic>(args.Result);
+								string autooff = "[autooff] = 0, ";
+								int auto_off;
+								if((bool?)sds.auto_off ?? false == true) {
+									autooff = $"[autooff] = {sds.auto_off_delay}, ";
+								}
+								if(sds.lights != null) {
+									auto_off = sds.lights[0].auto_off ?? 0;
+									if(auto_off > 0) {
+										autooff = $"[autooff] = {sds.lights[0].auto_off}, ";
+									}
+								}
+								if(sds.relays != null) {
+									auto_off = sds.relays[0].auto_off ?? 0;
+									if(auto_off > 0) {
+										autooff = $"[autooff] = {sds.relays[0].auto_off}, ";
+									}
+								}
+								using(Database Sql = new Database("Update Shelly MQTT lastContact")) {
+									string sql = $"UPDATE [shelly] SET {autooff}[lastcontact] = '{_lastContact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
+									Sql.NonResponse(sql);
+									if(Debug.debugShelly)
+										Debug.Write(MethodInfo.GetCurrentMethod(), sql);
+								}
+							} else {
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+							}
+						};
+						await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
 					}
 				} catch(Exception ex) {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");

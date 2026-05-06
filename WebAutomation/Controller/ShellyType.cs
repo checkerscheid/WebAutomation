@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 30.05.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 239                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: ShellyType.cs 239 2025-05-30 11:26:03Z                   $ #
+//# File-ID      : $Id:: ShellyType.cs 251 2025-12-23 12:06:40Z                   $ #
 //#                                                                                 #
 //###################################################################################
 using System.Collections.Generic;

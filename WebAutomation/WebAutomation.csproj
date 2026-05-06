@@ -108,6 +108,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
@@ -138,6 +139,7 @@
     <Compile Include="Helper\Sun.cs" />
     <Compile Include="Helper\TransferId.cs" />
     <Compile Include="Communication\WebSockets.cs" />
+    <Compile Include="Helper\WebcamCloudAnalyzer.cs" />
     <Compile Include="PlugIns\Calendar.cs" />
     <Compile Include="PlugIns\Router.cs" />
     <Compile Include="PlugIns\Scene.cs" />

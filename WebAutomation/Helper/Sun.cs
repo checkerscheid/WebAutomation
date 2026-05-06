@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 12.01.2024                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 247                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Sun.cs 247 2025-07-07 14:22:11Z                          $ #
+//# File-ID      : $Id:: Sun.cs 251 2025-12-23 12:06:40Z                          $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -29,6 +29,7 @@ namespace WebAutomation.Helper {
 		private int SunRiseId;
 		private int SunSetId;
 		private int SummerId;
+		private int CloudIndexId;
 		private DateTime sunrise;
 		public DateTime Sunrise { get { return sunrise; } }
 		private DateTime sunset;
@@ -38,9 +39,10 @@ namespace WebAutomation.Helper {
 		private System.Timers.Timer setNewSunriseSunsetTimer;
 		private System.Timers.Timer SunriseTimer;
 		private System.Timers.Timer SunsetTimer;
+		private System.Timers.Timer CloudIndexTimer;
 		public Sun() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun init");
-			int testSunIsShining, testSunRising, testSunsetting, testSummer;
+			int testSunIsShining, testSunRising, testSunsetting, testSummer, testCloudIndex;
 			if(Int32.TryParse(IniFile.Get("Projekt", "SunIsShining"), out testSunIsShining)) {
 				SunShineId = testSunIsShining;
 			}
@@ -52,6 +54,9 @@ namespace WebAutomation.Helper {
 			}
 			if(Int32.TryParse(IniFile.Get("Projekt", "Summer"), out testSummer)) {
 				SummerId = testSummer;
+			}
+			if(Int32.TryParse(IniFile.Get("Projekt", "CloudIndex"), out testCloudIndex)) {
+				CloudIndexId = testCloudIndex;
 			}
 			_ = StartSunriseSunsetTimer();
 			Debug.Write(MethodInfo.GetCurrentMethod(), "Sun Inited");
@@ -84,7 +89,12 @@ namespace WebAutomation.Helper {
 			SunsetTimer.Elapsed += SunsetTimer_Elapsed;
 			SunsetTimer.AutoReset = false;
 
+			CloudIndexTimer = new System.Timers.Timer();
+			CloudIndexTimer.Elapsed += CloudIndexTimer_Elapsed;
+			CloudIndexTimer.AutoReset = false;
+
 			await GetSunsetSunrise();
+			await CloudIndexTimerRun();
 
 			TimeSpan firstStart = new TimeSpan();
 			DateTime Now = DateTime.Now;
@@ -113,6 +123,60 @@ namespace WebAutomation.Helper {
 					Sql.HistoryCleaner();
 				}
 			});
+		}
+
+		private async void CloudIndexTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
+			await CloudIndexTimerRun();
+		}
+		private async Task CloudIndexTimerRun() {
+			try {
+				DateTime now = DateTime.Now;
+				DateTime todayStart = new DateTime(now.Year, now.Month, now.Day, 7, 0, 0);
+				DateTime todayEnd = new DateTime(now.Year, now.Month, now.Day, 21, 0, 0);
+
+				// Determine whether to run now or schedule for start
+				if(now >= todayStart && now < todayEnd) {
+					// we're inside the window: perform analysis now
+					try {
+						int scale = await WebcamCloudAnalyzer.GetCloudScaleFromPageUrl("https://www.wetteronline.de/wetter/heidelberg");
+						Debug.Write(MethodInfo.GetCurrentMethod(), "Cloud index (1..10) = {0}", scale);
+						if(CloudIndexId != 0) {
+							Datapoints.Get(CloudIndexId).WriteValue(scale.ToString());
+						}
+					} catch(Exception ex) {
+						Debug.WriteError(MethodBase.GetCurrentMethod(), ex, "GetCloudScaleFromPageUrl");
+					}
+
+					// schedule next 30 minute slot
+					int totalMinutes = now.Hour * 60 + now.Minute;
+					int nextSlot = ((totalMinutes / 30) + 1) * 30;
+					int nextHour = nextSlot / 60;
+					int nextMinute = nextSlot % 60;
+					DateTime nextRun = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0).AddHours(nextHour).AddMinutes(nextMinute);
+					if(nextRun >= todayEnd) {
+						// schedule to next day's 09:00
+						DateTime tomorrow = todayStart.AddDays(1);
+						nextRun = tomorrow;
+					}
+					TimeSpan untilNext = nextRun - now;
+					CloudIndexTimer.Interval = Math.Max(1000, untilNext.TotalMilliseconds);
+					CloudIndexTimer.Enabled = true;
+					Debug.Write(MethodInfo.GetCurrentMethod(), "CloudIndex Timer gestartet - wird ausgelöst in {0}", untilNext);
+				} else {
+					// outside window: schedule to next day's 09:00 (or today's 09:00 if in future)
+					DateTime nextRun;
+					if(now < todayStart)
+						nextRun = todayStart;
+					else
+						nextRun = todayStart.AddDays(1);
+					TimeSpan untilNext = nextRun - now;
+					CloudIndexTimer.Interval = Math.Max(1000, untilNext.TotalMilliseconds);
+					CloudIndexTimer.Enabled = true;
+					Debug.Write(MethodInfo.GetCurrentMethod(), "CloudIndex Timer (außerhalb Fenster) gestartet - wird ausgelöst in {0}", untilNext);
+				}
+			} catch(Exception ex) {
+				Debug.WriteError(MethodBase.GetCurrentMethod(), ex, "CloudIndexTimerRun");
+			}
 		}
 		private void SunriseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e) {
 			Datapoints.Get(SunShineId).WriteValue("1");

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 07.11.2019                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: D1Mini.cs 245 2025-06-28 15:07:22Z                       $ #
+//# File-ID      : $Id:: D1Mini.cs 251 2025-12-23 12:06:40Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -245,8 +245,10 @@ namespace WebAutomation.Controller {
 				Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini `lastChancePing`: {_name} no response, send 'lastChance Ping'");
 			//last chance
 			Ping _ping = new Ping();
-			if(_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
-				SetOnlineError();
+			if (_ping.Send(_ipAddress, 750).Status != IPStatus.Success) {
+				if (_active) {
+					SetOnlineError();
+				}
 			} else {
 				SetOnlineError(false);
 				if(Debug.debugD1Mini)

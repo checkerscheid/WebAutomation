@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: WebCom.cs 245 2025-06-28 15:07:22Z                       $ #
+//# File-ID      : $Id:: WebCom.cs 251 2025-12-23 12:06:40Z                       $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpCommen;
@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Security.RightsManagement;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -34,6 +35,7 @@ using WebAutomation.Controller;
 using WebAutomation.Helper;
 using WebAutomation.PlugIns;
 using static FreakaZone.Libraries.wpEventLog.Logger;
+using static WebAutomation.Communication.CoIot;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -197,6 +199,8 @@ namespace WebAutomation.Communication {
 			public const string cShellyMqttUpdate = "shellyMqttUpdate";
 			public const string cGetShellyStatus = "GetShellyStatus";
 			public const string cDeleteShelly = "DeleteShelly";
+			public const string cSetShellyUrlCmd = "SetShellyUrlCmd";
+			public const string cGetShellyCoIoTDescription = "GetShellyCoIoTDescription";
 			#endregion
 
 			#region D1Mini
@@ -448,6 +452,19 @@ namespace WebAutomation.Communication {
 						}
 					}
 					returns = new ret { erg = ret.OK }.ToString();
+					break;
+				case wpBefehl.cSetShellyUrlCmd:
+					param = wpBefehl.getParam(s_befehl[1]);
+					returns = ShellyServer.SendUrlCmd(param[0], param[1]);
+					break;
+				case wpBefehl.cGetShellyCoIoTDescription:
+					param = wpBefehl.getParam(s_befehl[1]);
+					string descr = CoIot.GetDescription(param[0]);
+					if (!String.IsNullOrEmpty(descr)) {
+						returns = new ret { erg = ret.OK, Json = descr}.ToString();
+					} else {
+						returns = new ret { erg = ret.ERROR, message = "Shelly nicht erreichbar" }.ToString();
+					}
 					break;
 				case wpBefehl.cGetShellyStatus:
 					ShellyServer.GetAllStatus();
@@ -973,21 +990,33 @@ namespace WebAutomation.Communication {
 			}
 			if(erg.Length == 1 && erg[0].Length == 1 &&
 				Int32.TryParse(erg[0][0], out level)) {
-				List<int> ids = new List<int>();
-				List<string> values = new List<string>();
 				Datapoint p;
-				returns.message = $"WriteScene ({{idscene}}):";
+				returns.message = $"WriteScene ({idscene}):";
 				string sqlLog = "";
-				Dictionary<int, string> d = Scene.getScene(idscene);
-				foreach(KeyValuePair<int, string> kvp in d) {
-					p = Datapoints.Get(kvp.Key);
-					if(p != null && p.WriteLevel <= level) {
-						p.WriteValue(kvp.Value);
-						returns.message += $"\r\n\tWrite DP Ok:\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
-						sqlLog += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.Name, DateTime.Now, p.Value, kvp.Value);
-					} else {
-						returns.erg = ret.ERROR;
-						returns.message += $"\r\n\tkeine Berechtigung zum schreiben\r\n\t\tuser: {user} ({level}), idDp: {kvp.Key}, Value: {kvp.Value}";
+				foreach(TableSceneValue tsv in Scene.getScene(idscene)) {
+					switch(tsv.type) {
+						case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.datapoint:
+							p = Datapoints.Get(tsv.id_dp);
+							if(p != null && p.WriteLevel <= level) {
+								p.WriteValue(tsv.value);
+								returns.message += $"\r\n\tWrite DP Ok:\r\n\t\tuser: {user} ({level}), idDp: {tsv.id_dp}, Value: {tsv.value}";
+								sqlLog += String.Format("('{0}', '{1} (scene)', '{2:s}', '{3}', '{4}'),", user, p.Name, DateTime.Now, p.Value, tsv.value);
+							} else {
+								returns.erg = ret.ERROR;
+								returns.message += $"\r\n\tkeine Berechtigung zum schreiben\r\n\t\tuser: {user} ({level}), idDp: {tsv.id_dp}, Value: {tsv.value}";
+							}
+							break;
+						case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.url:
+							returns.Json = "{\"erg\":\"S_ERROR\"}";
+							try {
+								WebClient webClient = new();
+								Task.Run(() => returns.Json = webClient.DownloadString(new Uri(tsv.value))).Wait();
+								returns.message += $"\r\n\tWrite URL Ok:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
+							} catch(Exception ex) {
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{tsv.value}: '{returns}'");
+								returns.message += $"\r\n\tWrite URL Error:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
+							}
+							break;
 					}
 				}
 				if(sqlLog.Length > 0) {
@@ -1291,6 +1320,11 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 			get { return _message; }
 			set { _message = value; }
 		}
+		private string _json = string.Empty;
+		public string Json {
+			get { return _json; }
+			set { _json = value; }
+		}
 		private string _trace = string.Empty;
 		public string trace {
 			get { return _trace; }
@@ -1298,8 +1332,9 @@ $"{{Wartung={(Program.MainProg.wpWartung ? "True" : "False")}}}";
 		}
 		public override string ToString() {
 			string msg = (_message != string.Empty) ? $",\"message\":\"{jsonEscape(_message)}\"" : "";
+			string josn = (_json != string.Empty) ? $",\"json\":{_json}" : "";
 			string trc = (_trace != string.Empty) ? $",\"trace\":\"{jsonEscape(_trace)}\"" : "";
-			return $"{{\"erg\":\"{erg}\"{msg}{trc}}}";
+			return $"{{\"erg\":\"{erg}\"{msg}{josn}{trc}}}";
 		}
 		private string jsonEscape(string str) {
 			return str.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t");

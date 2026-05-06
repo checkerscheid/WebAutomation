@@ -8,13 +8,14 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 15.02.2025                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 197                                                     $ #
+//# Revision     : $Rev:: 252                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: TableShelly.cs 197 2025-03-30 13:07:37Z                  $ #
+//# File-ID      : $Id:: CoIotServer.cs 252 2025-12-23 12:07:55Z                  $ #
 //#                                                                                 #
 //###################################################################################
 using CoAP;
 using FreakaZone.Libraries.wpEventLog;
+using FreakaZone.Libraries.wpIniFile;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -27,34 +28,42 @@ namespace WebAutomation.Communication {
 		private static bool running = false;
 		private static Thread CoIotServer;
 		private static int count = 0;
+		private static int intervall = 5; // in seconds
 		public static void Start() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "CoIot Init");
-			CoIotServer = new Thread(new ThreadStart(Run));
-			CoIotServer.Name = "CoIot Server";
-			CoIotServer.Start();
+			intervall = IniFile.GetInt("CoIot", "Intervall");
+			if(intervall < 0) intervall = 30;
+			if(intervall > 120) intervall = 120;
+			if(intervall != 0) {
+				CoIotServer = new Thread(new ThreadStart(Run));
+				CoIotServer.Name = "CoIot Server";
+				CoIotServer.Start();
+			}
 		}
 		public static void Run() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "CoIot Server Start");
 			List<Shelly> devices = new List<Shelly>();
 			devices = ShellyServer.GetCoIot();
 			running = true;
+			count = intervall - 1; // (fast) sofort starten
 			while(running) {
-				if(++count > 5) {
+				if(++count > intervall) {
 					count = 0;
 					foreach(Shelly d in devices) {
 						if(d.IdPower > 0) {
 							try {
-								CoapClient client = new CoapClient();
 								Request request = new Request(Method.GET);
 								request.URI = new Uri($"coap://{d.Ip}:5683/cit/s");
 								request.Send();
-
 								// wait for response
 								Response response = request.WaitForResponse();
 								ShellyValues obj = JsonConvert.DeserializeObject<ShellyValues>(response.PayloadString);
 								foreach(List<object> t in obj.G) {
 									if(t[1].ToString() == "4101") {
-										Datapoints.Get(d.IdPower).SetValue(t[2].ToString());
+										Datapoints.Get(d.IdPower)?.SetValue(t[2].ToString());
+									}
+									if(t[1].ToString() == "5101") {
+										Datapoints.Get(d.IdBrightness)?.SetValue(t[2].ToString());
 									}
 								}
 							} catch(Exception ex) {
@@ -67,6 +76,26 @@ namespace WebAutomation.Communication {
 				Thread.Sleep(1000);
 			}
 			Debug.Write(MethodInfo.GetCurrentMethod(), "CoIot Server Stopped");
+		}
+		public static string GetDescription(string shellyIp) {
+			Shelly s = ShellyServer.GetShellyWithCoIoT(shellyIp);
+			if(s != null) {
+				try {
+					Request request = new Request(Method.GET);
+					request.URI = new Uri($"coap://{s.Ip}:5683/cit/d");
+					request.Send();
+					// wait for response
+					Response response = request.WaitForResponse();
+					return response.PayloadString;
+
+				} catch(Exception ex) {
+					Debug.Write(MethodInfo.GetCurrentMethod(), $"Error reading CoIot description from Shelly {s.Name} ({s.Ip}): {ex.Message}");
+					return string.Empty;
+				}
+			} else {
+				Debug.Write(MethodInfo.GetCurrentMethod(), $"Error Shelly nicht gefunden {shellyIp}");
+				return string.Empty;
+			}
 		}
 		public static void Stop() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), "CoIot Server Stop");

@@ -8,9 +8,9 @@
 //# Author       : Christian Scheid                                                 #
 //# Date         : 06.03.2013                                                       #
 //#                                                                                 #
-//# Revision     : $Rev:: 245                                                     $ #
+//# Revision     : $Rev:: 251                                                     $ #
 //# Author       : $Author::                                                      $ #
-//# File-ID      : $Id:: Email.cs 245 2025-06-28 15:07:22Z                        $ #
+//# File-ID      : $Id:: Email.cs 251 2025-12-23 12:06:40Z                        $ #
 //#                                                                                 #
 //###################################################################################
 using FreakaZone.Libraries.wpEventLog;
@@ -251,9 +251,9 @@ namespace WebAutomation.Helper {
 					IniFile.Get("Email", "Password"));
 			}
 			MailClient.Send(mailMessage);
-			string to = "\r\n";
+			string to = "";
 			foreach(MailAddress sender in mailMessage.To) {
-				to += sender.Address + "\r\n";
+				to += "\r\n\t" + sender.Address;
 			}
 			mailMessage.To.Clear();
 			eventLog.Write(MethodInfo.GetCurrentMethod(), String.Format("Alarm EMail geschrieben an:{0}", to));

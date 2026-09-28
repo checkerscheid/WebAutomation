@@ -267,10 +267,13 @@ namespace WebAutomation.Controller {
 
 					string url = $"http://{_ip}/status";
 					try {
-						WebClient webClient = new WebClient();
-						returns = webClient.DownloadString(new Uri(url));
-						if(saveStatus)
-							SaveJsonStatus(_ip, returns);
+						try {
+							returns = SharedHttpClient.Instance.GetStringAsync(url).GetAwaiter().GetResult();
+							if(saveStatus)
+								SaveJsonStatus(_ip, returns);
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}, {d1md.Name}: '{returns}'");
+						}
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}, {d1md.Name}: '{returns}'");
 					}
@@ -324,8 +327,11 @@ VALUES (
 
 					string url = $"http://{_ip}/getNeoPixel";
 					try {
-						WebClient webClient = new WebClient();
-						returns = webClient.DownloadString(new Uri(url));
+						try {
+							returns = SharedHttpClient.Instance.GetStringAsync(url).GetAwaiter().GetResult();
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}' ({url})");
+						}
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}' ({url})");
 					}
@@ -353,10 +359,13 @@ VALUES (
 				if(d1md.Active) {
 					string url = $"http://{_ip}/{cmd}";
 					try {
-						WebClient webClient = new WebClient();
-						Task.Run(() => returns = webClient.DownloadString(new Uri(url))).Wait();
-						if(Debug.debugD1Mini)
-							Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini sendUrlCmd after wait {_ip} - {url} - returns: {returns}");
+						try {
+							returns = SharedHttpClient.Instance.GetStringAsync(url).GetAwaiter().GetResult();
+							if(Debug.debugD1Mini)
+								Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini sendUrlCmd after wait {_ip} - {url} - returns: {returns}");
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
+						}
 					} catch(Exception ex) {
 						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{_ip}: '{returns}'");
 					}

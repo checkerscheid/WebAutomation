@@ -19,6 +19,7 @@ using FreakaZone.Libraries.wpSQL;
 using Newtonsoft.Json;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using WebAutomation.Communication;
@@ -189,52 +190,38 @@ namespace WebAutomation.Helper {
 		private async Task GetSunsetSunrise() {
 			try {
 				InitSummer();
-				WebClient webClient = new WebClient();
 				string url = String.Format("http://api.openweathermap.org/data/2.5/weather?id={0}&APPID={1}&units=metric&lang=de", IniFile.Get("Projekt", "OpenWeatherCode"), IniFile.Get("Projekt", "OpenWeatherKey"));
-				webClient.DownloadStringCompleted += (e, args) => {
-					if(args.Error == null) {
-						try {
-							OpenWeather.weather SunsetSunrise = JsonConvert.DeserializeObject<OpenWeather.weather>(args.Result);
-							sunrise = UnixTimeStampToDateTime(SunsetSunrise.sys.sunrise);
-							sunset = UnixTimeStampToDateTime(SunsetSunrise.sys.sunset);
-							Datapoints.Get(SunRiseId).WriteValue(sunrise.ToString(Database.DateTimeFormat));
-							Datapoints.Get(SunSetId).WriteValue(sunset.ToString(Database.DateTimeFormat));
-							//PDebug.Write(result);
-							Debug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
-							DateTime Now = DateTime.Now;
-							if(Now < sunrise) {
-								Datapoints.Get(SunShineId).WriteValue("0");
-							} else if(Now >= sunrise && Now < sunset) {
-								Datapoints.Get(SunShineId).WriteValue("1");
-							} else if(Now > sunset) {
-								Datapoints.Get(SunShineId).WriteValue("0");
-							}
-							TimeSpan toSunrise = sunrise - Now;
-							TimeSpan toSunset = sunset - Now;
-							if(toSunrise.Ticks > 0) {
-								SunriseTimer.Interval = toSunrise.TotalMilliseconds;
-								SunriseTimer.Enabled = true;
-								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
-							} else {
-								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise war heute schon");
-							}
-							if(toSunset.Ticks > 0) {
-								SunsetTimer.Interval = toSunset.TotalMilliseconds;
-								SunsetTimer.Enabled = true;
-								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
-							} else {
-								Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset war heute schon");
-							}
-						} catch(Exception ex) {
-							Debug.WriteError(MethodBase.GetCurrentMethod(), ex);
-						}
-					} else {
-						Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error);
-					}
-				};
-				await Task.Run(() => {
-					webClient.DownloadStringAsync(new Uri(url));
-				});
+				string result = await SharedHttpClient.Instance.GetStringAsync(url).ConfigureAwait(false);
+				OpenWeather.weather SunsetSunrise = JsonConvert.DeserializeObject<OpenWeather.weather>(result);
+				sunrise = UnixTimeStampToDateTime(SunsetSunrise.sys.sunrise);
+				sunset = UnixTimeStampToDateTime(SunsetSunrise.sys.sunset);
+				Datapoints.Get(SunRiseId).WriteValue(sunrise.ToString(Database.DateTimeFormat));
+				Datapoints.Get(SunSetId).WriteValue(sunset.ToString(Database.DateTimeFormat));
+				Debug.Write(MethodInfo.GetCurrentMethod(), "Found Sunrise: {0:HH:mm:ss}, Found Sunset: {1:HH:mm:ss}", sunrise, sunset);
+				DateTime Now = DateTime.Now;
+				if(Now < sunrise) {
+					Datapoints.Get(SunShineId).WriteValue("0");
+				} else if(Now >= sunrise && Now < sunset) {
+					Datapoints.Get(SunShineId).WriteValue("1");
+				} else if(Now > sunset) {
+					Datapoints.Get(SunShineId).WriteValue("0");
+				}
+				TimeSpan toSunrise = sunrise - Now;
+				TimeSpan toSunset = sunset - Now;
+				if(toSunrise.Ticks > 0) {
+					SunriseTimer.Interval = toSunrise.TotalMilliseconds;
+					SunriseTimer.Enabled = true;
+					Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise Timer gestartet - wird ausgelöst in {0}", toSunrise);
+				} else {
+					Debug.Write(MethodInfo.GetCurrentMethod(), "toSunrise war heute schon");
+				}
+				if(toSunset.Ticks > 0) {
+					SunsetTimer.Interval = toSunset.TotalMilliseconds;
+					SunsetTimer.Enabled = true;
+					Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset Timer gestartet - wird ausgelöst in {0}", toSunset);
+				} else {
+					Debug.Write(MethodInfo.GetCurrentMethod(), "toSunset war heute schon");
+				}
 			} catch(Exception ex) {
 				Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 			}

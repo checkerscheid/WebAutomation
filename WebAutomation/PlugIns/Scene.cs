@@ -23,6 +23,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Net.Http;
+using WebAutomation.Communication;
 /**
 * @addtogroup WebAutomation
 * @{
@@ -48,17 +50,13 @@ namespace WebAutomation.PlugIns {
 					case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.datapoint:
 						Datapoints.Get(tsv.id_dp).WriteValue(tsv.value);
 						break;
-					case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.url:
-						string returns = "{\"erg\":\"S_ERROR\"}";
-						try
-						{
-							WebClient webClient = new WebClient();
-							Task.Run(() => returns = webClient.DownloadString(new Uri(tsv.value))).Wait();
-						}
-						catch (Exception ex)
-						{
-							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{tsv.value}: '{returns}'");
-						}
+				case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.url:
+					string returns = "{\"erg\":\"S_ERROR\"}";
+					try {
+						returns = SharedHttpClient.Instance.GetStringAsync(tsv.value).GetAwaiter().GetResult();
+					} catch(Exception ex) {
+						Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{tsv.value}: '{returns}'");
+					}
 						break;
 					default:
 						break;

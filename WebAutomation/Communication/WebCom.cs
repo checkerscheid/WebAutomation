@@ -30,6 +30,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http;
 using System.Windows.Forms;
 using WebAutomation.Controller;
 using WebAutomation.Helper;
@@ -1008,12 +1009,16 @@ namespace WebAutomation.Communication {
 							break;
 						case FreakaZone.Libraries.wpSQL.Enum.SceneValueType.url:
 							returns.Json = "{\"erg\":\"S_ERROR\"}";
-							try {
-								WebClient webClient = new();
-								Task.Run(() => returns.Json = webClient.DownloadString(new Uri(tsv.value))).Wait();
-								returns.message += $"\r\n\tWrite URL Ok:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
+								try {
+								try {
+									returns.Json = SharedHttpClient.Instance.GetStringAsync(tsv.value).GetAwaiter().GetResult();
+									returns.message += $"\r\n\tWrite URL Ok:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
+								} catch(Exception ex) {
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{tsv.value}: '{returns}'");
+									returns.message += $"\r\n\tWrite URL Error:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
+								}
 							} catch(Exception ex) {
-								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{tsv.value}: '{returns}'");
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex);
 								returns.message += $"\r\n\tWrite URL Error:\r\n\t\tuser: {user} ({level}), URL: {tsv.value}";
 							}
 							break;

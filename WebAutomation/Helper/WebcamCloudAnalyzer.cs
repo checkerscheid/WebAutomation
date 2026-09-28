@@ -3,8 +3,10 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WebAutomation.Communication;
 
 namespace WebAutomation.Helper {
 	public static class WebcamCloudAnalyzer {
@@ -17,11 +19,9 @@ namespace WebAutomation.Helper {
 				throw new ArgumentNullException(nameof(pageUrl));
 
 			string html;
-			using(var wc = new WebClient()) {
-				ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-				wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (compatible)";
-				html = await wc.DownloadStringTaskAsync(pageUrl).ConfigureAwait(false);
-			}
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+			SharedHttpClient.Instance.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible)");
+			html = await SharedHttpClient.Instance.GetStringAsync(pageUrl).ConfigureAwait(false);
 
 			string imgUrl = ExtractImageUrl(html);
 			if(string.IsNullOrEmpty(imgUrl))
@@ -32,10 +32,8 @@ namespace WebAutomation.Helper {
 			}
 
 			byte[] imageData;
-			using(var wc = new WebClient()) {
-				wc.Headers[HttpRequestHeader.UserAgent] = "Mozilla/5.0 (compatible)";
-				imageData = await wc.DownloadDataTaskAsync(imgUrl).ConfigureAwait(false);
-			}
+			SharedHttpClient.Instance.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible)");
+			imageData = await SharedHttpClient.Instance.GetByteArrayAsync(imgUrl).ConfigureAwait(false);
 
 			// save image to cache folder if possible
 			try {

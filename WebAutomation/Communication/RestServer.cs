@@ -77,7 +77,7 @@ namespace WebAutomation.Communication {
 			TcpClient tcpClient = (TcpClient)client;
 			if(Debug.debugREST)
 				Debug.Write(MethodInfo.GetCurrentMethod(), String.Format("Neue Rest aktion: {0}", tcpClient.Client.RemoteEndPoint));
-			try {
+			// try {
 				string s_message = "";
 				NetworkStream clientStream = tcpClient.GetStream();
 				byte[] message = new byte[tcpClient.ReceiveBufferSize];
@@ -262,11 +262,11 @@ namespace WebAutomation.Communication {
 				clientStream.Write(answer, 0, answer.Length);
 				clientStream.Flush();
 				clientStream.Close();
-			} catch(Exception ex) {
-				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-			} finally {
-				tcpClient.Close();
-			}
+			//} catch(Exception ex) {
+			//	eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
+			//} finally {
+			tcpClient.Close();
+			//}
 		}
 	}
 }

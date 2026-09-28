@@ -21,11 +21,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Timers;
+using WebAutomation.Communication;
 using WebAutomation.Controller.ShellyDevice;
 
 namespace WebAutomation.Controller {
@@ -326,22 +327,59 @@ namespace WebAutomation.Controller {
 
 		public void SetLongPress() {
 			Debug.Write(MethodInfo.GetCurrentMethod(), $"register LongPress on {this._name}");
+			string url = "";
 			using(Database Sql = new Database("Shellys Long Press")) {
 				string[][] Query = Sql.Query(@$"SELECT
 					[ip], [type], [un], [pw]
 					FROM [shelly]
 					WHERE [id_restroom] = {this._room}");
-				WebClient webClient = new WebClient();
 				for(int ishelly = 0; ishelly < Query.Length; ishelly++) {
-					try {
-						webClient.Credentials = new NetworkCredential(Query[ishelly][2], Query[ishelly][3]);
-						if(ShellyType.IsRelay(Query[ishelly][1]))
-							webClient.DownloadString(new Uri($"http://{Query[ishelly][0]}/relay/0?turn=off"));
-						if(ShellyType.IsLight(Query[ishelly][1]))
-							webClient.DownloadString(new Uri($"http://{Query[ishelly][0]}/light/0?turn=off"));
-					} catch(Exception ex) {
-						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					}
+					string ip = Query[ishelly][0];
+					string type = Query[ishelly][1];
+					string un = Query[ishelly][2];
+					string pw = Query[ishelly][3];
+				if (ShellyType.IsRelay(type)) {
+					url = $"http://{ip}/relay/0?turn=off";
+					string localUrl = url;
+					string localUn = un;
+					string localPw = pw;
+					Task.Run(async () => {
+						using(HttpClientHandler handler = new HttpClientHandler()) {
+							if(!String.IsNullOrEmpty(localUn) || !String.IsNullOrEmpty(localPw))
+								handler.Credentials = new NetworkCredential(localUn, localPw);
+							using(HttpClient client = new HttpClient(handler)) {
+								try {
+									HttpResponseMessage resp = await client.GetAsync(localUrl);
+									resp.EnsureSuccessStatusCode();
+									Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived LongPress`: {this.Name}, {localUrl}");
+								} catch(Exception ex) {
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"url nicht erreichbar: '{localUrl}'");
+								}
+							}
+						}
+					});
+				}
+				if (ShellyType.IsLight(type)) {
+					url = $"http://{ip}/light/0?turn=off";
+					string localUrl = url;
+					string localUn = un;
+					string localPw = pw;
+					Task.Run(async () => {
+						using(HttpClientHandler handler = new HttpClientHandler()) {
+							if(!String.IsNullOrEmpty(localUn) || !String.IsNullOrEmpty(localPw))
+								handler.Credentials = new NetworkCredential(localUn, localPw);
+							using(HttpClient client = new HttpClient(handler)) {
+								try {
+									HttpResponseMessage resp = await client.GetAsync(localUrl);
+									resp.EnsureSuccessStatusCode();
+									Debug.Write(MethodInfo.GetCurrentMethod(), $"Shelly `recived LongPress`: {this.Name}, {localUrl}");
+								} catch(Exception ex) {
+									Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"url nicht erreichbar: '{localUrl}'");
+								}
+							}
+						}
+					});
+				}
 				}
 			}
 			using(Database Sql = new Database("Shellys Long Press D1Mini")) {
@@ -349,16 +387,35 @@ namespace WebAutomation.Controller {
 					[ip], [compiledwith]
 					FROM [d1mini]
 					WHERE [id_restroom] = {this._room}");
-				WebClient webClient = new WebClient();
 				for(int id1mini = 0; id1mini < Query.Length; id1mini++) {
-					try {
-						if(Query[id1mini][1].Contains("NeoPixel"))
-							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setNeoPixel?turn=0"));
-						if(Query[id1mini][1].Contains("CwWw"))
-							webClient.DownloadString(new Uri($"http://{Query[id1mini][0]}/setCwWw?turn=0"));
-					} catch(Exception ex) {
-						eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex);
-					}
+					string ip = Query[id1mini][0];
+					string compiled = Query[id1mini][1];
+				if (compiled.Contains("NeoPixel")) {
+					url = $"http://{ip}/setNeoPixel?turn=0";
+					string localUrl = url;
+					Task.Run(async () => {
+						try {
+							HttpResponseMessage resp = await SharedHttpClient.Instance.GetAsync(localUrl).ConfigureAwait(false);
+							resp.EnsureSuccessStatusCode();
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini  `recived LongPress`: {this.Name}, {localUrl}");
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"url nicht erreichbar: '{localUrl}'");
+						}
+					});
+				}
+				if (compiled.Contains("CwWw")) {
+					url = $"http://{ip}/setCwWw?turn=0";
+					string localUrl = url;
+					Task.Run(async () => {
+						try {
+							HttpResponseMessage resp = await SharedHttpClient.Instance.GetAsync(localUrl).ConfigureAwait(false);
+							resp.EnsureSuccessStatusCode();
+							Debug.Write(MethodInfo.GetCurrentMethod(), $"D1Mini  `recived LongPress`: {this.Name}, {localUrl}");
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"url nicht erreichbar: '{localUrl}'");
+						}
+					});
+				}
 				}
 			}
 		}
@@ -377,13 +434,15 @@ namespace WebAutomation.Controller {
 				target = $"{url}/status";
 			}
 			if(!ShellyType.IsBat(this.Type) && this.Active) {
-				try {
-					using(WebClient webClient = new WebClient()) {
-						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
-						webClient.DownloadStringCompleted += (e, args) => {
-							if(args.Error == null) {
+			try {
+				if(_lastContact.AddHours(1) < DateTime.Now || force) {
+					using(HttpClientHandler handler = new HttpClientHandler()) {
+						handler.Credentials = new NetworkCredential("wpLicht", "turner");
+						using(HttpClient client = new HttpClient(handler)) {
+							try {
+								string result = await client.GetStringAsync(target).ConfigureAwait(false);
 								_lastContact = DateTime.Now;
-								status sds = JsonConvert.DeserializeObject<status>(args.Result);
+								status sds = JsonConvert.DeserializeObject<status>(result);
 								if(this.IdOnOff > 0) {
 									bool? ison = null;
 									if(ShellyType.IsLight(this.Type) && !ShellyType.IsGen2(this.Type)) {
@@ -406,19 +465,17 @@ namespace WebAutomation.Controller {
 									if(Debug.debugShelly)
 										Debug.Write(MethodInfo.GetCurrentMethod(), sql);
 								}
-							} else {
-								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+							} catch(Exception ex) {
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
 							}
-						};
-						if(_lastContact.AddHours(1) < DateTime.Now || force) {
-							await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
-							_doCheckStatus.Stop();
-							_doCheckStatus.Start();
 						}
 					}
-				} catch(Exception ex) {
-					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+					_doCheckStatus.Stop();
+					_doCheckStatus.Start();
 				}
+			} catch(Exception ex) {
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+			}
 			}
 		}
 		public void GetOutputStatus() {
@@ -438,45 +495,45 @@ namespace WebAutomation.Controller {
 				target = $"{url}/settings/relays/0";
 			}
 			if(!String.IsNullOrEmpty(target) && !ShellyType.IsBat(this.Type) && this.Active) {
-				try {
-					using(WebClient webClient = new WebClient()) {
-						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
-						webClient.DownloadStringCompleted += (e, args) => {
-							if(args.Error == null) {
-								_lastContact = DateTime.Now;
-								dynamic sds = JsonConvert.DeserializeObject<dynamic>(args.Result);
-								string autooff = "[autooff] = 0, ";
-								int auto_off;
-								if((bool?)sds.auto_off ?? false == true) {
-									autooff = $"[autooff] = {sds.auto_off_delay}, ";
-								}
-								if(sds.lights != null) {
-									auto_off = sds.lights[0].auto_off ?? 0;
-									if(auto_off > 0) {
-										autooff = $"[autooff] = {sds.lights[0].auto_off}, ";
-									}
-								}
-								if(sds.relays != null) {
-									auto_off = sds.relays[0].auto_off ?? 0;
-									if(auto_off > 0) {
-										autooff = $"[autooff] = {sds.relays[0].auto_off}, ";
-									}
-								}
-								using(Database Sql = new Database("Update Shelly MQTT lastContact")) {
-									string sql = $"UPDATE [shelly] SET {autooff}[lastcontact] = '{_lastContact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
-									Sql.NonResponse(sql);
-									if(Debug.debugShelly)
-										Debug.Write(MethodInfo.GetCurrentMethod(), sql);
-								}
-							} else {
-								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+			try {
+				using(HttpClientHandler handler = new HttpClientHandler()) {
+					handler.Credentials = new NetworkCredential("wpLicht", "turner");
+					using(HttpClient client = new HttpClient(handler)) {
+						try {
+							string result = await client.GetStringAsync(target).ConfigureAwait(false);
+							_lastContact = DateTime.Now;
+							dynamic sds = JsonConvert.DeserializeObject<dynamic>(result);
+							string autooff = "[autooff] = 0, ";
+							int auto_off;
+							if((bool?)sds.auto_off ?? false == true) {
+								autooff = $"[autooff] = {sds.auto_off_delay}, ";
 							}
-						};
-						await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
+							if(sds.lights != null) {
+								auto_off = sds.lights[0].auto_off ?? 0;
+								if(auto_off > 0) {
+									autooff = $"[autooff] = {sds.lights[0].auto_off}, ";
+								}
+							}
+							if(sds.relays != null) {
+								auto_off = sds.relays[0].auto_off ?? 0;
+								if(auto_off > 0) {
+									autooff = $"[autooff] = {sds.relays[0].auto_off}, ";
+								}
+							}
+							using(Database Sql = new Database("Update Shelly MQTT lastContact")) {
+								string sql = $"UPDATE [shelly] SET {autooff}[lastcontact] = '{_lastContact.ToString(Database.DateTimeFormat)}' WHERE [id_shelly] = {_id}";
+								Sql.NonResponse(sql);
+								if(Debug.debugShelly)
+									Debug.Write(MethodInfo.GetCurrentMethod(), sql);
+							}
+						} catch(Exception ex) {
+							Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+						}
 					}
-				} catch(Exception ex) {
-					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
 				}
+			} catch(Exception ex) {
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+			}
 			}
 		}
 		public void GetHttpShelly() {
@@ -488,13 +545,15 @@ namespace WebAutomation.Controller {
 		public async void GetHttpShellyAsync(bool force) {
 			string target = $"http://{this._ip.ToString()}/shelly";
 			if(ShellyType.IsGen2(this.Type) && !ShellyType.IsBat(this.Type) && this.Active) {
-				try {
-					using(WebClient webClient = new WebClient()) {
-						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
-						webClient.DownloadStringCompleted += (e, args) => {
-							if(args.Error == null) {
+			try {
+				if(_lastContact.AddHours(1) < DateTime.Now || force) {
+					using(HttpClientHandler handler = new HttpClientHandler()) {
+						handler.Credentials = new NetworkCredential("wpLicht", "turner");
+						using(HttpClient client = new HttpClient(handler)) {
+							try {
+								string result = await client.GetStringAsync(target).ConfigureAwait(false);
 								_lastContact = DateTime.Now;
-								dynamic stuff = JsonConvert.DeserializeObject(args.Result);
+								dynamic stuff = JsonConvert.DeserializeObject(result);
 								string updatesql = "";
 								if(stuff.id != null && this._wsId != (string)stuff.id) {
 									this._wsId = stuff.id;
@@ -506,19 +565,17 @@ namespace WebAutomation.Controller {
 									if(Debug.debugShelly)
 										Debug.Write(MethodInfo.GetCurrentMethod(), sql);
 								}
-							} else {
-								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+							} catch(Exception ex) {
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
 							}
-						};
-						if(_lastContact.AddHours(1) < DateTime.Now || force) {
-							await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
-							_doCheckShelly.Stop();
-							_doCheckShelly.Start();
 						}
 					}
-				} catch(Exception ex) {
-					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+					_doCheckShelly.Stop();
+					_doCheckShelly.Start();
 				}
+			} catch(Exception ex) {
+				eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
+			}
 			}
 		}
 		public void GetMqttStatus() {
@@ -534,11 +591,12 @@ namespace WebAutomation.Controller {
 			}
 			if(!ShellyType.IsBat(this.Type) && this.Active) {
 				try {
-					using(WebClient webClient = new WebClient()) {
-						webClient.Credentials = new NetworkCredential("wpLicht", "turner");
-						webClient.DownloadStringCompleted += (e, args) => {
-							if(args.Error == null) {
-								mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(args.Result);
+					using(HttpClientHandler handler = new HttpClientHandler()) {
+						handler.Credentials = new NetworkCredential("wpLicht", "turner");
+						using(HttpClient client = new HttpClient(handler)) {
+							try {
+								string result = await client.GetStringAsync(target).ConfigureAwait(false);
+								mqttstatus sdms = JsonConvert.DeserializeObject<mqttstatus>(result);
 								bool res_mqtt_enable, res_mqtt_writeable, res_coiot_enable;
 								string res_mqtt_server, res_mqtt_id, res_mqtt_prefix;
 								if(ShellyType.IsGen2(this.Type)) {
@@ -601,11 +659,10 @@ namespace WebAutomation.Controller {
 											Debug.Write(MethodInfo.GetCurrentMethod(), sql);
 									}
 								}
-							} else {
-								Debug.WriteError(MethodInfo.GetCurrentMethod(), args.Error, $"{this.Name} ({this.Ip}), '{target}'");
+							} catch(Exception ex) {
+								Debug.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");
 							}
-						};
-						await Task.Run(() => webClient.DownloadStringAsync(new Uri(target)));
+						}
 					}
 				} catch(Exception ex) {
 					eventLog.WriteError(MethodInfo.GetCurrentMethod(), ex, $"{this.Name} ({this.Ip}), '{target}'");

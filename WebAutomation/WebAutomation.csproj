@@ -123,6 +123,7 @@
       <DependentUpon>BeendenPW.cs</DependentUpon>
     </Compile>
     <Compile Include="Communication\CoIotServer.cs" />
+    <Compile Include="Communication\SharedHttpClient.cs" />
     <Compile Include="Controller\D1MiniServer.cs" />
     <Compile Include="externals\Interop.cs" />
     <Compile Include="externals\OPC_Common.cs" />
